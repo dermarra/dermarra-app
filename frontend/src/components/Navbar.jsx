@@ -19,6 +19,9 @@ export default function Navbar() {
           <Link to="/cart" className="hover:text-ink">Cart ({itemCount})</Link>
           {user ? (
             <>
+              {user.is_admin && (
+                <Link to="/admin/orders" className="hover:text-ink">Admin</Link>
+              )}
               <Link to="/account" className="hover:text-ink">{user.full_name}</Link>
               <button onClick={logout} className="hover:text-ink">Sign out</button>
             </>

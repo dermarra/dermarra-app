@@ -1,7 +1,8 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
 import BottomNav from "./components/BottomNav.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
 
 import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
@@ -12,6 +13,12 @@ import Checkout from "./pages/Checkout.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import Account from "./pages/Account.jsx";
+import AdminLayout from "./pages/admin/AdminLayout.jsx";
+import AdminOrders from "./pages/admin/AdminOrders.jsx";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail.jsx";
+import AdminProducts from "./pages/admin/AdminProducts.jsx";
+import AdminRoutines from "./pages/admin/AdminRoutines.jsx";
+import AdminUsers from "./pages/admin/AdminUsers.jsx";
 
 export default function App() {
   return (
@@ -28,6 +35,22 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/account" element={<Account />} />
+
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<Navigate to="orders" replace />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:orderId" element={<AdminOrderDetail />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="routines" element={<AdminRoutines />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
         </Routes>
       </main>
       <BottomNav />
