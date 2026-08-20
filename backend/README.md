@@ -64,7 +64,14 @@ API is served at `http://localhost:5000`, all routes under `/api/*`. Health chec
 | `/api/admin/routines/<id>`        | PATCH/DELETE | admin | Update/delete a routine |
 | `/api/admin/routines/<id>/steps`  | PUT    | admin | Replace a routine's full ordered step list |
 | `/api/admin/concerns`             | GET/POST/DELETE | admin | Manage skin concerns |
-| `/api/admin/upload-image`         | POST   | admin | Multipart upload → Cloudinary, returns `public_id` |
+| `/api/admin/upload-image`         | POST   | admin | Multipart upload → Cloudinary, returns `public_id` (optional `folder` form field) |
+| `/api/admin/orders`               | GET    | admin | List all orders (optional `?status=`), includes `user_id`/`user_email` |
+| `/api/admin/orders/<id>`          | GET    | admin | Order detail (admin view) |
+| `/api/admin/orders/<id>/refresh-payment-status` | POST | admin | Query Safaricom's live status for a `payment_pending` order |
+| `/api/admin/orders/<id>/advance`  | POST   | admin | `{status, delivery_proof_public_id?}` → advance one step through `paid → processing → shipped → delivered`; proof photo required for `delivered` |
+| `/api/admin/orders/<id>/cancel`   | POST   | admin | Cancel a `paid`/`processing`/`shipped` order |
+| `/api/admin/users`                | GET    | admin | List users with `created_at`/`order_count` |
+| `/api/admin/users/<id>`           | PATCH  | admin | `{is_admin}` → promote/demote (can't demote yourself) |
 
 Auth header for protected routes: `Authorization: Bearer <access_token>`.
 
@@ -78,7 +85,9 @@ Auth header for protected routes: `Authorization: Bearer <access_token>`.
 
 ## Admin access
 
-There's no signup flow for admins by design. To promote a user, open `flask shell` and run:
+The very first admin has to be bootstrapped via `flask shell` (there's no
+signup flow for admins, and you can't call an admin endpoint before you're
+one):
 
 ```python
 from app.extensions import db
@@ -88,6 +97,11 @@ user = User.query.filter_by(email="you@example.com").first()
 user.is_admin = True
 db.session.commit()
 ```
+
+After that, any admin can promote or demote other users via
+`PATCH /api/admin/users/<id>` (or the `/admin/users` page in the frontend)
+with `{"is_admin": true|false}`. An admin cannot demote themselves through
+this endpoint — drop back to `flask shell` if you ever need to.
 
 ## Seeding sample data
 

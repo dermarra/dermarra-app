@@ -9,8 +9,9 @@ from app.models.user import User
 def admin_required(fn):
     """Stack under @jwt_required(). Checks the current user's is_admin flag.
 
-    There is no signup flow for admins -- promote a user by setting
-    is_admin=True directly in the database (see backend/README.md).
+    The first admin has to be bootstrapped by setting is_admin=True directly
+    in the database (see backend/README.md) -- after that, admins can
+    promote/demote other users via PATCH /api/admin/users/<id>.
     """
 
     @wraps(fn)
