@@ -5,9 +5,13 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
 from app.models.order import Order
+from app.models.product import Product
+from app.models.routine import Routine
 from app.models.user import User
 from app.services import mpesa_service
 from app.services.brevo_service import send_order_confirmation_email
+from app.utils.inventory import stock_lines
+
 
 payments_bp = Blueprint("payments", __name__)
 
@@ -88,22 +92,30 @@ def mpesa_callback():
     if not order:
         current_app.logger.warning(f"No order found for CheckoutRequestID {checkout_request_id}")
         return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}), 200
-
+    
     if result_code == 0:
-        metadata = {
-            item["Name"]: item.get("Value")
-            for item in stk_callback.get("CallbackMetadata", {}).get("Item", [])
-        }
-        order.status = "paid"
-        order.mpesa_receipt_number = metadata.get("MpesaReceiptNumber")
-        order.paid_at = datetime.now(timezone.utc)
-        db.session.commit()
+        if order.status != "paid":
+            metadata = {
+                item["Name"]: item.get("Value")
+                for item in stk_callback.get("CallbackMetadata", {}).get("Item", [])
+            }
+            order.status = "paid"
+            order.mpesa_receipt_number = metadata.get("MpesaReceiptNumber")
+            order.paid_at = datetime.now(timezone.utc)
 
-        try:
-            user = User.query.get(order.user_id)
-            send_order_confirmation_email(user, order)
-        except Exception:
-            pass
+            for order_item in order.items:
+                product = Product.query.get(order_item.product_id) if order_item.product_id else None
+                routine = Routine.query.get(order_item.routine_id) if order_item.routine_id else None
+                for product_row, needed_qty in stock_lines(product, routine, order_item.quantity):
+                    product_row.stock_quantity = max(0, product_row.stock_quantity - needed_qty)
+
+            db.session.commit()
+
+            try:
+                user = User.query.get(order.user_id)
+                send_order_confirmation_email(user, order)
+            except Exception:
+                pass
     else:
         order.status = "payment_failed"
         db.session.commit()

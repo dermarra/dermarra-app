@@ -46,7 +46,7 @@ export default function Account() {
       pollTimers.current[order.id] = setInterval(async () => {
         if (Date.now() > deadline) {
           clearInterval(pollTimers.current[order.id]);
-          setPaymentState((s) => ({ ...s, [order.id]: "error" }));
+          setPaymentState((s) => ({ ...s, [order.id]: "Payment timed out. Please try again." }));
           return;
         }
         const { data } = await client.get(`/payments/mpesa/status/${order.id}`);
@@ -57,8 +57,11 @@ export default function Account() {
           );
         }
       }, POLL_INTERVAL_MS);
-    } catch {
-      setPaymentState((s) => ({ ...s, [order.id]: "error" }));
+    } catch (err){
+      setPaymentState((s) => ({ 
+        ...s, 
+        [order.id]: err.response?.data?.error || "Payment did not go through.",
+       }));
     }
   };
 
@@ -139,9 +142,9 @@ export default function Account() {
                         Check your phone ({order.shipping.phone}) and enter your PIN…
                       </p>
                     )}
-                    {state === "error" && (
+                    {state && state !== "sending" && state !== "awaiting_pin" && (
                       <p className="text-xs text-clay">
-                        Payment didn&apos;t go through.{" "}
+                        {state}{" "}
                         <button onClick={() => payNow(order)} className="underline">
                           Try again
                         </button>
@@ -156,7 +159,7 @@ export default function Account() {
                       </button>
                     )}
 
-                    {canCancel && !state && (
+                    {canCancel && state !== "sending" && state !== "awaiting_pin" && (
                       <button
                         onClick={() => cancelOrder(order)}
                         disabled={cancelling === "cancelling"}

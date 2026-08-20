@@ -5,6 +5,7 @@ from app.extensions import db
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem
 from app.services import mpesa_service
+from app.utils.inventory import stock_lines
 
 orders_bp = Blueprint("orders", __name__)
 
@@ -45,6 +46,16 @@ def checkout():
     cart = Cart.query.filter_by(user_id=user_id).first()
     if not cart or not cart.items:
         return jsonify({"error": "cart is empty"}), 400
+    insufficient = set()
+    for item in cart.items:
+        for product, needed_qty in stock_lines(item.product, item.routine, item.quantity):
+            if product.stock_quantity < needed_qty:
+                insufficient.add(product.name)
+
+    if insufficient:
+        return jsonify({
+            "error": f"not enough stock for: {', '.join(sorted(insufficient))}"
+        }), 400
 
     subtotal_cents = 0
     order_items = []
