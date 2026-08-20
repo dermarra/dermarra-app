@@ -47,10 +47,12 @@ class Order(db.Model):
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    delivery_proof_public_id = db.Column(db.String(255), nullable=True)
+
     items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan")
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_admin_fields=False):
+        data = {
             "id": self.id,
             "status": self.status,
             "subtotal_cents": self.subtotal_cents,
@@ -60,6 +62,7 @@ class Order(db.Model):
             "payment_method": self.payment_method,
             "mpesa_receipt_number": self.mpesa_receipt_number,
             "paid_at": self.paid_at.isoformat() if self.paid_at else None,
+            "delivery_proof_public_id": self.delivery_proof_public_id,
             "shipping": {
                 "name": self.shipping_name,
                 "address_line1": self.shipping_address_line1,
@@ -72,6 +75,10 @@ class Order(db.Model):
             "created_at": self.created_at.isoformat(),
             "items": [item.to_dict() for item in self.items],
         }
+        if include_admin_fields:
+            data["user_id"] = self.user_id
+            data["user_email"] = self.user.email if self.user else None
+        return data
 
 
 class OrderItem(db.Model):

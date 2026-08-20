@@ -1,10 +1,15 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import get_jwt_identity
 
 from app.extensions import db
+from app.models.order import Order
 from app.models.product import Product, SkinConcern
 from app.models.routine import Routine, RoutineStep
+from app.models.user import User
+from app.services import mpesa_service
 from app.services.cloudinary_service import upload_image, delete_image
 from app.utils.decorators import admin_required
+from app.utils.order_transitions import can_advance, can_cancel
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -203,10 +208,15 @@ def set_routine_steps(routine_id):
 @admin_bp.post("/upload-image")
 @admin_required
 def upload_product_image():
-    """Multipart form upload -- send the file under the "file" field."""
+    """Multipart form upload -- send the file under the "file" field.
+
+    Optional "folder" form field routes the upload into a different
+    Cloudinary folder (e.g. delivery-proof photos vs product photography).
+    """
     if "file" not in request.files:
         return jsonify({"error": "no file provided"}), 400
-    result = upload_image(request.files["file"])
+    folder = request.form.get("folder", "derma-skincare/products")
+    result = upload_image(request.files["file"], folder=folder)
     return jsonify(result), 201
 
 
@@ -215,3 +225,135 @@ def upload_product_image():
 def remove_image(public_id):
     delete_image(public_id)
     return "", 204
+
+
+# ---------- Orders ----------
+
+@admin_bp.get("/orders")
+@admin_required
+def list_all_orders():
+    query = Order.query
+    status = request.args.get("status")
+    if status:
+        query = query.filter_by(status=status)
+    orders = query.order_by(Order.created_at.desc()).all()
+    return jsonify([o.to_dict(include_admin_fields=True) for o in orders]), 200
+
+
+@admin_bp.get("/orders/<order_id>")
+@admin_required
+def get_admin_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    return jsonify(order.to_dict(include_admin_fields=True)), 200
+
+
+@admin_bp.post("/orders/<order_id>/refresh-payment-status")
+@admin_required
+def refresh_order_payment_status(order_id):
+    """Only meaningful while a payment is in flight -- queries Safaricom's
+    live status rather than trusting local state, same rule as cancel_order
+    in orders.py."""
+    order = Order.query.get_or_404(order_id)
+
+    if order.status != "payment_pending" or not order.mpesa_checkout_request_id:
+        return jsonify(order.to_dict(include_admin_fields=True)), 200
+
+    try:
+        result = mpesa_service.query_stk_status(order.mpesa_checkout_request_id)
+    except Exception:
+        return jsonify({
+            "error": "Couldn't confirm payment status with M-Pesa right now -- please try again in a moment."
+        }), 502
+
+    result_code = result.get("ResultCode")
+    if result_code == "0":
+        order.status = "paid"
+        db.session.commit()
+    elif result_code is not None:
+        order.status = "payment_failed"
+        db.session.commit()
+
+    return jsonify(order.to_dict(include_admin_fields=True)), 200
+
+
+@admin_bp.post("/orders/<order_id>/advance")
+@admin_required
+def advance_order(order_id):
+    """Body: { "status": "processing"|"shipped"|"delivered", "delivery_proof_public_id": "..." }
+
+    Only moves an order exactly one step forward in
+    paid -> processing -> shipped -> delivered. Advancing to "delivered"
+    requires a proof-of-delivery photo already uploaded via
+    POST /admin/upload-image.
+    """
+    order = Order.query.get_or_404(order_id)
+    data = request.get_json(silent=True) or {}
+    new_status = data.get("status")
+
+    if not can_advance(order.status, new_status):
+        return jsonify({
+            "error": f"cannot advance an order from '{order.status}' to '{new_status}'"
+        }), 400
+
+    if new_status == "delivered":
+        proof_id = data.get("delivery_proof_public_id")
+        if not proof_id:
+            return jsonify({"error": "delivery_proof_public_id is required to mark an order delivered"}), 400
+        order.delivery_proof_public_id = proof_id
+
+    order.status = new_status
+    db.session.commit()
+    return jsonify(order.to_dict(include_admin_fields=True)), 200
+
+
+@admin_bp.post("/orders/<order_id>/cancel")
+@admin_required
+def cancel_order_admin(order_id):
+    order = Order.query.get_or_404(order_id)
+
+    if not can_cancel(order.status):
+        return jsonify({
+            "error": f"orders with status '{order.status}' cannot be cancelled"
+        }), 400
+
+    order.status = "cancelled"
+    db.session.commit()
+    return jsonify(order.to_dict(include_admin_fields=True)), 200
+
+
+# ---------- Users ----------
+
+def _user_admin_dict(user):
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": user.phone,
+        "is_admin": user.is_admin,
+        "created_at": user.created_at.isoformat(),
+        "order_count": user.orders.count(),
+    }
+
+
+@admin_bp.get("/users")
+@admin_required
+def list_users():
+    users = User.query.order_by(User.created_at.desc()).all()
+    return jsonify([_user_admin_dict(u) for u in users]), 200
+
+
+@admin_bp.patch("/users/<user_id>")
+@admin_required
+def update_user_admin_status(user_id):
+    user = User.query.get_or_404(user_id)
+    data = request.get_json(silent=True) or {}
+
+    if "is_admin" not in data:
+        return jsonify({"error": "is_admin is required"}), 400
+
+    if user.id == get_jwt_identity() and data["is_admin"] is False:
+        return jsonify({"error": "you cannot remove your own admin access"}), 400
+
+    user.is_admin = bool(data["is_admin"])
+    db.session.commit()
+    return jsonify(_user_admin_dict(user)), 200
