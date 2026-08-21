@@ -15,6 +15,9 @@ export default function AdminOrderDetail() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [proofPublicId, setProofPublicId] = useState(null);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [invoiceSent, setInvoiceSent] = useState(false);
+  const [sendingInvoice, setSendingInvoice] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -45,13 +48,29 @@ export default function AdminOrderDetail() {
     try {
       const body = { status: nextStatus };
       if (nextStatus === "delivered") body.delivery_proof_public_id = proofPublicId;
+      if (trackingNumber.trim()) body.tracking_number = trackingNumber.trim();
       const { data } = await client.post(`/admin/orders/${orderId}/advance`, body);
       setOrder(data);
       setProofPublicId(null);
+      setTrackingNumber("");
     } catch (err) {
       setError(err.response?.data?.error || "Couldn't advance this order.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const sendInvoice = async () => {
+    setError(null);
+    setInvoiceSent(false);
+    setSendingInvoice(true);
+    try {
+      await client.post(`/admin/orders/${orderId}/send-invoice`);
+      setInvoiceSent(true);
+    } catch (err) {
+      setError(err.response?.data?.error || "Couldn't send the invoice.");
+    } finally {
+      setSendingInvoice(false);
     }
   };
 
@@ -113,6 +132,11 @@ export default function AdminOrderDetail() {
         {order.shipping.address_line2 && <p className="text-sm text-ink/80">{order.shipping.address_line2}</p>}
         <p className="text-sm text-ink/80">{order.shipping.city}, {order.shipping.country}</p>
         <p className="text-sm text-ink/80">{order.shipping.phone}</p>
+        {order.tracking_number && (
+          <p className="text-sm text-ink/80 mt-2">
+            Tracking number: <span className="font-mono">{order.tracking_number}</span>
+          </p>
+        )}
       </section>
 
       <section className="border border-mist rounded-sm p-4">
@@ -130,6 +154,17 @@ export default function AdminOrderDetail() {
             {busy ? "Checking…" : "Check live payment status"}
           </button>
         )}
+
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={sendInvoice}
+            disabled={sendingInvoice}
+            className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm disabled:opacity-50"
+          >
+            {sendingInvoice ? "Sending…" : "Email invoice to customer"}
+          </button>
+          {invoiceSent && <span className="text-xs text-sage-dark">Invoice sent.</span>}
+        </div>
       </section>
 
       {proofUrl && (
@@ -151,6 +186,17 @@ export default function AdminOrderDetail() {
                 value={proofPublicId}
                 onChange={setProofPublicId}
                 folder="derma-skincare/delivery-proofs"
+              />
+            </div>
+          )}
+          {nextStatus === "shipped" && (
+            <div className="mb-3">
+              <p className="text-xs text-ink/60 mb-2">Tracking number (optional)</p>
+              <input
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="e.g. G4S-123456"
+                className="border border-mist rounded-sm px-3 py-2 text-sm w-full sm:w-64"
               />
             </div>
           )}

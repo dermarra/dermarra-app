@@ -48,6 +48,7 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     delivery_proof_public_id = db.Column(db.String(255), nullable=True)
+    tracking_number = db.Column(db.String(120), nullable=True)
 
     items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan")
 
@@ -63,6 +64,7 @@ class Order(db.Model):
             "mpesa_receipt_number": self.mpesa_receipt_number,
             "paid_at": self.paid_at.isoformat() if self.paid_at else None,
             "delivery_proof_public_id": self.delivery_proof_public_id,
+            "tracking_number": self.tracking_number,
             "shipping": {
                 "name": self.shipping_name,
                 "address_line1": self.shipping_address_line1,

@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 
 const TABS = [
+  { to: "dashboard", label: "Dashboard" },
   { to: "orders", label: "Orders" },
   { to: "products", label: "Products" },
   { to: "routines", label: "Routines" },

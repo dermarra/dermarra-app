@@ -1,16 +1,23 @@
+from datetime import datetime, timedelta, timezone
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
+from sqlalchemy import func
 
 from app.extensions import db
 from app.models.order import Order
-from app.models.product import Product, SkinConcern
+from app.models.product import Product, ProductImage, SkinConcern
 from app.models.routine import Routine, RoutineStep
 from app.models.user import User
-from app.services import mpesa_service
+from app.services import mpesa_service, brevo_service
 from app.services.cloudinary_service import upload_image, delete_image
 from app.utils.decorators import admin_required
 from app.utils.inventory import restock_order
 from app.utils.order_transitions import can_advance, can_cancel
+
+# Orders in any of these statuses never reached a successful payment, so
+# they're excluded from revenue/lifetime-value aggregation.
+_UNPAID_STATUSES = ("pending", "payment_pending", "payment_failed", "cancelled")
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -51,7 +58,7 @@ def delete_concern(concern_id):
 @admin_required
 def list_products():
     products = Product.query.order_by(Product.created_at.desc()).all()
-    return jsonify([p.to_dict() for p in products]), 200
+    return jsonify([p.to_dict(include_admin_fields=True) for p in products]), 200
 
 
 @admin_bp.post("/products")
@@ -116,6 +123,82 @@ def update_product(product_id):
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
     db.session.delete(product)
+    db.session.commit()
+    return "", 204
+
+
+@admin_bp.post("/products/<product_id>/images")
+@admin_required
+def add_product_image(product_id):
+    """Multipart form upload -- send the file under the "file" field."""
+    product = Product.query.get_or_404(product_id)
+    if "file" not in request.files:
+        return jsonify({"error": "no file provided"}), 400
+
+    result = upload_image(request.files["file"], folder="derma-skincare/products")
+    max_position = db.session.query(func.max(ProductImage.position)).filter_by(
+        product_id=product.id
+    ).scalar()
+    is_first = len(product.images) == 0
+
+    image = ProductImage(
+        product_id=product.id,
+        cloudinary_public_id=result["public_id"],
+        position=(max_position + 1) if max_position is not None else 0,
+        is_primary=is_first,
+    )
+    db.session.add(image)
+    if is_first:
+        product.cloudinary_public_id = result["public_id"]
+    db.session.commit()
+    return jsonify(image.to_dict()), 201
+
+
+@admin_bp.patch("/products/<product_id>/images/<image_id>")
+@admin_required
+def update_product_image(product_id, image_id):
+    """Body: { "is_primary"?: bool, "position"?: int }"""
+    product = Product.query.get_or_404(product_id)
+    image = ProductImage.query.filter_by(id=image_id, product_id=product.id).first_or_404()
+    data = request.get_json(silent=True) or {}
+
+    if "position" in data:
+        image.position = data["position"]
+
+    if data.get("is_primary") is True:
+        for other in product.images:
+            if other.id != image.id:
+                other.is_primary = False
+        image.is_primary = True
+        product.cloudinary_public_id = image.cloudinary_public_id
+
+    db.session.commit()
+    return jsonify(image.to_dict()), 200
+
+
+@admin_bp.delete("/products/<product_id>/images/<image_id>")
+@admin_required
+def delete_product_image(product_id, image_id):
+    product = Product.query.get_or_404(product_id)
+    image = ProductImage.query.filter_by(id=image_id, product_id=product.id).first_or_404()
+    was_primary = image.is_primary
+
+    delete_image(image.cloudinary_public_id)
+    db.session.delete(image)
+    db.session.flush()
+
+    if was_primary:
+        remaining = (
+            ProductImage.query.filter_by(product_id=product.id)
+            .order_by(ProductImage.position)
+            .first()
+        )
+        if remaining:
+            remaining.is_primary = True
+            product.cloudinary_public_id = remaining.cloudinary_public_id
+        else:
+            product.cloudinary_public_id = None
+
     db.session.commit()
     return "", 204
 
@@ -302,9 +385,27 @@ def advance_order(order_id):
             return jsonify({"error": "delivery_proof_public_id is required to mark an order delivered"}), 400
         order.delivery_proof_public_id = proof_id
 
+    if data.get("tracking_number"):
+        order.tracking_number = data["tracking_number"]
+
     order.status = new_status
     db.session.commit()
     return jsonify(order.to_dict(include_admin_fields=True)), 200
+
+
+@admin_bp.post("/orders/<order_id>/send-invoice")
+@admin_required
+def send_order_invoice(order_id):
+    order = Order.query.get_or_404(order_id)
+    if not order.user:
+        return jsonify({"error": "this order has no associated user"}), 400
+
+    try:
+        brevo_service.send_order_invoice_email(order.user, order)
+    except Exception:
+        return jsonify({"error": "couldn't send the invoice email right now -- please try again"}), 502
+
+    return jsonify({"sent": True}), 200
 
 
 @admin_bp.post("/orders/<order_id>/cancel")
@@ -327,6 +428,12 @@ def cancel_order_admin(order_id):
 
 # ---------- Users ----------
 
+def _lifetime_value_cents(user):
+    return sum(
+        order.total_cents for order in user.orders if order.status not in _UNPAID_STATUSES
+    )
+
+
 def _user_admin_dict(user):
     return {
         "id": user.id,
@@ -336,6 +443,7 @@ def _user_admin_dict(user):
         "is_admin": user.is_admin,
         "created_at": user.created_at.isoformat(),
         "order_count": user.orders.count(),
+        "lifetime_value_cents": _lifetime_value_cents(user),
     }
 
 
@@ -344,6 +452,35 @@ def _user_admin_dict(user):
 def list_users():
     users = User.query.order_by(User.created_at.desc()).all()
     return jsonify([_user_admin_dict(u) for u in users]), 200
+
+
+@admin_bp.get("/users/<user_id>")
+@admin_required
+def get_user_admin(user_id):
+    user = User.query.get_or_404(user_id)
+    recent_orders = user.orders.order_by(Order.created_at.desc()).limit(10).all()
+
+    last_shipping_address = None
+    last_order_with_address = (
+        user.orders.filter(Order.shipping_address_line1.isnot(None))
+        .order_by(Order.created_at.desc())
+        .first()
+    )
+    if last_order_with_address:
+        last_shipping_address = {
+            "name": last_order_with_address.shipping_name,
+            "address_line1": last_order_with_address.shipping_address_line1,
+            "address_line2": last_order_with_address.shipping_address_line2,
+            "city": last_order_with_address.shipping_city,
+            "country": last_order_with_address.shipping_country,
+            "postal_code": last_order_with_address.shipping_postal_code,
+            "phone": last_order_with_address.shipping_phone,
+        }
+
+    data = _user_admin_dict(user)
+    data["recent_orders"] = [o.to_dict(include_admin_fields=True) for o in recent_orders]
+    data["last_shipping_address"] = last_shipping_address
+    return jsonify(data), 200
 
 
 @admin_bp.patch("/users/<user_id>")
@@ -361,3 +498,57 @@ def update_user_admin_status(user_id):
     user.is_admin = bool(data["is_admin"])
     db.session.commit()
     return jsonify(_user_admin_dict(user)), 200
+
+
+# ---------- Dashboard ----------
+
+@admin_bp.get("/dashboard")
+@admin_required
+def dashboard():
+    paid_or_later = Order.query.filter(Order.status.notin_(_UNPAID_STATUSES))
+
+    total_revenue_cents = paid_or_later.with_entities(
+        func.coalesce(func.sum(Order.total_cents), 0)
+    ).scalar()
+
+    order_counts_by_status = dict(
+        db.session.query(Order.status, func.count(Order.id)).group_by(Order.status).all()
+    )
+
+    low_stock_count = Product.query.filter(
+        Product.is_active.is_(True),
+        Product.stock_quantity <= Product.LOW_STOCK_THRESHOLD,
+    ).count()
+
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    revenue_rows = (
+        paid_or_later.filter(Order.paid_at.isnot(None), Order.paid_at >= thirty_days_ago)
+        .with_entities(func.date(Order.paid_at).label("day"), func.sum(Order.total_cents))
+        .group_by("day")
+        .order_by("day")
+        .all()
+    )
+    revenue_by_day = [
+        {"date": day.isoformat() if hasattr(day, "isoformat") else str(day), "revenue_cents": revenue}
+        for day, revenue in revenue_rows
+    ]
+
+    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
+    recent_activity = [
+        {
+            "id": o.id,
+            "status": o.status,
+            "total_cents": o.total_cents,
+            "created_at": o.created_at.isoformat(),
+            "user_email": o.user.email if o.user else None,
+        }
+        for o in recent_orders
+    ]
+
+    return jsonify({
+        "total_revenue_cents": total_revenue_cents,
+        "order_counts_by_status": order_counts_by_status,
+        "low_stock_count": low_stock_count,
+        "revenue_by_day": revenue_by_day,
+        "recent_activity": recent_activity,
+    }), 200
