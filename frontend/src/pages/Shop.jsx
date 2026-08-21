@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import client from "../api/client";
 import ProductCard from "../components/ProductCard.jsx";
 
@@ -11,21 +12,35 @@ const STEP_FILTERS = [
 ];
 
 export default function Shop() {
+  const [searchParams] = useSearchParams();
+  const concern = searchParams.get("concern") || "";
   const [products, setProducts] = useState([]);
   const [stepType, setStepType] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
+    const params = {};
+    if (stepType) params.step_type = stepType;
+    if (concern) params.concern = concern;
     client
-      .get("/products", { params: stepType ? { step_type: stepType } : {} })
+      .get("/products", { params })
       .then(({ data }) => setProducts(data))
       .finally(() => setLoading(false));
-  }, [stepType]);
+  }, [stepType, concern]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <h1 className="font-display text-2xl mb-4">Shop</h1>
+
+      {concern && (
+        <p className="text-sm text-ink/70 mb-4">
+          Filtering by concern.{" "}
+          <Link to="/shop" className="text-amber underline">
+            Clear filter
+          </Link>
+        </p>
+      )}
 
       <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         {STEP_FILTERS.map((filter) => (

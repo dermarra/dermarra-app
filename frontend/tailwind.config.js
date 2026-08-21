@@ -5,22 +5,27 @@ export default {
     extend: {
       colors: {
         bone: {
-          DEFAULT: "#EDEAE2",
-          light: "#F6F4EE",
+          DEFAULT: "#FFFFFF",
+          light: "#F7F7F6",
         },
-        ink: "#1F2A24",
+        ink: "#64615A",
         sage: {
-          DEFAULT: "#5C6F5D",
-          light: "#8AA089",
-          dark: "#3E4C3F",
+          DEFAULT: "#84C665",
+          light: "#AFDA9B",
+          dark: "#63954C",
         },
         amber: {
-          DEFAULT: "#B5702C",
-          light: "#D89B5D",
-          dark: "#8A5220",
+          DEFAULT: "#F47A53",
+          light: "#F8A98F",
+          dark: "#B75C3E",
         },
-        clay: "#A8574E",
-        mist: "#D8D2C4",
+        sky: {
+          DEFAULT: "#00C0F3",
+          light: "#59D6F7",
+          dark: "#0090B6",
+        },
+        clay: "#B75C3E",
+        mist: "#ECECEB",
       },
       fontFamily: {
         display: ["Fraunces", "ui-serif", "Georgia", "serif"],
