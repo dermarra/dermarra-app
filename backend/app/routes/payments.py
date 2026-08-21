@@ -5,12 +5,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
 from app.models.order import Order
-from app.models.product import Product
-from app.models.routine import Routine
 from app.models.user import User
 from app.services import mpesa_service
 from app.services.brevo_service import send_order_confirmation_email
-from app.utils.inventory import stock_lines
+from app.utils.inventory import decrement_stock_for_order
 
 
 payments_bp = Blueprint("payments", __name__)
@@ -103,11 +101,7 @@ def mpesa_callback():
             order.mpesa_receipt_number = metadata.get("MpesaReceiptNumber")
             order.paid_at = datetime.now(timezone.utc)
 
-            for order_item in order.items:
-                product = Product.query.get(order_item.product_id) if order_item.product_id else None
-                routine = Routine.query.get(order_item.routine_id) if order_item.routine_id else None
-                for product_row, needed_qty in stock_lines(product, routine, order_item.quantity):
-                    product_row.stock_quantity = max(0, product_row.stock_quantity - needed_qty)
+            decrement_stock_for_order(order)
 
             db.session.commit()
 

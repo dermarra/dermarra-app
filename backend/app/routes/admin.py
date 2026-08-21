@@ -9,6 +9,7 @@ from app.models.user import User
 from app.services import mpesa_service
 from app.services.cloudinary_service import upload_image, delete_image
 from app.utils.decorators import admin_required
+from app.utils.inventory import restock_order
 from app.utils.order_transitions import can_advance, can_cancel
 
 admin_bp = Blueprint("admin", __name__)
@@ -316,6 +317,9 @@ def cancel_order_admin(order_id):
             "error": f"orders with status '{order.status}' cannot be cancelled"
         }), 400
 
+    # can_cancel only allows paid/processing/shipped, all of which imply
+    # stock was already decremented once when the order became paid.
+    restock_order(order)
     order.status = "cancelled"
     db.session.commit()
     return jsonify(order.to_dict(include_admin_fields=True)), 200
