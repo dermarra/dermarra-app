@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import client from "../../api/client";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
+import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
 const TIME_OF_DAY = ["both", "am", "pm"];
+const SKIN_TYPES = ["oily", "dry", "combination", "normal", "sensitive"];
 
 const emptyForm = {
   name: "",
@@ -10,6 +13,7 @@ const emptyForm = {
   tagline: "",
   description: "",
   primary_concern_id: "",
+  skin_type: "",
   bundle_discount_percent: 0,
   cloudinary_public_id: null,
   is_active: true,
@@ -63,6 +67,7 @@ export default function AdminRoutines() {
       tagline: routine.tagline || "",
       description: routine.description || "",
       primary_concern_id: routine.primary_concern?.id || "",
+      skin_type: routine.skin_type || "",
       bundle_discount_percent: routine.bundle_discount_percent || 0,
       cloudinary_public_id: routine.cloudinary_public_id,
       is_active: routine.is_active,
@@ -82,6 +87,7 @@ export default function AdminRoutines() {
         tagline: form.tagline,
         description: form.description,
         primary_concern_id: form.primary_concern_id || null,
+        skin_type: form.skin_type || null,
         bundle_discount_percent: Number(form.bundle_discount_percent),
         cloudinary_public_id: form.cloudinary_public_id,
         is_active: form.is_active,
@@ -169,15 +175,21 @@ export default function AdminRoutines() {
   };
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl">Routines</h2>
-        <button
+        <h2 className="font-display text-xl text-ink">Routines</h2>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           onClick={openCreate}
           className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm"
         >
           + Add routine
-        </button>
+        </motion.button>
       </div>
 
       {editingId && (
@@ -220,6 +232,16 @@ export default function AdminRoutines() {
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+            <select
+              value={form.skin_type}
+              onChange={(e) => setForm({ ...form, skin_type: e.target.value })}
+              className="border border-mist rounded-sm px-3 py-2 text-sm"
+            >
+              <option value="">Any skin type</option>
+              {SKIN_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
             <input
               type="number"
               min="0"
@@ -245,6 +267,7 @@ export default function AdminRoutines() {
               value={form.cloudinary_public_id}
               onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
               folder="derma-skincare/routines"
+              aspect={1}
             />
           </div>
 
@@ -366,12 +389,13 @@ export default function AdminRoutines() {
       ) : routines.length === 0 ? (
         <p className="text-ink/60 text-sm">No routines yet.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
           {routines.map((routine) => {
             const state = rowState[routine.id];
             return (
-              <div
+              <motion.div
                 key={routine.id}
+                variants={itemReveal}
                 className="flex items-center justify-between border border-mist rounded-sm px-4 py-3"
               >
                 <div>
@@ -379,6 +403,7 @@ export default function AdminRoutines() {
                   <p className="text-xs text-ink/60">
                     {routine.steps.length} steps · {routine.bundle_discount_percent}% off ·{" "}
                     {routine.is_active ? "active" : "inactive"}
+                    {routine.skin_type && ` · ${routine.skin_type} skin`}
                   </p>
                   {state && state !== "deleting" && (
                     <p className="text-xs text-clay mt-1">{state}</p>
@@ -405,11 +430,11 @@ export default function AdminRoutines() {
                     {state === "deleting" ? "Deleting…" : "Delete"}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

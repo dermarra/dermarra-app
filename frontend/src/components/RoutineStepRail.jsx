@@ -1,11 +1,12 @@
+import { motion } from "framer-motion";
 import { cloudinaryUrl } from "../api/client";
+import { containerReveal, itemReveal } from "./Reveal.jsx";
 
 const STEP_LABELS = {
   cleanser: "Cleanse",
   serum: "Treat",
   barrier_cream: "Repair",
   spf: "Protect",
-  hair: "Hair",
 };
 
 /**
@@ -19,17 +20,24 @@ export default function RoutineStepRail({ steps, activeStepId = null, timeOfDay 
   );
 
   return (
-    <ol className="flex items-stretch gap-0 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+    <motion.ol
+      initial="hidden"
+      animate="show"
+      variants={containerReveal}
+      className="flex items-stretch gap-0 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0"
+    >
       {visibleSteps.map((step, index) => {
         const isActive = step.product.id === activeStepId;
         const imageUrl = cloudinaryUrl(step.product.cloudinary_public_id, { width: 160 });
         return (
-          <li
+          <motion.li
             key={step.id}
+            variants={itemReveal}
             className="flex items-center shrink-0 snap-start"
             aria-current={isActive ? "step" : undefined}
           >
-            <div
+            <motion.div
+              whileHover={{ y: -3 }}
               className={`flex flex-col items-center gap-2 w-28 sm:w-32 rounded-sm border p-3 transition-colors ${
                 isActive ? "border-amber bg-amber-light/20" : "border-mist bg-bone-light"
               }`}
@@ -53,13 +61,13 @@ export default function RoutineStepRail({ steps, activeStepId = null, timeOfDay 
               <span className="text-[11px] text-ink/70 text-center leading-snug">
                 {step.product.name}
               </span>
-            </div>
+            </motion.div>
             {index < visibleSteps.length - 1 && (
               <div className="w-6 sm:w-8 h-px bg-mist shrink-0" aria-hidden="true" />
             )}
-          </li>
+          </motion.li>
         );
       })}
-    </ol>
+    </motion.ol>
   );
 }

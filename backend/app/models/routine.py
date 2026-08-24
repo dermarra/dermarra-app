@@ -9,12 +9,18 @@ class Routine(db.Model):
 
     __tablename__ = "routines"
 
+    # Quiz-matching dimension alongside primary_concern_id. None means
+    # "suitable for any skin type" -- soft-validated app-side (same
+    # convention as Product.step_type), not a DB enum.
+    SKIN_TYPES = ("oily", "dry", "combination", "normal", "sensitive")
+
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(255), nullable=False)
     slug = db.Column(db.String(255), unique=True, nullable=False)
     tagline = db.Column(db.String(255))
     description = db.Column(db.Text)
     primary_concern_id = db.Column(db.String(36), db.ForeignKey("skin_concerns.id"))
+    skin_type = db.Column(db.String(20), nullable=True)
     cloudinary_public_id = db.Column(db.String(255))
     bundle_discount_percent = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
@@ -36,8 +42,10 @@ class Routine(db.Model):
             "tagline": self.tagline,
             "description": self.description,
             "primary_concern": self.primary_concern.to_dict() if self.primary_concern else None,
+            "skin_type": self.skin_type,
             "bundle_discount_percent": self.bundle_discount_percent,
             "cloudinary_public_id": self.cloudinary_public_id,
+            "is_active": self.is_active,
             "steps": [step.to_dict() for step in self.steps],
         }
 

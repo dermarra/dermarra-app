@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../context/CartContext";
 
 const items = [
@@ -43,14 +44,43 @@ export default function BottomNav() {
                 }`
               }
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5">
-                {icons[icon]}
-              </svg>
-              {label}
-              {to === "/cart" && itemCount > 0 && (
-                <span className="absolute top-0 right-1/2 translate-x-3 -translate-y-1 bg-amber text-bone-light text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
-                  {itemCount}
-                </span>
+              {({ isActive }) => (
+                <>
+                  <motion.svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                    animate={{ scale: isActive ? 1.1 : 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  >
+                    {icons[icon]}
+                  </motion.svg>
+                  {label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="bottomNavActive"
+                      className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-amber"
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                  {to === "/cart" && (
+                    <AnimatePresence>
+                      {itemCount > 0 && (
+                        <motion.span
+                          key={itemCount}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                          className="absolute top-0 right-1/2 translate-x-3 -translate-y-1 bg-amber text-bone-light text-[9px] rounded-full w-4 h-4 flex items-center justify-center"
+                        >
+                          {itemCount}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  )}
+                </>
               )}
             </NavLink>
           </li>

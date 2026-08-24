@@ -99,6 +99,8 @@ class OrderItem(db.Model):
         return {
             "id": self.id,
             "name": self.name_snapshot,
+            "product_id": self.product_id,
+            "routine_id": self.routine_id,
             "unit_price_cents": self.unit_price_cents_snapshot,
             "quantity": self.quantity,
             "line_total_cents": self.unit_price_cents_snapshot * self.quantity,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 
@@ -94,14 +95,19 @@ export default function AdminOrderDetail() {
   const proofUrl = cloudinaryUrl(order.delivery_proof_public_id, { width: 300 });
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="flex flex-col gap-6 max-w-2xl"
+    >
       <button onClick={() => navigate("/admin/orders")} className="text-xs text-ink/60 self-start">
         ← Back to orders
       </button>
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-xl">Order {order.id.slice(0, 8)}</h2>
+          <h2 className="font-display text-xl text-ink">Order {order.id.slice(0, 8)}</h2>
           <p className="text-xs text-ink/60">{order.user_email}</p>
         </div>
         <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1">
@@ -146,23 +152,27 @@ export default function AdminOrderDetail() {
         <p className="text-sm text-ink/80">Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}</p>
 
         {order.status === "payment_pending" && (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={refreshPaymentStatus}
             disabled={busy}
             className="mt-3 px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm disabled:opacity-50"
           >
             {busy ? "Checking…" : "Check live payment status"}
-          </button>
+          </motion.button>
         )}
 
         <div className="mt-3 flex items-center gap-3">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={sendInvoice}
             disabled={sendingInvoice}
             className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm disabled:opacity-50"
           >
             {sendingInvoice ? "Sending…" : "Email invoice to customer"}
-          </button>
+          </motion.button>
           {invoiceSent && <span className="text-xs text-sage-dark">Invoice sent.</span>}
         </div>
       </section>
@@ -200,25 +210,29 @@ export default function AdminOrderDetail() {
               />
             </div>
           )}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => advance(nextStatus)}
             disabled={busy || (nextStatus === "delivered" && !proofPublicId)}
             className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
           >
             {busy ? "Saving…" : `Mark as ${nextStatus}`}
-          </button>
+          </motion.button>
         </section>
       )}
 
       {CANCELLABLE.has(order.status) && (
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={cancelOrder}
           disabled={busy}
           className="self-start px-4 py-2 rounded-sm border border-mist text-clay text-sm disabled:opacity-50"
         >
           Cancel order
-        </button>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 }

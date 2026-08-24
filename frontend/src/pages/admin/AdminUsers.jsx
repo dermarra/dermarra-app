@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import client from "../../api/client";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
 function formatKES(cents) {
   return `KES ${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -59,20 +61,24 @@ export default function AdminUsers() {
   };
 
   return (
-    <div>
-      <h2 className="font-display text-xl mb-4">Users</h2>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
+      <h2 className="font-display text-xl text-ink mb-4">Users</h2>
 
       {loading ? (
         <p className="text-ink/60 text-sm">Loading users…</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
           {users.map((u) => {
             const state = rowState[u.id];
             const isSelf = u.id === currentUser?.id;
             const isExpanded = expandedId === u.id;
             const detail = details[u.id];
             return (
-              <div key={u.id} className="border border-mist rounded-sm">
+              <motion.div key={u.id} variants={itemReveal} className="border border-mist rounded-sm">
                 <div
                   onClick={() => toggleExpand(u)}
                   className="flex items-center justify-between px-4 py-3 cursor-pointer"
@@ -88,7 +94,9 @@ export default function AdminUsers() {
                     </p>
                     {state && state !== "saving" && <p className="text-xs text-clay mt-1">{state}</p>}
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleAdmin(u);
@@ -100,11 +108,17 @@ export default function AdminUsers() {
                     }`}
                   >
                     {state === "saving" ? "Saving…" : u.is_admin ? "Revoke admin" : "Make admin"}
-                  </button>
+                  </motion.button>
                 </div>
 
+                <AnimatePresence>
                 {isExpanded && (
-                  <div className="border-t border-mist px-4 py-3 bg-bone-light">
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="border-t border-mist px-4 py-3 bg-bone-light overflow-hidden">
                     {detailLoading === u.id ? (
                       <p className="text-xs text-ink/60">Loading profile…</p>
                     ) : detail ? (
@@ -155,13 +169,14 @@ export default function AdminUsers() {
                     ) : (
                       <p className="text-xs text-clay">Could not load this profile.</p>
                     )}
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+                </AnimatePresence>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

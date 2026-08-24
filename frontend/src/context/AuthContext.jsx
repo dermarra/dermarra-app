@@ -52,8 +52,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  // Reflects a fresh user object (e.g. the response of PATCH /auth/me)
+  // into local state immediately, without a full re-login.
+  const updateUser = useCallback((updatedUser) => {
+    setUser(updatedUser);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

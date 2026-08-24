@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   DndContext,
   useDraggable,
@@ -10,6 +11,12 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import client from "../../api/client";
+import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+
+// OrderCard is intentionally left as plain elements, not motion.* --
+// @dnd-kit already drives its position via an inline `style.transform`
+// during drag, and layering Framer Motion's own transform-based
+// animations on the same node risks fighting that mid-drag.
 
 const BOARD_STATUSES = ["paid", "processing", "shipped", "delivered"];
 const BOARD_LABELS = { paid: "Paid", processing: "Processing", shipped: "Shipped", delivered: "Delivered" };
@@ -52,9 +59,10 @@ function OrderCard({ order }) {
 function Column({ status, orders }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
-      className={`flex-1 min-w-[220px] border rounded-sm p-3 ${
+      variants={itemReveal}
+      className={`flex-1 min-w-[220px] border rounded-sm p-3 transition-colors ${
         isOver ? "border-amber bg-amber-light/10" : "border-mist"
       }`}
     >
@@ -64,7 +72,7 @@ function Column({ status, orders }) {
       {orders.map((order) => (
         <OrderCard key={order.id} order={order} />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
@@ -126,20 +134,25 @@ export default function AdminOrders() {
   };
 
   return (
-    <div>
-      <h2 className="font-display text-xl mb-4">Orders</h2>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
+      <h2 className="font-display text-xl text-ink mb-4">Orders</h2>
 
       <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         {OTHER_FILTERS.map((f) => (
-          <button
+          <motion.button
             key={f.value}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setFilter(f.value)}
             className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-colors ${
               filter === f.value ? "bg-ink text-bone-light border-ink" : "border-mist text-ink/70"
             }`}
           >
             {f.label}
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -176,13 +189,18 @@ export default function AdminOrders() {
         )
       ) : (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="flex gap-3 overflow-x-auto pb-4">
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={containerReveal}
+            className="flex gap-3 overflow-x-auto pb-4"
+          >
             {BOARD_STATUSES.map((status) => (
               <Column key={status} status={status} orders={columns[status]} />
             ))}
-          </div>
+          </motion.div>
         </DndContext>
       )}
-    </div>
+    </motion.div>
   );
 }
