@@ -20,16 +20,22 @@ def create_app(config_name=None):
     from app.routes.products import products_bp
     from app.routes.routines import routines_bp
     from app.routes.cart import cart_bp
+    from app.routes.wishlist import wishlist_bp
     from app.routes.orders import orders_bp
     from app.routes.payments import payments_bp
+    from app.routes.hero import hero_bp
+    from app.routes.newsletter import newsletter_bp
     from app.routes.admin import admin_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(products_bp, url_prefix="/api/products")
     app.register_blueprint(routines_bp, url_prefix="/api/routines")
     app.register_blueprint(cart_bp, url_prefix="/api/cart")
+    app.register_blueprint(wishlist_bp, url_prefix="/api/wishlist")
     app.register_blueprint(orders_bp, url_prefix="/api/orders")
     app.register_blueprint(payments_bp, url_prefix="/api/payments")
+    app.register_blueprint(hero_bp, url_prefix="/api/hero-slides")
+    app.register_blueprint(newsletter_bp, url_prefix="/api/newsletter")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
     from app.utils.errors import register_error_handlers
