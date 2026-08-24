@@ -35,6 +35,27 @@ def send_welcome_email(user):
         raise
 
 
+def send_password_reset_email(user, reset_url):
+    api_instance = _get_client()
+    email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": user.email, "name": user.full_name}],
+        sender=_sender(),
+        subject="Reset your Derma Skincare password",
+        html_content=(
+            f"<p>Hi {user.full_name},</p>"
+            "<p>Someone requested a password reset for this account. If that was you, "
+            f'click the link below -- it expires in 30 minutes:</p>'
+            f'<p><a href="{reset_url}">{reset_url}</a></p>'
+            "<p>If you didn't request this, you can safely ignore this email.</p>"
+        ),
+    )
+    try:
+        api_instance.send_transac_email(email)
+    except ApiException as e:
+        current_app.logger.error(f"Brevo password reset email failed: {e}")
+        raise
+
+
 def send_order_confirmation_email(user, order):
     api_instance = _get_client()
     items_html = "".join(

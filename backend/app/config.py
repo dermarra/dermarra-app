@@ -34,6 +34,7 @@ class Config:
     BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
     BREVO_SENDER_EMAIL = os.environ.get("BREVO_SENDER_EMAIL")
     BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME", "Derma Skincare")
+    BREVO_NEWSLETTER_LIST_ID = int(os.environ.get("BREVO_NEWSLETTER_LIST_ID", 0)) or None
 
     # M-Pesa Daraja (Safaricom) -- Lipa Na M-Pesa Online (STK Push)
     MPESA_ENV = os.environ.get("MPESA_ENV", "sandbox")
@@ -42,6 +43,11 @@ class Config:
     MPESA_SHORTCODE = os.environ.get("MPESA_SHORTCODE")
     MPESA_PASSKEY = os.environ.get("MPESA_PASSKEY")
     MPESA_CALLBACK_URL = os.environ.get("MPESA_CALLBACK_URL")
+
+    # The single canonical frontend URL used to build links inside emails
+    # (password reset, etc.) -- distinct from FRONTEND_ORIGINS below, which
+    # is the full comma-separated CORS allowlist (multiple dev ports).
+    FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "http://localhost:5173")
 
     FRONTEND_ORIGINS = [
         origin.strip()
