@@ -1,18 +1,22 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
+from app.models.hero_slide import HeroSlide
+from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction
 from app.models.order import Order
-from app.models.product import Product, ProductImage, SkinConcern
+from app.models.product import Product, ProductImage, SkinConcern, Ingredient, StepGroup
 from app.models.routine import Routine, RoutineStep
 from app.models.user import User
 from app.services import mpesa_service, brevo_service
 from app.services.cloudinary_service import upload_image, delete_image
+from app.services import inventory_service
+from app.services.inventory_service import InventoryError, restock_order
 from app.utils.decorators import admin_required
-from app.utils.inventory import restock_order
 from app.utils.order_transitions import can_advance, can_cancel
 
 # Orders in any of these statuses never reached a successful payment, so
@@ -37,19 +41,338 @@ def create_concern():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
         return jsonify({"error": "name and slug are required"}), 400
-    concern = SkinConcern(name=data["name"], slug=data["slug"], description=data.get("description"))
+    concern = SkinConcern(
+        name=data["name"],
+        slug=data["slug"],
+        description=data.get("description"),
+        cloudinary_public_id=data.get("cloudinary_public_id"),
+    )
     db.session.add(concern)
     db.session.commit()
     return jsonify(concern.to_dict()), 201
+
+
+@admin_bp.patch("/concerns/<concern_id>")
+@admin_required
+def update_concern(concern_id):
+    concern = SkinConcern.query.get_or_404(concern_id)
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "slug", "description", "cloudinary_public_id"):
+        if field in data:
+            setattr(concern, field, data[field])
+    db.session.commit()
+    return jsonify(concern.to_dict()), 200
 
 
 @admin_bp.delete("/concerns/<concern_id>")
 @admin_required
 def delete_concern(concern_id):
     concern = SkinConcern.query.get_or_404(concern_id)
+    if concern.cloudinary_public_id:
+        delete_image(concern.cloudinary_public_id)
     db.session.delete(concern)
     db.session.commit()
     return "", 204
+
+
+# ---------- Ingredients ----------
+
+@admin_bp.get("/ingredients")
+@admin_required
+def list_ingredients():
+    ingredients = Ingredient.query.order_by(Ingredient.name).all()
+    return jsonify([i.to_dict() for i in ingredients]), 200
+
+
+@admin_bp.post("/ingredients")
+@admin_required
+def create_ingredient():
+    data = request.get_json(silent=True) or {}
+    if not data.get("name") or not data.get("slug"):
+        return jsonify({"error": "name and slug are required"}), 400
+    ingredient = Ingredient(
+        name=data["name"],
+        slug=data["slug"],
+        description=data.get("description"),
+        cloudinary_public_id=data.get("cloudinary_public_id"),
+    )
+    db.session.add(ingredient)
+    db.session.commit()
+    return jsonify(ingredient.to_dict()), 201
+
+
+@admin_bp.patch("/ingredients/<ingredient_id>")
+@admin_required
+def update_ingredient(ingredient_id):
+    ingredient = Ingredient.query.get_or_404(ingredient_id)
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "slug", "description", "cloudinary_public_id"):
+        if field in data:
+            setattr(ingredient, field, data[field])
+    db.session.commit()
+    return jsonify(ingredient.to_dict()), 200
+
+
+@admin_bp.delete("/ingredients/<ingredient_id>")
+@admin_required
+def delete_ingredient(ingredient_id):
+    ingredient = Ingredient.query.get_or_404(ingredient_id)
+    if ingredient.cloudinary_public_id:
+        delete_image(ingredient.cloudinary_public_id)
+    db.session.delete(ingredient)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Step groups ----------
+# Fixed set of 4 rows (prep/treat/seal/protect), seeded by migration --
+# edit-only, no create/delete (see StepGroup model docstring).
+
+@admin_bp.get("/step-groups")
+@admin_required
+def list_step_groups_admin():
+    groups = StepGroup.query.order_by(StepGroup.position).all()
+    return jsonify([g.to_dict() for g in groups]), 200
+
+
+@admin_bp.patch("/step-groups/<step_group_id>")
+@admin_required
+def update_step_group(step_group_id):
+    group = StepGroup.query.get_or_404(step_group_id)
+    data = request.get_json(silent=True) or {}
+    for field in ("label", "description", "cloudinary_public_id"):
+        if field in data:
+            setattr(group, field, data[field])
+    db.session.commit()
+    return jsonify(group.to_dict()), 200
+
+
+# ---------- Hero slides ----------
+# Homepage carousel content -- free-standing marketing rows, not tied to
+# a specific Product/Routine (cta_link is a free-text path/URL).
+
+@admin_bp.get("/hero-slides")
+@admin_required
+def list_hero_slides_admin():
+    slides = HeroSlide.query.order_by(HeroSlide.position).all()
+    return jsonify([s.to_dict() for s in slides]), 200
+
+
+@admin_bp.post("/hero-slides")
+@admin_required
+def create_hero_slide():
+    data = request.get_json(silent=True) or {}
+    if not data.get("title"):
+        return jsonify({"error": "title is required"}), 400
+    slide = HeroSlide(
+        eyebrow=data.get("eyebrow"),
+        title=data["title"],
+        subtitle=data.get("subtitle"),
+        cloudinary_public_id=data.get("cloudinary_public_id"),
+        cta_label=data.get("cta_label"),
+        cta_link=data.get("cta_link"),
+        position=data.get("position", 0),
+        is_active=data.get("is_active", True),
+    )
+    db.session.add(slide)
+    db.session.commit()
+    return jsonify(slide.to_dict()), 201
+
+
+@admin_bp.patch("/hero-slides/<slide_id>")
+@admin_required
+def update_hero_slide(slide_id):
+    slide = HeroSlide.query.get_or_404(slide_id)
+    data = request.get_json(silent=True) or {}
+    for field in (
+        "eyebrow", "title", "subtitle", "cloudinary_public_id",
+        "cta_label", "cta_link", "position", "is_active",
+    ):
+        if field in data:
+            setattr(slide, field, data[field])
+    db.session.commit()
+    return jsonify(slide.to_dict()), 200
+
+
+@admin_bp.delete("/hero-slides/<slide_id>")
+@admin_required
+def delete_hero_slide(slide_id):
+    slide = HeroSlide.query.get_or_404(slide_id)
+    if slide.cloudinary_public_id:
+        delete_image(slide.cloudinary_public_id)
+    db.session.delete(slide)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Inventory ----------
+# Batch/lot tracking with FEFO allocation, stock reservations, and an
+# immutable transaction ledger -- see app/services/inventory_service.py
+# and app/models/inventory.py for the mechanics. Customers only ever see
+# stock_status via Product.to_dict(); everything here (batches, unit
+# cost, the ledger) is admin-only.
+
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        raise InventoryError(f"invalid date: {value!r} (expected YYYY-MM-DD)")
+
+
+def _parse_datetime(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        raise InventoryError(f"invalid datetime: {value!r} (expected ISO 8601)")
+
+
+@admin_bp.get("/inventory")
+@admin_required
+def list_inventory():
+    """Optional ?status=in_stock|low_stock|out_of_stock filter."""
+    status_filter = request.args.get("status")
+    products = Product.query.order_by(Product.name).all()
+    rows = [p.to_dict(include_concerns=False, include_admin_fields=True) for p in products]
+    if status_filter:
+        rows = [r for r in rows if r["stock_status"] == status_filter]
+    return jsonify(rows), 200
+
+
+@admin_bp.get("/inventory/low-stock")
+@admin_required
+def low_stock_products():
+    products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
+    rows = [p.to_dict(include_concerns=False, include_admin_fields=True) for p in products]
+    return jsonify([r for r in rows if r["stock_status"] in ("low_stock", "out_of_stock")]), 200
+
+
+@admin_bp.get("/inventory/expiring-soon")
+@admin_required
+def expiring_soon_batches():
+    """Optional ?days= (default 30)."""
+    try:
+        days = int(request.args.get("days", 30))
+    except ValueError:
+        return jsonify({"error": "days must be an integer"}), 400
+
+    cutoff = date.today() + timedelta(days=days)
+    batches = (
+        InventoryBatch.query
+        .filter(
+            InventoryBatch.status == "active",
+            InventoryBatch.expiry_date.isnot(None),
+            InventoryBatch.expiry_date <= cutoff,
+        )
+        .order_by(InventoryBatch.expiry_date.asc())
+        .all()
+    )
+    result = []
+    for batch in batches:
+        data = batch.to_dict()
+        product = Product.query.get(batch.product_id)
+        data["product_name"] = product.name if product else None
+        result.append(data)
+    return jsonify(result), 200
+
+
+@admin_bp.get("/inventory/<product_id>")
+@admin_required
+def get_inventory_detail(product_id):
+    product = Product.query.get_or_404(product_id)
+    batches = (
+        InventoryBatch.query
+        .filter_by(product_id=product_id)
+        .order_by(InventoryBatch.expiry_date.asc().nullslast(), InventoryBatch.produced_at.asc())
+        .all()
+    )
+    transactions = (
+        InventoryTransaction.query
+        .filter_by(product_id=product_id)
+        .order_by(InventoryTransaction.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    return jsonify({
+        "product": product.to_dict(include_concerns=False, include_admin_fields=True),
+        "batches": [b.to_dict() for b in batches],
+        "transactions": [t.to_dict() for t in transactions],
+    }), 200
+
+
+@admin_bp.post("/inventory/<product_id>/receive")
+@admin_required
+def receive_stock(product_id):
+    """Logs a finished in-house production run into inventory.
+
+    Body: { "batch_number", "quantity_produced", "unit_cost_cents"?,
+            "expiry_date"?, "produced_at"?, "notes"? }
+    """
+    Product.query.get_or_404(product_id)
+    data = request.get_json(silent=True) or {}
+
+    try:
+        batch, txn = inventory_service.record_production_run(
+            product_id,
+            batch_number=data.get("batch_number"),
+            quantity_produced=data.get("quantity_produced"),
+            unit_cost_cents=data.get("unit_cost_cents"),
+            expiry_date=_parse_date(data.get("expiry_date")),
+            produced_at=_parse_datetime(data.get("produced_at")),
+            notes=data.get("notes"),
+            created_by=get_jwt_identity(),
+        )
+    except InventoryError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "a batch with this batch_number already exists for this product"}), 400
+
+    db.session.commit()
+    return jsonify({"batch": batch.to_dict(), "transaction": txn.to_dict()}), 201
+
+
+@admin_bp.post("/inventory/<product_id>/adjust")
+@admin_required
+def adjust_stock(product_id):
+    """A manual correction against one batch -- always requires a reason.
+
+    Body: { "batch_id", "type" (one of DAMAGE/EXPIRY/LOSS/ADJUSTMENT/
+            SAMPLE/PROMOTION/INTERNAL_USE), "quantity", "reason" }
+    """
+    Product.query.get_or_404(product_id)
+    data = request.get_json(silent=True) or {}
+
+    try:
+        txn = inventory_service.adjust_stock(
+            product_id,
+            batch_id=data.get("batch_id"),
+            transaction_type=data.get("type"),
+            quantity=data.get("quantity"),
+            reason=data.get("reason"),
+            created_by=get_jwt_identity(),
+        )
+    except InventoryError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+
+    db.session.commit()
+    return jsonify(txn.to_dict()), 201
+
+
+@admin_bp.post("/inventory/expire-reservations")
+@admin_required
+def expire_reservations():
+    """No background worker in this project -- hit this from an external
+    cron (or manually) to release reservations nobody paid for in time.
+    Also runs lazily whenever a new reservation is created."""
+    released = inventory_service.expire_stale_reservations()
+    db.session.commit()
+    return jsonify({"released": released}), 200
 
 
 # ---------- Products ----------
@@ -81,7 +404,6 @@ def create_product():
         key_actives=data.get("key_actives"),
         price_cents=data["price_cents"],
         currency=data.get("currency", "KES"),
-        stock_quantity=data.get("stock_quantity", 0),
         cloudinary_public_id=data.get("cloudinary_public_id"),
         is_active=data.get("is_active", True),
     )
@@ -90,9 +412,20 @@ def create_product():
     if concern_ids:
         product.skin_concerns = SkinConcern.query.filter(SkinConcern.id.in_(concern_ids)).all()
 
+    ingredient_ids = data.get("ingredient_ids", [])
+    if ingredient_ids:
+        product.ingredients = Ingredient.query.filter(Ingredient.id.in_(ingredient_ids)).all()
+
     db.session.add(product)
+    db.session.flush()
+
+    # Every product gets an Inventory row up front (0 on hand) -- actual
+    # stock is logged separately via "receive stock" once a production
+    # run exists to back it.
+    db.session.add(Inventory(product_id=product.id, reorder_level=data.get("reorder_level", 10)))
+
     db.session.commit()
-    return jsonify(product.to_dict()), 201
+    return jsonify(product.to_dict(include_admin_fields=True)), 201
 
 
 @admin_bp.patch("/products/<product_id>")
@@ -103,7 +436,7 @@ def update_product(product_id):
 
     for field in [
         "name", "slug", "step_type", "short_description", "description",
-        "key_actives", "price_cents", "currency", "stock_quantity",
+        "key_actives", "price_cents", "currency",
         "cloudinary_public_id", "is_active",
     ]:
         if field in data:
@@ -114,14 +447,32 @@ def update_product(product_id):
             SkinConcern.id.in_(data["skin_concern_ids"])
         ).all()
 
+    if "ingredient_ids" in data:
+        product.ingredients = Ingredient.query.filter(
+            Ingredient.id.in_(data["ingredient_ids"])
+        ).all()
+
+    if "reorder_level" in data:
+        inv = Inventory.query.filter_by(product_id=product.id).first()
+        if inv:
+            inv.reorder_level = data["reorder_level"]
+
     db.session.commit()
-    return jsonify(product.to_dict()), 200
+    return jsonify(product.to_dict(include_admin_fields=True)), 200
 
 
 @admin_bp.delete("/products/<product_id>")
 @admin_required
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
+
+    has_inventory_history = InventoryTransaction.query.filter_by(product_id=product.id).first() is not None
+    if has_inventory_history:
+        return jsonify({
+            "error": "this product has inventory history and can't be deleted -- set is_active to false instead"
+        }), 400
+
+    Inventory.query.filter_by(product_id=product.id).delete()
     db.session.delete(product)
     db.session.commit()
     return "", 204
@@ -225,6 +576,7 @@ def create_routine():
         tagline=data.get("tagline"),
         description=data.get("description"),
         primary_concern_id=data.get("primary_concern_id"),
+        skin_type=data.get("skin_type"),
         cloudinary_public_id=data.get("cloudinary_public_id"),
         bundle_discount_percent=data.get("bundle_discount_percent", 0),
         is_active=data.get("is_active", True),
@@ -242,7 +594,7 @@ def update_routine(routine_id):
 
     for field in [
         "name", "slug", "tagline", "description", "primary_concern_id",
-        "cloudinary_public_id", "bundle_discount_percent", "is_active",
+        "skin_type", "cloudinary_public_id", "bundle_discount_percent", "is_active",
     ]:
         if field in data:
             setattr(routine, field, data[field])
@@ -420,7 +772,7 @@ def cancel_order_admin(order_id):
 
     # can_cancel only allows paid/processing/shipped, all of which imply
     # stock was already decremented once when the order became paid.
-    restock_order(order)
+    restock_order(order, created_by=get_jwt_identity())
     order.status = "cancelled"
     db.session.commit()
     return jsonify(order.to_dict(include_admin_fields=True)), 200
@@ -515,10 +867,7 @@ def dashboard():
         db.session.query(Order.status, func.count(Order.id)).group_by(Order.status).all()
     )
 
-    low_stock_count = Product.query.filter(
-        Product.is_active.is_(True),
-        Product.stock_quantity <= Product.LOW_STOCK_THRESHOLD,
-    ).count()
+    stock_summary = inventory_service.inventory_summary()
 
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     revenue_rows = (
@@ -548,7 +897,10 @@ def dashboard():
     return jsonify({
         "total_revenue_cents": total_revenue_cents,
         "order_counts_by_status": order_counts_by_status,
-        "low_stock_count": low_stock_count,
+        "low_stock_count": stock_summary["low_stock_count"],
+        "out_of_stock_count": stock_summary["out_of_stock_count"],
+        "expiring_soon_count": stock_summary["expiring_soon_count"],
+        "total_products": stock_summary["total_products"],
         "revenue_by_day": revenue_by_day,
         "recent_activity": recent_activity,
     }), 200

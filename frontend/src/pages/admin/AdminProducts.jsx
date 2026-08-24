@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   PointerSensor,
@@ -15,15 +17,21 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import Cropper from "react-easy-crop";
 import client, { cloudinaryUrl } from "../../api/client";
+import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { getCroppedBlob } from "../../lib/imageCrop.js";
 
-const STEP_TYPES = ["cleanser", "serum", "barrier_cream", "spf", "hair"];
-const LOW_STOCK_THRESHOLD = 10;
+// The sortable image gallery below (SortableImageTile) deliberately stays
+// plain, non-motion elements -- @dnd-kit drives its position via an inline
+// style.transform during drag, and Framer Motion's own transform-based
+// animations on the same node would fight that mid-drag.
+
+const STEP_TYPES = ["cleanser", "serum", "barrier_cream", "spf"];
 
 const STOCK_FILTERS = [
   { value: "", label: "All stock" },
-  { value: "in", label: "In stock" },
-  { value: "low", label: "Low stock" },
-  { value: "out", label: "Out of stock" },
+  { value: "in_stock", label: "In stock" },
+  { value: "low_stock", label: "Low stock" },
+  { value: "out_of_stock", label: "Out of stock" },
 ];
 
 const emptyForm = {
@@ -33,53 +41,23 @@ const emptyForm = {
   short_description: "",
   key_actives: "",
   price_kes: "",
-  stock_quantity: 0,
   is_active: true,
   skin_concern_ids: [],
+  ingredient_ids: [],
   images: [],
 };
 
-function stockStatus(product) {
-  if (product.stock_quantity === 0) return "out";
-  if (product.stock_quantity <= LOW_STOCK_THRESHOLD) return "low";
-  return "in";
-}
+const STOCK_LABELS = { in_stock: "In stock", low_stock: "Low stock", out_of_stock: "Out of stock" };
 
 function StockBadge({ product }) {
-  const status = stockStatus(product);
-  const label = status === "out" ? "Out of stock" : status === "low" ? "Low stock" : "In stock";
+  const status = product.stock_status;
   const cls =
-    status === "out"
+    status === "out_of_stock"
       ? "text-clay border-clay/30"
-      : status === "low"
+      : status === "low_stock"
       ? "text-amber-dark border-amber/30"
       : "text-sage-dark border-sage/30";
-  return <span className={`text-[11px] px-2 py-0.5 rounded-full border ${cls}`}>{label}</span>;
-}
-
-async function getCroppedBlob(imageSrc, cropPixels) {
-  const image = await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = imageSrc;
-  });
-  const canvas = document.createElement("canvas");
-  canvas.width = cropPixels.width;
-  canvas.height = cropPixels.height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(
-    image,
-    cropPixels.x,
-    cropPixels.y,
-    cropPixels.width,
-    cropPixels.height,
-    0,
-    0,
-    cropPixels.width,
-    cropPixels.height
-  );
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+  return <span className={`text-[11px] px-2 py-0.5 rounded-full border ${cls}`}>{STOCK_LABELS[status]}</span>;
 }
 
 function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
@@ -135,6 +113,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [concerns, setConcerns] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null); // null = closed, "new" = create form
   const [form, setForm] = useState(emptyForm);
@@ -164,12 +143,14 @@ export default function AdminProducts() {
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const reloadProducts = async () => {
-    const [productsRes, concernsRes] = await Promise.all([
+    const [productsRes, concernsRes, ingredientsRes] = await Promise.all([
       client.get("/admin/products"),
       client.get("/admin/concerns"),
+      client.get("/admin/ingredients"),
     ]);
     setProducts(productsRes.data);
     setConcerns(concernsRes.data);
+    setIngredients(ingredientsRes.data);
     return productsRes.data;
   };
 
@@ -192,9 +173,9 @@ export default function AdminProducts() {
       short_description: product.short_description || "",
       key_actives: product.key_actives || "",
       price_kes: product.price_cents / 100,
-      stock_quantity: product.stock_quantity ?? 0,
       is_active: product.is_active,
       skin_concern_ids: product.skin_concerns?.map((c) => c.id) || [],
+      ingredient_ids: product.ingredients?.map((i) => i.id) || [],
       images: product.images || [],
     });
     setError(null);
@@ -211,6 +192,15 @@ export default function AdminProducts() {
     }));
   };
 
+  const toggleIngredient = (ingredientId) => {
+    setForm((f) => ({
+      ...f,
+      ingredient_ids: f.ingredient_ids.includes(ingredientId)
+        ? f.ingredient_ids.filter((id) => id !== ingredientId)
+        : [...f.ingredient_ids, ingredientId],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -223,9 +213,9 @@ export default function AdminProducts() {
         short_description: form.short_description,
         key_actives: form.key_actives,
         price_cents: Math.round(Number(form.price_kes) * 100),
-        stock_quantity: Number(form.stock_quantity),
         is_active: form.is_active,
         skin_concern_ids: form.skin_concern_ids,
+        ingredient_ids: form.ingredient_ids,
       };
       if (editingId === "new") {
         await client.post("/admin/products", payload);
@@ -440,7 +430,7 @@ export default function AdminProducts() {
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     if (stepTypeFilter) list = list.filter((p) => p.step_type === stepTypeFilter);
-    if (stockFilter) list = list.filter((p) => stockStatus(p) === stockFilter);
+    if (stockFilter) list = list.filter((p) => p.stock_status === stockFilter);
 
     const sorted = [...list].sort((a, b) => {
       let av, bv;
@@ -451,8 +441,8 @@ export default function AdminProducts() {
         av = a.price_cents;
         bv = b.price_cents;
       } else if (sortKey === "stock") {
-        av = a.stock_quantity;
-        bv = b.stock_quantity;
+        av = a.on_hand;
+        bv = b.on_hand;
       } else {
         av = a.is_active ? 1 : 0;
         bv = b.is_active ? 1 : 0;
@@ -476,21 +466,32 @@ export default function AdminProducts() {
   const sortIndicator = (key) => (sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "");
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl">Products</h2>
-        <button
+        <h2 className="font-display text-xl text-ink">Products</h2>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           onClick={openCreate}
           className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm"
         >
           + Add product
-        </button>
+        </motion.button>
       </div>
 
+      <AnimatePresence>
       {editingId && (
-        <form
+        <motion.form
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
           onSubmit={handleSubmit}
-          className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light"
+          className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
         >
           <h3 className="font-semibold text-sm">
             {editingId === "new" ? "New product" : "Edit product"}
@@ -536,17 +537,13 @@ export default function AdminProducts() {
               onChange={(e) => setForm({ ...form, price_kes: e.target.value })}
               className="border border-mist rounded-sm px-3 py-2 text-sm"
             />
-            <input
-              required
-              type="number"
-              min="0"
-              step="1"
-              placeholder="Stock quantity"
-              value={form.stock_quantity}
-              onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
           </div>
+
+          {editingId !== "new" && (
+            <Link to={`/admin/inventory/${editingId}`} className="text-xs text-ink/60 underline decoration-dotted self-start">
+              Manage stock (batches, production runs, adjustments) →
+            </Link>
+          )}
 
           <textarea
             placeholder="Short description"
@@ -571,6 +568,26 @@ export default function AdminProducts() {
                   }`}
                 >
                   {c.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-ink/70 mb-2">Ingredients</p>
+            <div className="flex flex-wrap gap-2">
+              {ingredients.map((i) => (
+                <button
+                  type="button"
+                  key={i.id}
+                  onClick={() => toggleIngredient(i.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs border ${
+                    form.ingredient_ids.includes(i.id)
+                      ? "bg-ink text-bone-light border-ink"
+                      : "border-mist text-ink/70"
+                  }`}
+                >
+                  {i.name}
                 </button>
               ))}
             </div>
@@ -685,8 +702,9 @@ export default function AdminProducts() {
               Cancel
             </button>
           </div>
-        </form>
+        </motion.form>
       )}
+      </AnimatePresence>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-3">
         <input
@@ -771,12 +789,12 @@ export default function AdminProducts() {
                 <th className="py-2 pr-2"></th>
               </tr>
             </thead>
-            <tbody>
+            <motion.tbody key={`${sortKey}-${sortDir}`} initial="hidden" animate="show" variants={containerReveal}>
               {visibleProducts.map((product) => {
                 const state = rowState[product.id];
                 const thumbUrl = cloudinaryUrl(product.cloudinary_public_id, { width: 80 });
                 return (
-                  <tr key={product.id} className="border-b border-mist align-top">
+                  <motion.tr key={product.id} variants={itemReveal} className="border-b border-mist align-top">
                     <td className="py-2 pr-2">
                       <input
                         type="checkbox"
@@ -821,8 +839,10 @@ export default function AdminProducts() {
                       )}
                     </td>
                     <td className="py-2 pr-2">
-                      <p className="text-ink">{product.stock_quantity}</p>
-                      <StockBadge product={product} />
+                      <Link to={`/admin/inventory/${product.id}`} className="text-ink hover:text-amber underline decoration-dotted">
+                        {product.on_hand}
+                      </Link>
+                      <div><StockBadge product={product} /></div>
                     </td>
                     <td className="py-2 pr-2 text-xs text-ink/60">
                       {product.is_active ? "Active" : "Inactive"}
@@ -844,13 +864,13 @@ export default function AdminProducts() {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               })}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -5,7 +7,12 @@ from app.extensions import db
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem
 from app.services import mpesa_service
-from app.utils.inventory import stock_lines
+from app.services.inventory_service import (
+    InsufficientStockError,
+    consume_reservations_for_order,
+    reserve_stock_for_order,
+    release_reservations_for_order,
+)
 
 orders_bp = Blueprint("orders", __name__)
 
@@ -46,16 +53,6 @@ def checkout():
     cart = Cart.query.filter_by(user_id=user_id).first()
     if not cart or not cart.items:
         return jsonify({"error": "cart is empty"}), 400
-    insufficient = set()
-    for item in cart.items:
-        for product, needed_qty in stock_lines(item.product, item.routine, item.quantity):
-            if product.stock_quantity < needed_qty:
-                insufficient.add(product.name)
-
-    if insufficient:
-        return jsonify({
-            "error": f"not enough stock for: {', '.join(sorted(insufficient))}"
-        }), 400
 
     subtotal_cents = 0
     order_items = []
@@ -96,6 +93,15 @@ def checkout():
         items=order_items,
     )
     db.session.add(order)
+    db.session.flush()  # assigns order.id / order_item.id -- reservations need both
+
+    try:
+        reserve_stock_for_order(order)
+    except InsufficientStockError as e:
+        db.session.rollback()
+        return jsonify({
+            "error": f"not enough stock for: {', '.join(sorted(e.shortages))}"
+        }), 400
 
     for item in list(cart.items):
         db.session.delete(item)
@@ -120,12 +126,14 @@ def cancel_order(order_id):
     order = Order.query.filter_by(id=order_id, user_id=user_id).first_or_404()
 
     if order.status in ("pending", "payment_failed"):
+        release_reservations_for_order(order)
         order.status = "cancelled"
         db.session.commit()
         return jsonify(order.to_dict()), 200
 
     if order.status == "payment_pending":
         if not order.mpesa_checkout_request_id:
+            release_reservations_for_order(order)
             order.status = "cancelled"
             db.session.commit()
             return jsonify(order.to_dict()), 200
@@ -151,8 +159,13 @@ def cancel_order(order_id):
 
         if str(result_code) == "0":
             # Payment actually succeeded -- the callback just hasn't landed
-            # yet. Never lose track of money that already moved.
+            # yet. Never lose track of money that already moved. Consume
+            # the reservation now (same as the callback would) since the
+            # callback, when it does arrive, will see status == "paid"
+            # already and skip its own consume call.
             order.status = "paid"
+            order.paid_at = datetime.now(timezone.utc)
+            consume_reservations_for_order(order)
             db.session.commit()
             return jsonify({
                 "error": "This order was already paid and cannot be cancelled.",
@@ -161,6 +174,7 @@ def cancel_order(order_id):
 
         # Any other non-zero ResultCode means Safaricom itself reports the
         # transaction as failed/cancelled/timed out -- safe to cancel.
+        release_reservations_for_order(order)
         order.status = "cancelled"
         db.session.commit()
         return jsonify(order.to_dict()), 200

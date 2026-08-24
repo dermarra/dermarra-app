@@ -8,7 +8,7 @@ from app.models.order import Order
 from app.models.user import User
 from app.services import mpesa_service
 from app.services.brevo_service import send_order_confirmation_email
-from app.utils.inventory import decrement_stock_for_order
+from app.services.inventory_service import consume_reservations_for_order, release_reservations_for_order
 
 
 payments_bp = Blueprint("payments", __name__)
@@ -101,7 +101,12 @@ def mpesa_callback():
             order.mpesa_receipt_number = metadata.get("MpesaReceiptNumber")
             order.paid_at = datetime.now(timezone.utc)
 
-            decrement_stock_for_order(order)
+            # Guarded by `order.status != "paid"` above -- Safaricom can
+            # (and does) redeliver this webhook, and consume_reservations_
+            # for_order is itself idempotent (no-op once the reservations
+            # are already CONSUMED), so a duplicate callback never
+            # deducts stock twice.
+            consume_reservations_for_order(order)
 
             db.session.commit()
 
@@ -111,6 +116,7 @@ def mpesa_callback():
             except Exception:
                 pass
     else:
+        release_reservations_for_order(order)
         order.status = "payment_failed"
         db.session.commit()
 

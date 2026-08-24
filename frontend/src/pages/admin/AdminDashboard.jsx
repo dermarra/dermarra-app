@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   AreaChart,
   Area,
@@ -13,6 +14,7 @@ import {
   LabelList,
 } from "recharts";
 import client from "../../api/client";
+import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -69,25 +71,69 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h2 className="font-display text-xl">Dashboard</h2>
+      <motion.h2
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="font-display text-xl text-ink"
+      >
+        Dashboard
+      </motion.h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="border border-mist rounded-sm p-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={containerReveal}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      >
+        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
           <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Total revenue</p>
           <p className="font-display text-2xl text-ink mt-1">{formatKES(data.total_revenue_cents)}</p>
-        </div>
-        <div className="border border-mist rounded-sm p-4">
+        </motion.div>
+        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
           <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Total orders</p>
           <p className="font-display text-2xl text-ink mt-1">{totalOrders}</p>
-        </div>
-        <div className="border border-mist rounded-sm p-4">
-          <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Low stock</p>
-          <p className="font-display text-2xl text-ink mt-1">{data.low_stock_count}</p>
-        </div>
+        </motion.div>
+      </motion.div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-ink mb-3">Inventory</h3>
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={containerReveal}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+        >
+          <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
+            <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Total products</p>
+            <p className="font-display text-2xl text-ink mt-1">{data.total_products}</p>
+          </motion.div>
+          <Link to="/admin/inventory?status=low_stock">
+            <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4 hover:border-ink/40 transition-colors">
+              <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Low stock</p>
+              <p className="font-display text-2xl text-amber-dark mt-1">{data.low_stock_count}</p>
+            </motion.div>
+          </Link>
+          <Link to="/admin/inventory?status=out_of_stock">
+            <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4 hover:border-ink/40 transition-colors">
+              <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Out of stock</p>
+              <p className="font-display text-2xl text-clay mt-1">{data.out_of_stock_count}</p>
+            </motion.div>
+          </Link>
+          <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
+            <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Expiring soon</p>
+            <p className="font-display text-2xl text-ink mt-1">{data.expiring_soon_count}</p>
+          </motion.div>
+        </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="border border-mist rounded-sm p-4">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={containerReveal}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      >
+        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
           <h3 className="text-sm font-semibold text-ink mb-4">Revenue, last 30 days</h3>
           {revenueByDay.length === 0 ? (
             <p className="text-xs text-ink/60">No revenue yet.</p>
@@ -125,9 +171,9 @@ export default function AdminDashboard() {
               </AreaChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </motion.div>
 
-        <div className="border border-mist rounded-sm p-4">
+        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
           <h3 className="text-sm font-semibold text-ink mb-4">Orders by status</h3>
           {ordersByStatus.length === 0 ? (
             <p className="text-xs text-ink/60">No orders yet.</p>
@@ -153,20 +199,20 @@ export default function AdminDashboard() {
               </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       <div>
         <h3 className="text-sm font-semibold text-ink mb-3">Recent activity</h3>
         {(data.recent_activity || []).length === 0 ? (
           <p className="text-xs text-ink/60">No recent orders.</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
             {data.recent_activity.map((order) => (
+              <motion.div key={order.id} variants={itemReveal}>
               <Link
-                key={order.id}
                 to={`/admin/orders/${order.id}`}
-                className="flex items-center justify-between border border-mist rounded-sm px-4 py-3 hover:border-ink/40"
+                className="flex items-center justify-between border border-mist rounded-sm px-4 py-3 hover:border-ink/40 transition-colors"
               >
                 <div>
                   <p className="text-sm font-semibold text-ink font-mono">{order.id.slice(0, 8)}</p>
@@ -179,8 +225,9 @@ export default function AdminDashboard() {
                   <p className="text-xs font-mono uppercase text-ink/60">{order.status}</p>
                 </div>
               </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
