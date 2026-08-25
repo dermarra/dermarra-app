@@ -34,7 +34,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 bg-bone-light/95 backdrop-blur border-b border-mist">
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
         <Link to="/" className="font-display text-lg tracking-tight text-ink">
-          Derma<span className="text-amber">.</span>
+          Dermarra<span className="text-amber">+</span>
         </Link>
 
         <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-ink/80">

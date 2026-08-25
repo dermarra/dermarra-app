@@ -40,7 +40,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         <div>
           <Link to="/" className="font-display text-lg tracking-tight text-ink">
-            Derma<span className="text-amber">.</span>
+            Dermarra<span className="text-amber">+</span>
           </Link>
           <p className="text-sm text-ink/60 mt-3 max-w-xs">
             Skin health, engineered as a system -- cleanse, treat, repair, protect.
@@ -108,7 +108,7 @@ export default function Footer() {
 
       <div className="border-t border-mist">
         <div className="mx-auto max-w-6xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-ink/50">
-          <p>© {new Date().getFullYear()} Derma Skincare. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Dermarra Skincare. All rights reserved.</p>
           <div className="flex gap-4">
             <Link to="/terms" className="hover:text-ink transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-ink transition-colors">Privacy</Link>

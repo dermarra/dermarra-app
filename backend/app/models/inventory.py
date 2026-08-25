@@ -48,7 +48,7 @@ class Inventory(db.Model):
 
 
 class InventoryBatch(db.Model):
-    """One production run's worth of stock. Derma Skincare manufactures
+    """One production run's worth of stock. Dermarra Skincare manufactures
     in-house -- there is no supplier/vendor concept here, `unit_cost_cents`
     is the internal per-unit production cost (ingredients + packaging +
     labor), and a batch is logged when a run finishes, not when goods
