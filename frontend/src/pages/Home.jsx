@@ -1,72 +1,108 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../api/client";
-import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import ProductCard from "../components/ProductCard.jsx";
-import RoutineStepRail from "../components/RoutineStepRail.jsx";
 import HeroCarousel from "../components/HeroCarousel.jsx";
 import Reveal, { containerReveal, itemReveal } from "../components/Reveal.jsx";
+import { ChevronLeftIcon, ChevronRightIcon } from "../components/Icons.jsx";
 
-const SYSTEM_STEPS = [
+// Fallback copy for a step group whose admin-editable `description` hasn't
+// been filled in yet -- keyed by Product.step_type so it lines up
+// regardless of what the StepGroup's own label/key is.
+const STEP_COPY = {
+  cleanser: "Strip nothing but the day. A pH-correct cleanse that keeps the barrier intact.",
+  serum: "Actives dosed at the concentration that actually changes skin, in the right order.",
+  barrier_cream: "Rebuild the lipid barrier the actives just worked through.",
+  spf: "Broad-spectrum SPF, every morning — the step that makes the other three worth it.",
+};
+
+const PRINCIPLES = [
   {
-    label: "Cleanse",
-    copy: "Strip nothing but the day. A pH-correct cleanse that keeps the barrier intact.",
-    accent: "bg-ink",
+    label: "Barrier-first",
+    copy: "Every product is designed to protect, restore, and strengthen your skin barrier first — long-term skin health over short-term cosmetic gains.",
   },
   {
-    label: "Treat",
-    copy: "Actives dosed at the concentration that actually changes skin, in the right order.",
-    accent: "bg-amber",
+    label: "System-based skincare",
+    copy: "Instead of standalone products, we build coordinated systems where each step has a defined role, working together to maximize results and minimize irritation.",
   },
   {
-    label: "Repair",
-    copy: "Rebuild the lipid barrier the actives just worked through.",
-    accent: "bg-sage",
-  },
-  {
-    label: "Protect",
-    copy: "Broad-spectrum SPF, every morning — the step that makes the other three worth it.",
-    accent: "bg-sky",
+    label: "Clinical precision",
+    copy: "Every formula is built on scientifically proven actives at optimal concentrations — no unnecessary complexity, no unproven trends.",
   },
 ];
 
+function ConcernSlider({ concerns }) {
+  const scrollRef = useRef(null);
+  const scrollBy = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: "smooth" });
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0"
+      >
+        {concerns.map((concern) => {
+          const imageUrl = cloudinaryUrl(concern.cloudinary_public_id, { width: 300 });
+          return (
+            <Link
+              key={concern.id}
+              to={`/shop/concern/${concern.slug}`}
+              className="group shrink-0 snap-start w-40 sm:w-48"
+            >
+              <div className="aspect-square rounded-sm bg-mist overflow-hidden">
+                {imageUrl && (
+                  <img
+                    src={imageUrl}
+                    alt={concern.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                )}
+              </div>
+              <p className="mt-2 text-sm font-semibold text-ink flex items-center gap-1">
+                {concern.name}
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </p>
+            </Link>
+          );
+        })}
+      </div>
+
+      {concerns.length > 4 && (
+        <>
+          <button
+            onClick={() => scrollBy(-1)}
+            aria-label="Scroll concerns left"
+            className="hidden sm:flex absolute -left-4 top-[35%] -translate-y-1/2 w-9 h-9 rounded-full bg-bone-light border border-mist items-center justify-center text-ink/70 hover:text-ink shadow-sm"
+          >
+            <ChevronLeftIcon className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => scrollBy(1)}
+            aria-label="Scroll concerns right"
+            className="hidden sm:flex absolute -right-4 top-[35%] -translate-y-1/2 w-9 h-9 rounded-full bg-bone-light border border-mist items-center justify-center text-ink/70 hover:text-ink shadow-sm"
+          >
+            <ChevronRightIcon className="w-4 h-4" />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
-  const { addItem } = useCart();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [heroSlides, setHeroSlides] = useState([]);
   const [concerns, setConcerns] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [stepGroups, setStepGroups] = useState([]);
-  const [routines, setRoutines] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [addedRoutineId, setAddedRoutineId] = useState(null);
 
   useEffect(() => {
     client.get("/hero-slides").then(({ data }) => setHeroSlides(data));
     client.get("/products/concerns").then(({ data }) => setConcerns(data));
     client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6)));
     client.get("/products/step-groups").then(({ data }) => setStepGroups(data));
-    client.get("/routines").then(({ data }) => setRoutines(data.slice(0, 3)));
-    client.get("/products").then(({ data }) => setProducts(data.slice(0, 8)));
   }, []);
-
-  const addRoutineToCart = async (routineId) => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    try {
-      await addItem({ routineId });
-      setAddedRoutineId(routineId);
-      setTimeout(() => setAddedRoutineId(null), 1800);
-    } catch {
-      // swallowed -- this is a lightweight landing-page shortcut; the
-      // full quiz/product-detail flows show a real error message.
-    }
-  };
 
   return (
     <div className="overflow-x-hidden">
@@ -108,7 +144,7 @@ export default function Home() {
               Skin health, engineered as a system — not a shelf of standalone products.
             </motion.h1>
             <motion.p variants={itemReveal} className="mt-4 text-ink/70 max-w-xl">
-              Cleanse, treat, repair, protect. Every Derma routine is built around your skin
+              Cleanse, treat, repair, protect. Every Dermarra routine is built around your skin
               concern, in the right order, at the right concentration.
             </motion.p>
             <motion.div variants={itemReveal} className="mt-6 flex gap-3">
@@ -133,30 +169,30 @@ export default function Home() {
         </section>
       )}
 
-      {/* ---------- How it works ---------- */}
-      <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-        <motion.p
-          variants={itemReveal}
-          className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2"
-        >
-          The system
-        </motion.p>
-        <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-8 max-w-xl">
-          Four steps, in order, every time.
-        </motion.h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {SYSTEM_STEPS.map((step, index) => (
-            <motion.div
-              key={step.label}
-              variants={itemReveal}
-              whileHover={{ y: -4 }}
-              className="rounded-sm border border-mist bg-bone-light p-4 flex flex-col gap-3"
-            >
-              <span className={`w-8 h-8 rounded-full ${step.accent} text-bone-light text-xs font-mono flex items-center justify-center`}>
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <h3 className="font-semibold text-ink text-sm">{step.label}</h3>
-              <p className="text-xs text-ink/70 leading-relaxed">{step.copy}</p>
+      {/* ---------- The Dermarra story ---------- */}
+      <Reveal as={motion.section} className="px-4 py-16 sm:py-20 mx-auto max-w-6xl">
+        <div className="max-w-2xl">
+          <motion.p variants={itemReveal} className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+            Why Dermarra
+          </motion.p>
+          <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-4">
+            Skincare engineered around your skin&apos;s biology, not market trends.
+          </motion.h2>
+          <motion.p variants={itemReveal} className="text-ink/70 leading-relaxed">
+            We design science-led, result-oriented skin solutions built on a simple idea: skin
+            needs a coordinated system, not a shelf of standalone products. Every Dermarra
+            routine is engineered around cleansing, treatment, barrier repair and protection —
+            in the right order, at the right concentration — for real, measurable outcomes
+            instead of short-term appearance fixes.
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-10">
+          {PRINCIPLES.map((p, index) => (
+            <motion.div key={p.label} variants={itemReveal} className="border-t border-mist pt-4">
+              <span className="font-mono text-xs text-ink/40">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="font-display text-lg text-ink mt-2 mb-2">{p.label}</h3>
+              <p className="text-sm text-ink/70 leading-relaxed">{p.copy}</p>
             </motion.div>
           ))}
         </div>
@@ -165,33 +201,13 @@ export default function Home() {
       {/* ---------- Shop by concern ---------- */}
       {concerns.length > 0 && (
         <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-8 max-w-xl">
-            Common concerns.
+          <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-2 max-w-xl">
+            Shop by concern.
           </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {concerns.map((concern) => {
-              const imageUrl = cloudinaryUrl(concern.cloudinary_public_id, { width: 300 });
-              return (
-                <motion.div key={concern.id} variants={itemReveal}>
-                  <Link to={`/shop/concern/${concern.slug}`} className="group block">
-                    <div className="aspect-square rounded-sm bg-mist overflow-hidden">
-                      {imageUrl && (
-                        <img
-                          src={imageUrl}
-                          alt={concern.name}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-ink flex items-center gap-1">
-                      {concern.name}
-                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                    </p>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
+          <motion.p variants={itemReveal} className="text-ink/70 mb-8 max-w-xl">
+            Tell us what you&apos;re seeing, get a routine and products built to remedy it.
+          </motion.p>
+          <ConcernSlider concerns={concerns} />
         </Reveal>
       )}
 
@@ -202,8 +218,8 @@ export default function Home() {
             Shop by step.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-ink/70 mb-8 max-w-xl">
-            Our 4-step system is designed to build a complete routine. Explore each step
-            to see what it does and which products belong there.
+            Only need one thing? Our 4-step system -- cleanse, treat, repair, protect -- works
+            just as well one product at a time.
           </motion.p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {stepGroups.map((group) => {
@@ -216,9 +232,9 @@ export default function Home() {
                     )}
                   </div>
                   <h3 className="font-display text-lg text-ink">{group.label}</h3>
-                  {group.description && (
-                    <p className="text-sm text-ink/70 mt-1 leading-relaxed">{group.description}</p>
-                  )}
+                  <p className="text-sm text-ink/70 mt-1 leading-relaxed">
+                    {group.description || STEP_COPY[group.step_type]}
+                  </p>
                   <Link
                     to={`/shop/step/${group.key}`}
                     className="inline-flex items-center gap-1 text-sm font-semibold text-amber hover:text-amber-dark mt-2"
@@ -268,88 +284,18 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* ---------- Featured routines ---------- */}
-      {routines.length > 0 && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-8 max-w-xl">
-            Built for a specific concern.
-          </motion.h2>
-          <div className="flex flex-col gap-6">
-            {routines.map((routine) => {
-              const routineImageUrl = cloudinaryUrl(routine.cloudinary_public_id, { width: 160 });
-              return (
-              <motion.div
-                key={routine.id}
-                variants={itemReveal}
-                whileHover={{ y: -3 }}
-                className="rounded-sm border border-mist bg-bone-light p-5 transition-shadow hover:shadow-lg hover:shadow-ink/5"
-              >
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-14 h-14 rounded-sm bg-mist overflow-hidden shrink-0">
-                      {routineImageUrl && (
-                        <img src={routineImageUrl} alt={routine.name} className="w-full h-full object-cover" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-display text-lg text-ink">{routine.name}</h3>
-                      {routine.tagline && (
-                        <p className="text-sm text-ink/70 mt-1">{routine.tagline}</p>
-                      )}
-                    </div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => addRoutineToCart(routine.id)}
-                    className="shrink-0 px-4 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold hover:bg-amber-dark transition-colors whitespace-nowrap"
-                  >
-                    {addedRoutineId === routine.id
-                      ? "Added to cart"
-                      : user
-                      ? `Add to cart${routine.bundle_discount_percent > 0 ? ` · Save ${routine.bundle_discount_percent}%` : ""}`
-                      : "Sign in to add"}
-                  </motion.button>
-                </div>
-                <RoutineStepRail steps={routine.steps} />
-              </motion.div>
-              );
-            })}
-          </div>
-        </Reveal>
-      )}
-
-      {/* ---------- Featured products ---------- */}
-      {products.length > 0 && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-8 max-w-xl">
-            The products behind the system.
-          </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            {products.map((product) => (
-              <motion.div key={product.id} variants={itemReveal}>
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </div>
-        </Reveal>
-      )}
-
       {/* ---------- Become a member ---------- */}
-      {/* NOTE: this is the marketing section only -- an actual signup
-          discount isn't wired up yet (see CLAUDE.md/session notes: needs
-          a decision between a hardcoded new-account discount vs. a real
-          Coupon model before checkout can apply one). */}
       {!user && (
         <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-4xl text-center">
           <motion.p variants={itemReveal} className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-3">
-            Become a member
+            Join the family
           </motion.p>
           <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink">
-            Create an account and save on your first routine.
+            Your skin&apos;s story is just getting started. Let&apos;s write it together.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-ink/70 mt-3 max-w-md mx-auto">
-            Track orders, save your quiz results, build a wishlist, and reorder in one click.
+            Create your Dermarra account to save your quiz results, build a wishlist, track
+            orders, and pick up your routine right where you left off.
           </motion.p>
           <motion.div
             variants={itemReveal}
@@ -361,7 +307,7 @@ export default function Home() {
               to="/signup"
               className="inline-block px-6 py-3 rounded-sm bg-amber text-bone-light text-sm font-semibold hover:bg-amber-dark transition-colors"
             >
-              Sign up
+              Join Dermarra
             </Link>
           </motion.div>
         </Reveal>
