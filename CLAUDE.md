@@ -1,4 +1,4 @@
-# Derma Skincare — Project Context for Claude Code
+# Dermarra Skincare — Project Context for Claude Code
 
 ## Stack
 - Backend: Flask (app factory pattern) + SQLAlchemy + Flask-JWT-Extended, in `backend/`
@@ -110,7 +110,7 @@ Replaces the old `Product.stock_quantity` int column entirely (dropped,
 not cached) with proper batch/lot tracking. Models in
 `backend/app/models/inventory.py`: `Inventory` (on_hand/reserved per
 product, `available` computed not stored), `InventoryBatch` (one per
-production run — Derma Skincare manufactures in-house, so there's no
+production run — Dermarra Skincare manufactures in-house, so there's no
 supplier/vendor concept anywhere in this model; `unit_cost_cents` is
 internal production cost, `expiry_date` is nullable for non-expiring
 products), `InventoryTransaction` (append-only audit ledger, never
@@ -338,3 +338,91 @@ with no second password change taking effect. Not verified: no actual
 email was sent/received (Brevo call happens inside the same try/except-
 swallow pattern as the other transactional emails), no in-browser
 click-through of the split layout or the promo panel's animation.
+
+## Email audit (2026-08-24)
+
+Verified the Brevo integration end-to-end rather than just reading the
+code. `backend/app/services/brevo_service.py` is now the single place
+all 6 transactional emails (welcome, password reset, order confirmation,
+shipping update — new, invoice, newsletter contact-add) render through
+a shared branded shell and HTML-escape every interpolated field —
+confirmed by capturing a real `SendSmtpEmail` object with `<b>`/`'`
+characters in a fake user's name and asserting the rendered
+`html_content` came out as `&lt;b&gt;...&#x27;`, not raw markup.
+
+**Found and fixed**: every send function only caught
+`sib_api_v3_sdk.rest.ApiException`, so a lower-level failure (DNS,
+timeout, connection refused) wouldn't get logged before hitting a bare
+`except: pass` at the call site — silent with zero trace. All sends now
+go through one `_send()` helper that catches and logs any `Exception`.
+Also added `send_shipping_update_email` (fires on admin advancing an
+order to `shipped`/`delivered`, includes tracking number) — this
+lifecycle point had no customer-facing email at all before.
+
+**Found, not a code fix, since resolved**: `BREVO_API_KEY` is valid
+(confirmed live via `AccountApi.get_account()`, account
+`dermarradev@gmail.com`). A real test send from the configured
+`BREVO_SENDER_EMAIL` (`welcome@dermarra.com`) succeeded at the API level,
+but `SendersApi.get_senders()` initially showed only
+`dermarradev@gmail.com` as a verified sender — Brevo doesn't hard-reject
+sends from an unverified address, but Gmail and other strict receivers
+commonly spam-box or reject mail from a domain with no SPF/DKIM
+authentication, so this mattered. **Resolved 2026-08-25**: user verified
+`welcome@dermarra.com` and configured DKIM + DMARC for `dermarra.com` in
+Brevo's dashboard — reverified via `SendersApi.get_senders()` (now
+`active=True`) and a live `send_welcome_email()` call, both succeeding
+from the now-authenticated sender. See `backend/README.md`'s
+"Transactional emails" section.
+
+## Deployment prep (2026-08-25)
+
+Backend targets Render, frontend targets Netlify — see the root
+`README.md`'s new "Deployment" section for the actual walkthrough; this
+is just what changed in the codebase to support it.
+
+- `render.yaml` (repo root, not `backend/` — Render's monorepo blueprint
+  convention) declares the web service with `rootDir: backend`,
+  `gunicorn wsgi:app` as the start command, and every env var as
+  `sync: false` (Render prompts for the value rather than it ever being
+  committed) except the ones safe to default in the file itself
+  (`FLASK_ENV=production`, `BREVO_SENDER_NAME`, and **`MPESA_ENV=sandbox`
+  by default** — deliberately not `production`, so a fresh deploy never
+  silently hits real Safaricom endpoints before real Daraja credentials
+  exist). Migrations are **not** automated in the blueprint — matches
+  this project's existing manual `flask db upgrade` workflow, run once
+  via Render's Shell tab after each deploy that adds one.
+- `netlify.toml` (repo root, `base = "frontend"`) — build command,
+  publish dir, and the SPA fallback redirect (`/* -> /index.html`)
+  React Router needs; without it, refreshing any non-root route 404s on
+  Netlify since there's no server-side route matching a client-only
+  router's paths.
+- `backend/app/config.py` gained `validate_production_config()`, called
+  from `create_app()` only when `FLASK_ENV=production` — **refuses to
+  boot** if `SECRET_KEY`/`JWT_SECRET_KEY` are missing or still at their
+  insecure dev fallback (a forged JWT/session is possible otherwise), and
+  logs one clear warning (doesn't crash) if Cloudinary/Brevo/M-Pesa
+  config is missing, since those gate individual features rather than
+  the whole app. Verified both paths directly: a real `RuntimeError` with
+  insecure secrets, silent boot with real ones, and the warning firing
+  for exactly the vars actually unset.
+- Found and fixed two stale/incorrect docs while doing this: the root
+  `README.md` had the Supabase pooler names backwards (said "Session
+  pooler" for port 6543, which CLAUDE.md's own gotcha #1 already
+  correctly identifies as the *transaction* pooler), and
+  `frontend/README.md` predated nearly this entire session's work
+  (wrong design-token hex values, a reference to the long-deleted
+  `Account.jsx`, a "what's next" list that was already built). Fixed the
+  factual errors and the most actively-misleading parts; didn't do a
+  full exhaustive rewrite of `frontend/README.md`'s file-tree listing —
+  worth a fuller pass later if it drifts further.
+- `backend/.env.example` was missing `FRONTEND_BASE_URL` and
+  `BREVO_NEWSLETTER_LIST_ID` entirely (both added earlier this session,
+  never backfilled into the example file) — added, plus fixed the stale
+  `BREVO_SENDER_NAME=Derma Skincare` default.
+
+**Not done**: CI (`.github/workflows/ci.yml`) still only lints; it
+doesn't run `backend/tests/` (which needs a real Postgres — either an
+ephemeral service container or a dedicated test-DB secret would be
+needed, since the suite runs against the real dev DB by design today).
+Flagged in the root README's Status section rather than implemented, to
+keep this batch scoped to hosting prep specifically.

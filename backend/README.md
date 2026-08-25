@@ -14,6 +14,15 @@ Fill in `.env`:
 - `JWT_SECRET_KEY` — any long random string (`python -c "import secrets; print(secrets.token_hex(32))"`)
 - `CLOUDINARY_*` — from your Cloudinary dashboard
 - `BREVO_API_KEY` — from Brevo → SMTP & API → API Keys
+- `BREVO_SENDER_EMAIL` / `BREVO_SENDER_NAME` — must be a verified sender in
+  this Brevo account (Brevo → Senders, Domains & Dedicated IPs → Senders).
+  Brevo's API will still accept a send from an unverified address without
+  erroring, but receiving mail servers (Gmail especially) will spam-box or
+  reject mail from a domain with no SPF/DKIM authentication — this is why
+  it matters, not just an API technicality. **Verified 2026-08-25**:
+  `welcome@dermarra.com` is a verified sender, `dermarra.com` has DKIM +
+  DMARC configured, confirmed both via `SendersApi.get_senders()` and a
+  live `send_welcome_email()` call.
 - `BREVO_NEWSLETTER_LIST_ID` — the numeric Brevo contact list ID the footer's
   newsletter form subscribes into (Brevo → Contacts → Lists). Without it,
   `POST /api/newsletter/subscribe` returns 503 rather than failing silently.
@@ -107,6 +116,28 @@ Auth header for protected routes: `Authorization: Bearer <access_token>`.
 4. Flow: `POST /api/orders/checkout` creates the order → `POST /api/payments/mpesa/stk-push` triggers the customer's phone prompt → Safaricom hits `/api/payments/mpesa/callback` with the result → frontend polls `/api/payments/mpesa/status/<order_id>` until it flips to `paid`.
 5. Going live requires production credentials and a registered Paybill/Till number — sandbox only simulates payments.
 
+## Transactional emails
+
+All emails go through `backend/app/services/brevo_service.py`, share one
+branded HTML shell (`_email_shell()`), and HTML-escape every interpolated
+field (`_e()`) — a customer's full name, a shipping address, a product
+name an admin entered are all attacker-controllable strings from an
+email-injection standpoint, so none of it is trusted raw.
+
+| Email | Trigger | Blocking? |
+|---|---|---|
+| Welcome | `POST /api/auth/signup` | No — signup succeeds even if the send fails |
+| Password reset | `POST /api/auth/forgot-password` | No — the endpoint's response never reveals whether the send succeeded, to avoid account enumeration |
+| Order confirmation | M-Pesa callback marks an order `paid` | No — payment confirmation isn't blocked on email delivery |
+| Shipping update | Admin advances an order to `shipped` or `delivered` (includes the tracking number if set) | No |
+| Invoice | Admin clicks "Email invoice" (`POST /api/admin/orders/<id>/send-invoice`) | **Yes** — this is a user-initiated action, so a failure is surfaced as a 502 rather than silently swallowed |
+| Newsletter signup | `POST /api/newsletter/subscribe` | **Yes** — same reasoning; a duplicate-subscription response from Brevo is treated as success, not an error |
+
+"Non-blocking" sends are wrapped in `try/except: pass` at the call site —
+the failure is still logged (`_send()` in brevo_service.py logs before
+re-raising), just not surfaced to the customer, since a flaky email
+provider should never be the reason an order or signup fails.
+
 ## Admin access
 
 The very first admin has to be bootstrapped via `flask shell` (there's no
@@ -129,7 +160,7 @@ this endpoint — drop back to `flask shell` if you ever need to.
 
 ## Inventory management
 
-Derma Skincare manufactures in-house, so stock enters the system as
+Dermarra Skincare manufactures in-house, so stock enters the system as
 **production runs**, not purchase orders — there's no supplier/vendor
 concept anywhere in this model. `Product.stock_quantity` no longer
 exists; `app/models/inventory.py` (`Inventory`, `InventoryBatch`,
