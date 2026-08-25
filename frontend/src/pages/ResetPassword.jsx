@@ -39,18 +39,18 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="grid lg:grid-cols-2 min-h-[calc(100vh-4rem)]">
-      <div className="hidden lg:block">
-        <AuthPromoPanel />
-      </div>
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-mist/20">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-3xl bg-bone-light border border-mist rounded-lg shadow-xl overflow-hidden grid lg:grid-cols-2"
+      >
+        <div className="hidden lg:block">
+          <AuthPromoPanel />
+        </div>
 
-      <div className="relative flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-sm bg-bone-light border border-mist rounded-sm p-8 sm:p-10"
-        >
+        <div className="p-8 sm:p-12 flex flex-col justify-center">
           <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
             Reset password
           </p>
@@ -121,8 +121,8 @@ export default function ResetPassword() {
               ← Back to sign in
             </Link>
           </p>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
