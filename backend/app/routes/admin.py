@@ -742,6 +742,13 @@ def advance_order(order_id):
 
     order.status = new_status
     db.session.commit()
+
+    if new_status in ("shipped", "delivered") and order.user:
+        try:
+            brevo_service.send_shipping_update_email(order.user, order)
+        except Exception:
+            pass
+
     return jsonify(order.to_dict(include_admin_fields=True)), 200
 
 
