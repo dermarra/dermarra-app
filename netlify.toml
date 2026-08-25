@@ -1,0 +1,14 @@
+[build]
+base = "frontend"
+command = "npm run build"
+publish = "dist"
+
+# React Router does client-side routing -- without this, refreshing or
+# directly visiting any non-root path (e.g. /shop/some-product) 404s,
+# since Netlify otherwise only has a route for the literal file paths
+# vite emitted. Every path falls through to index.html and React Router
+# takes over from there.
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from app.config import config_by_name
+from app.config import config_by_name, validate_production_config
 from app.extensions import db, migrate, jwt, cors
 
 
@@ -10,6 +10,9 @@ def create_app(config_name=None):
     config_name = config_name or os.environ.get("FLASK_ENV", "development")
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
+
+    if config_name == "production":
+        validate_production_config(app)
 
     db.init_app(app)
     migrate.init_app(app, db)
