@@ -1,9 +1,10 @@
-import os 
+import os
 from datetime import timedelta
 
 from dotenv import load_dotenv
 
-load_dotenv() 
+load_dotenv()
+
 
 # Load environment variables from .env file if it exists
 class Config:
@@ -11,7 +12,8 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev")
 
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
-    SQLALCHEMY_TRACK_MODIFICATIONS = False # Disables the modification tracking feature of SQLAlchemy, which can consume extra memory and is not needed in most cases.
+    # Disables SQLAlchemy's modification-tracking feature — extra memory overhead, not needed here.
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,  # avoids stale-connection errors against Supabase's pooler
         "pool_size": 5,

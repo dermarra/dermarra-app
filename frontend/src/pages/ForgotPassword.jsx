@@ -43,12 +43,12 @@ export default function ForgotPassword() {
           </p>
           <h1 className="font-display text-2xl sm:text-3xl text-ink mb-3">Forgot your password?</h1>
           <p className="text-sm text-ink/60 mb-8">
-            Enter your account email and we'll send you a link to reset it.
+            Enter your account email and we&apos;ll send you a link to reset it.
           </p>
 
           {sent ? (
             <p className="text-sm text-sage-dark">
-              If an account exists for that email, we've sent a password reset link -- it expires
+              If an account exists for that email, we&apos;ve sent a password reset link -- it expires
               in 30 minutes.
             </p>
           ) : (

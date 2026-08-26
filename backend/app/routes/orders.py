@@ -16,7 +16,7 @@ from app.services.inventory_service import (
 
 orders_bp = Blueprint("orders", __name__)
 
-SHIPPING_FLAT_CENTS = 0 # Flat shipping fee in cents (e.g., 0 for free shipping, 500 for $5.00 shipping).
+SHIPPING_FLAT_CENTS = 0  # Flat shipping fee in cents (e.g., 0 for free shipping, 500 for $5.00 shipping).
 
 
 @orders_bp.get("")

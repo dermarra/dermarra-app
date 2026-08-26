@@ -90,7 +90,7 @@ def mpesa_callback():
     if not order:
         current_app.logger.warning(f"No order found for CheckoutRequestID {checkout_request_id}")
         return jsonify({"ResultCode": 0, "ResultDesc": "Accepted"}), 200
-    
+
     if result_code == 0:
         if order.status != "paid":
             metadata = {

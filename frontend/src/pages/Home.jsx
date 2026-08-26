@@ -255,7 +255,7 @@ export default function Home() {
             Shop by active ingredient.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-ink/70 mb-8 max-w-xl">
-            Look for products by what's actually doing the work.
+            Look for products by what&apos;s actually doing the work.
           </motion.p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {ingredients.map((ingredient) => {
