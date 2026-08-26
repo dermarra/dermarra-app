@@ -9,7 +9,7 @@
 - Dev environment: WSL: Ubuntu, VS Code Remote-WSL
 
 ## Running locally
-- Backend: `cd backend && source d-venv/bin/activate && flask run` (port 5000)
+- Backend: `cd backend && source dermarra-venv/bin/activate && flask run` (port 5000)
 - Frontend: `cd frontend && npm run dev` (port 5173, sometimes bumps to 5174/5175 if a stale process is still holding 5173)
 - Both must run simultaneously in separate terminals for the app to work end-to-end.
 
