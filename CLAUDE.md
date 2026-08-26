@@ -426,3 +426,44 @@ ephemeral service container or a dedicated test-DB secret would be
 needed, since the suite runs against the real dev DB by design today).
 Flagged in the root README's Status section rather than implemented, to
 keep this batch scoped to hosting prep specifically.
+
+## Repo migration to new GitHub account + Render/Netlify deploy config verified (2026-08-27)
+
+- Project moved to a new GitHub account/org: `dermarra` (repo
+  `dermarra-app`), replacing `ColourfulVisualCommunication/derma` as the
+  canonical remote — full commit history preserved (pushed as-is, not
+  squashed). SSH config reorganized from role-based aliases
+  (`github.com-business`/`github.com-personal`) to account-based ones:
+  `github.com-cvc` (ColourfulVisualCommunication) is now the alias used
+  for all `git` operations on this project; `github.com-njoroge-cvc`
+  (the old business account) is retired but kept configured;
+  `github-northerniy` unchanged.
+- **Found and fixed**: `backend/requirements.txt` was not actually this
+  project's dependency file — it was a `pip freeze` dump of Ubuntu
+  system packages (`cloud-init`, `ubuntu-pro-client`, `dbus-python`,
+  etc.), with zero of the app's real dependencies. Reconstructed from
+  actual imports across `app/` cross-checked against the stack described
+  in this file; installs cleanly and `flask run` boots and serves
+  `/api/health` against it.
+- Backend venv renamed `d-venv` → `dermarra-venv` (see "Running locally"
+  above); old `d-venv` was already removed from disk.
+- **Found and fixed**: CI (`.github/workflows/ci.yml`) had never
+  actually been green — pre-existing `flake8` violations (whitespace,
+  spacing, line length in `app/config.py`, `routes/orders.py`,
+  `routes/payments.py`, `utils/errors.py`) and `eslint`
+  `react/no-unescaped-entities` errors (raw apostrophes in JSX text in
+  `ForgotPassword.jsx`, `Home.jsx`, `Privacy.jsx`, `Terms.jsx`). Fixed
+  all; both jobs verified passing locally (`flake8`, `npm run lint`,
+  `npm run build`) before push, then confirmed green on GitHub Actions.
+- **Verified**: `render.yaml` and `netlify.toml` reviewed against the
+  current codebase and need no changes for the new repo — neither file
+  hardcodes a GitHub account/org, since Render/Netlify link to a repo
+  via their own dashboards (Render → New → Blueprint, Netlify → Import
+  from Git), not via anything committed in-repo. `render.yaml`'s
+  `buildCommand` (`pip install -r requirements.txt`) was specifically
+  re-checked against the fixed `requirements.txt` above. Root
+  `README.md`'s Deployment section doesn't reference the old account
+  either, so nothing there needed updating for the migration.
+- **Not done**: Render/Netlify services haven't been (re)connected to
+  the new `dermarra/dermarra-app` repo yet — to be done via each
+  platform's dashboard through the `dermarra` GitHub account directly.
