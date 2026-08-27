@@ -467,3 +467,51 @@ keep this batch scoped to hosting prep specifically.
 - **Not done**: Render/Netlify services haven't been (re)connected to
   the new `dermarra/dermarra-app` repo yet — to be done via each
   platform's dashboard through the `dermarra` GitHub account directly.
+
+## First live deploy: Render + Netlify go-live (2026-08-27)
+
+Backend deployed at `https://dermarra-backend.onrender.com`, frontend at
+`https://dermarra.netlify.app`, both connected directly through their
+dashboards to `dermarra/dermarra-app` (no CLI) as planned above.
+
+- **Found and fixed**: `render.yaml` had `plan: starter`, which requires
+  Render to have a card on file before it'll even run the Blueprint —
+  blocked the first deploy attempt. Changed to `plan: free`. Tradeoff
+  worth knowing: the free tier has **no Shell tab access**, so
+  `flask db upgrade` after a migration-adding deploy can't be run the
+  way `backend/README.md` describes — has to be run from a local machine
+  against the production `DATABASE_URL` instead (session pooler, port
+  5432, temporarily — same pattern as gotcha #1), not Render's Shell.
+- **Verified**: `/api/health` returns 200 but is a static handler with
+  no DB query (`app/__init__.py`) — doesn't actually prove Supabase
+  connectivity. Used `GET /api/products/step-groups` instead (public,
+  DB-backed) and got the real seeded 4-row taxonomy back, confirming
+  `DATABASE_URL` on Render is correctly set to a reachable pooler
+  connection.
+- **Found and fixed**: after both deploys were live, the frontend loaded
+  but every API call hit `localhost:5000` instead of the Render backend
+  — browser console showed `ERR_CONNECTION_REFUSED` on every request.
+  Root cause: `frontend/src/api/client.js`'s
+  `import.meta.env.VITE_API_URL || "http://localhost:5000/api"` fallback
+  — Vite bakes env vars in at **build time**, not runtime, so setting
+  `VITE_API_URL` on Netlify after the first build doesn't retroactively
+  fix an already-built JS bundle; a fresh build is required. Confirmed
+  via the built bundle's content hash (`index-D952L1ir.js`) staying
+  identical across a "Trigger deploy" click — proof the rebuild wasn't
+  actually picking up the new env var. **Resolved**: root cause was that
+  Vite's environment config wasn't actually set up yet on Netlify at the
+  time of the first build. Fixed by the user directly; reverified by
+  confirming the bundle hash changed (`index-CMoxebUw.js`) and that its
+  contents now reference `dermarra-backend.onrender.com` instead of
+  `localhost:5000`.
+- Added a real favicon (`frontend/public/favicon.svg`, plus generated
+  `favicon.ico`/`favicon-32x32.png`/`apple-touch-icon.png` fallbacks via
+  a throwaway `cairosvg`+`Pillow` venv, since no SVG-to-raster tool was
+  installed) from the actual brand mark provided
+  (`D:\branding\Dermarra Skincare- Description\SVG\Asset 2.svg`, a blue
+  `#009ee2` swirl mark — distinct from the amber/sage web design tokens
+  in `tailwind.config.js`, so don't assume it should match those).
+  Wired into `frontend/index.html` via `<link rel="icon">`/
+  `apple-touch-icon`. `npm run build` verified all four files land in
+  `dist/`. **Not yet committed/pushed** — pending the user previewing it
+  locally first.
