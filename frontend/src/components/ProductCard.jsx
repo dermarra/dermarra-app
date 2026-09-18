@@ -13,7 +13,7 @@ export default function ProductCard({ product }) {
   const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
   const navigate = useNavigate();
   const imageUrl = cloudinaryUrl(product.cloudinary_public_id, { width: 400 });
-  const price = (product.price_cents / 100).toFixed(0);
+  const price = (product.price_from_cents / 100).toFixed(0);
   const [status, setStatus] = useState("idle"); // idle | adding | added
   const [wishlistBusy, setWishlistBusy] = useState(false);
   const wishlisted = isWishlisted(product.id);
@@ -26,7 +26,7 @@ export default function ProductCard({ product }) {
     }
     setStatus("adding");
     try {
-      await addItem({ productId: product.id });
+      await addItem({ variantId: product.default_variant_id });
       setStatus("added");
       setTimeout(() => setStatus("idle"), 1800);
     } catch {
@@ -84,14 +84,9 @@ export default function ProductCard({ product }) {
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           )}
-          {product.stock_status === "out_of_stock" && (
+          {!product.in_stock && (
             <span className="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide bg-bone-light/90 text-ink/60 px-2 py-1 rounded-sm">
               Out of stock
-            </span>
-          )}
-          {product.stock_status === "low_stock" && (
-            <span className="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide bg-bone-light/90 text-amber-dark px-2 py-1 rounded-sm">
-              Low stock
             </span>
           )}
         </div>
@@ -102,7 +97,7 @@ export default function ProductCard({ product }) {
             </span>
           )}
           <h3 className="text-sm font-semibold text-ink leading-snug">{product.name}</h3>
-          <span className="text-sm text-ink/80">KES {price}</span>
+          <span className="text-sm text-ink/80">From KES {price}</span>
         </div>
       </Link>
 

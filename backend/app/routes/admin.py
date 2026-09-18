@@ -9,7 +9,7 @@ from app.extensions import db
 from app.models.hero_slide import HeroSlide
 from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction
 from app.models.order import Order
-from app.models.product import Product, ProductImage, SkinConcern, Ingredient, StepGroup
+from app.models.product import Product, ProductVariant, ProductImage, SkinConcern, Ingredient, StepGroup
 from app.models.routine import Routine, RoutineStep
 from app.models.user import User
 from app.services import mpesa_service, brevo_service
@@ -230,13 +230,20 @@ def _parse_datetime(value):
         raise InventoryError(f"invalid datetime: {value!r} (expected ISO 8601)")
 
 
+def _variant_admin_dict(variant):
+    data = variant.to_dict(include_admin_fields=True)
+    data["product_name"] = variant.product.name
+    data["product_id"] = variant.product_id
+    return data
+
+
 @admin_bp.get("/inventory")
 @admin_required
 def list_inventory():
     """Optional ?status=in_stock|low_stock|out_of_stock filter."""
     status_filter = request.args.get("status")
-    products = Product.query.order_by(Product.name).all()
-    rows = [p.to_dict(include_concerns=False, include_admin_fields=True) for p in products]
+    variants = ProductVariant.query.join(ProductVariant.product).order_by(Product.name, ProductVariant.position).all()
+    rows = [_variant_admin_dict(v) for v in variants]
     if status_filter:
         rows = [r for r in rows if r["stock_status"] == status_filter]
     return jsonify(rows), 200
@@ -245,8 +252,13 @@ def list_inventory():
 @admin_bp.get("/inventory/low-stock")
 @admin_required
 def low_stock_products():
-    products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
-    rows = [p.to_dict(include_concerns=False, include_admin_fields=True) for p in products]
+    variants = (
+        ProductVariant.query.join(ProductVariant.product)
+        .filter(ProductVariant.is_active.is_(True), Product.is_active.is_(True))
+        .order_by(Product.name, ProductVariant.position)
+        .all()
+    )
+    rows = [_variant_admin_dict(v) for v in variants]
     return jsonify([r for r in rows if r["stock_status"] in ("low_stock", "out_of_stock")]), 200
 
 
@@ -273,50 +285,51 @@ def expiring_soon_batches():
     result = []
     for batch in batches:
         data = batch.to_dict()
-        product = Product.query.get(batch.product_id)
-        data["product_name"] = product.name if product else None
+        variant = ProductVariant.query.get(batch.variant_id)
+        data["product_name"] = variant.product.name if variant else None
+        data["variant_label"] = variant.label if variant else None
         result.append(data)
     return jsonify(result), 200
 
 
-@admin_bp.get("/inventory/<product_id>")
+@admin_bp.get("/inventory/<variant_id>")
 @admin_required
-def get_inventory_detail(product_id):
-    product = Product.query.get_or_404(product_id)
+def get_inventory_detail(variant_id):
+    variant = ProductVariant.query.get_or_404(variant_id)
     batches = (
         InventoryBatch.query
-        .filter_by(product_id=product_id)
+        .filter_by(variant_id=variant_id)
         .order_by(InventoryBatch.expiry_date.asc().nullslast(), InventoryBatch.produced_at.asc())
         .all()
     )
     transactions = (
         InventoryTransaction.query
-        .filter_by(product_id=product_id)
+        .filter_by(variant_id=variant_id)
         .order_by(InventoryTransaction.created_at.desc())
         .limit(100)
         .all()
     )
     return jsonify({
-        "product": product.to_dict(include_concerns=False, include_admin_fields=True),
+        "variant": _variant_admin_dict(variant),
         "batches": [b.to_dict() for b in batches],
         "transactions": [t.to_dict() for t in transactions],
     }), 200
 
 
-@admin_bp.post("/inventory/<product_id>/receive")
+@admin_bp.post("/inventory/<variant_id>/receive")
 @admin_required
-def receive_stock(product_id):
+def receive_stock(variant_id):
     """Logs a finished in-house production run into inventory.
 
     Body: { "batch_number", "quantity_produced", "unit_cost_cents"?,
             "expiry_date"?, "produced_at"?, "notes"? }
     """
-    Product.query.get_or_404(product_id)
+    ProductVariant.query.get_or_404(variant_id)
     data = request.get_json(silent=True) or {}
 
     try:
         batch, txn = inventory_service.record_production_run(
-            product_id,
+            variant_id,
             batch_number=data.get("batch_number"),
             quantity_produced=data.get("quantity_produced"),
             unit_cost_cents=data.get("unit_cost_cents"),
@@ -330,26 +343,26 @@ def receive_stock(product_id):
         return jsonify({"error": str(e)}), 400
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "a batch with this batch_number already exists for this product"}), 400
+        return jsonify({"error": "a batch with this batch_number already exists for this variant"}), 400
 
     db.session.commit()
     return jsonify({"batch": batch.to_dict(), "transaction": txn.to_dict()}), 201
 
 
-@admin_bp.post("/inventory/<product_id>/adjust")
+@admin_bp.post("/inventory/<variant_id>/adjust")
 @admin_required
-def adjust_stock(product_id):
+def adjust_stock(variant_id):
     """A manual correction against one batch -- always requires a reason.
 
     Body: { "batch_id", "type" (one of DAMAGE/EXPIRY/LOSS/ADJUSTMENT/
             SAMPLE/PROMOTION/INTERNAL_USE), "quantity", "reason" }
     """
-    Product.query.get_or_404(product_id)
+    ProductVariant.query.get_or_404(variant_id)
     data = request.get_json(silent=True) or {}
 
     try:
         txn = inventory_service.adjust_stock(
-            product_id,
+            variant_id,
             batch_id=data.get("batch_id"),
             transaction_type=data.get("type"),
             quantity=data.get("quantity"),
@@ -388,7 +401,7 @@ def list_products():
 @admin_required
 def create_product():
     data = request.get_json(silent=True) or {}
-    required = ["name", "slug", "step_type", "price_cents"]
+    required = ["name", "slug", "step_type"]
     missing = [f for f in required if data.get(f) is None]
     if missing:
         return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
@@ -402,8 +415,6 @@ def create_product():
         short_description=data.get("short_description"),
         description=data.get("description"),
         key_actives=data.get("key_actives"),
-        price_cents=data["price_cents"],
-        currency=data.get("currency", "KES"),
         cloudinary_public_id=data.get("cloudinary_public_id"),
         is_active=data.get("is_active", True),
     )
@@ -417,13 +428,6 @@ def create_product():
         product.ingredients = Ingredient.query.filter(Ingredient.id.in_(ingredient_ids)).all()
 
     db.session.add(product)
-    db.session.flush()
-
-    # Every product gets an Inventory row up front (0 on hand) -- actual
-    # stock is logged separately via "receive stock" once a production
-    # run exists to back it.
-    db.session.add(Inventory(product_id=product.id, reorder_level=data.get("reorder_level", 10)))
-
     db.session.commit()
     return jsonify(product.to_dict(include_admin_fields=True)), 201
 
@@ -436,8 +440,7 @@ def update_product(product_id):
 
     for field in [
         "name", "slug", "step_type", "short_description", "description",
-        "key_actives", "price_cents", "currency",
-        "cloudinary_public_id", "is_active",
+        "key_actives", "cloudinary_public_id", "is_active",
     ]:
         if field in data:
             setattr(product, field, data[field])
@@ -452,11 +455,6 @@ def update_product(product_id):
             Ingredient.id.in_(data["ingredient_ids"])
         ).all()
 
-    if "reorder_level" in data:
-        inv = Inventory.query.filter_by(product_id=product.id).first()
-        if inv:
-            inv.reorder_level = data["reorder_level"]
-
     db.session.commit()
     return jsonify(product.to_dict(include_admin_fields=True)), 200
 
@@ -466,14 +464,96 @@ def update_product(product_id):
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
 
-    has_inventory_history = InventoryTransaction.query.filter_by(product_id=product.id).first() is not None
+    variant_ids = [v.id for v in product.variants]
+    has_inventory_history = (
+        variant_ids
+        and InventoryTransaction.query.filter(InventoryTransaction.variant_id.in_(variant_ids)).first() is not None
+    )
     if has_inventory_history:
         return jsonify({
             "error": "this product has inventory history and can't be deleted -- set is_active to false instead"
         }), 400
 
-    Inventory.query.filter_by(product_id=product.id).delete()
-    db.session.delete(product)
+    if variant_ids:
+        Inventory.query.filter(Inventory.variant_id.in_(variant_ids)).delete(synchronize_session=False)
+    db.session.delete(product)  # cascades to ProductVariant rows (see Product.variants relationship)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Product variants ----------
+
+@admin_bp.post("/products/<product_id>/variants")
+@admin_required
+def create_product_variant(product_id):
+    product = Product.query.get_or_404(product_id)
+    data = request.get_json(silent=True) or {}
+    required = ["label", "sku", "price_cents"]
+    missing = [f for f in required if data.get(f) is None]
+    if missing:
+        return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
+
+    variant = ProductVariant(
+        product_id=product.id,
+        label=data["label"],
+        sku=data["sku"],
+        price_cents=data["price_cents"],
+        currency=data.get("currency", "KES"),
+        is_active=data.get("is_active", True),
+        position=data.get("position", len(product.variants)),
+    )
+    db.session.add(variant)
+    db.session.flush()
+
+    # Every variant gets an Inventory row up front (0 on hand) -- actual
+    # stock is logged separately via "receive stock" once a production
+    # run exists to back it.
+    db.session.add(Inventory(variant_id=variant.id, reorder_level=data.get("reorder_level", 10)))
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "a variant with this SKU already exists"}), 400
+    return jsonify(_variant_admin_dict(variant)), 201
+
+
+@admin_bp.patch("/products/<product_id>/variants/<variant_id>")
+@admin_required
+def update_product_variant(product_id, variant_id):
+    variant = ProductVariant.query.filter_by(id=variant_id, product_id=product_id).first_or_404()
+    data = request.get_json(silent=True) or {}
+
+    for field in ["label", "sku", "price_cents", "currency", "is_active", "position"]:
+        if field in data:
+            setattr(variant, field, data[field])
+
+    if "reorder_level" in data:
+        inv = Inventory.query.filter_by(variant_id=variant.id).first()
+        if inv:
+            inv.reorder_level = data["reorder_level"]
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "a variant with this SKU already exists"}), 400
+    return jsonify(_variant_admin_dict(variant)), 200
+
+
+@admin_bp.delete("/products/<product_id>/variants/<variant_id>")
+@admin_required
+def delete_product_variant(product_id, variant_id):
+    variant = ProductVariant.query.filter_by(id=variant_id, product_id=product_id).first_or_404()
+
+    has_inventory_history = InventoryTransaction.query.filter_by(variant_id=variant.id).first() is not None
+    if has_inventory_history:
+        return jsonify({
+            "error": "this variant has inventory history and can't be deleted -- set is_active to false instead"
+        }), 400
+
+    Inventory.query.filter_by(variant_id=variant.id).delete()
+    db.session.delete(variant)
     db.session.commit()
     return "", 204
 
@@ -617,7 +697,7 @@ def delete_routine(routine_id):
 def set_routine_steps(routine_id):
     """Replaces the full ordered step list in one call.
 
-    Body: { "steps": [{ "product_id": "...", "order_index": 1, "time_of_day": "both" }, ...] }
+    Body: { "steps": [{ "variant_id": "...", "order_index": 1, "time_of_day": "both" }, ...] }
     """
     routine = Routine.query.get_or_404(routine_id)
     data = request.get_json(silent=True) or {}
@@ -630,7 +710,7 @@ def set_routine_steps(routine_id):
         db.session.add(
             RoutineStep(
                 routine_id=routine.id,
-                product_id=step["product_id"],
+                variant_id=step["variant_id"],
                 order_index=step["order_index"],
                 time_of_day=step.get("time_of_day", "both"),
             )

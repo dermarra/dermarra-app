@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { cloudinaryUrl } from "../api/client";
 import { MinusIcon, PlusIcon, TrashIcon, BagIcon } from "../components/Icons.jsx";
+import { cartItemUnitPriceCents, cartItemUndiscountedCents, cartTotalCents } from "../lib/cartTotals.js";
 
 export default function Cart() {
   const { user } = useAuth();
@@ -39,14 +40,7 @@ export default function Cart() {
     );
   }
 
-  const total = cart.items.reduce((sum, item) => {
-    const unit = item.product
-      ? item.product.price_cents
-      : (item.routine.steps.reduce((s, step) => s + step.product.price_cents, 0) *
-          (100 - (item.routine.bundle_discount_percent || 0))) /
-        100;
-    return sum + unit * item.quantity;
-  }, 0);
+  const total = cartTotalCents(cart.items);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 pb-32 sm:pb-6">
@@ -64,17 +58,11 @@ export default function Cart() {
           {cart.items.map((item) => {
             const image = item.product?.cloudinary_public_id || item.routine?.cloudinary_public_id;
             const imageUrl = cloudinaryUrl(image, { width: 160 });
-            const name = item.product ? item.product.name : `${item.routine.name} (Full Routine)`;
-            const priceCents = item.product
-              ? item.product.price_cents
-              : Math.round(
-                  (item.routine.steps.reduce((s, step) => s + step.product.price_cents, 0) *
-                    (100 - (item.routine.bundle_discount_percent || 0))) /
-                    100
-                );
-            const undiscountedPriceCents = item.routine
-              ? item.routine.steps.reduce((s, step) => s + step.product.price_cents, 0)
-              : null;
+            const name = item.product
+              ? `${item.product.name}${item.variant ? ` — ${item.variant.label}` : ""}`
+              : `${item.routine.name} (Full Routine)`;
+            const priceCents = cartItemUnitPriceCents(item);
+            const undiscountedPriceCents = cartItemUndiscountedCents(item);
 
             return (
               <motion.li

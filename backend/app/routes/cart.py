@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
 from app.models.cart import Cart, CartItem
-from app.models.product import Product
+from app.models.product import ProductVariant
 from app.models.routine import Routine
 
 cart_bp = Blueprint("cart", __name__)
@@ -29,19 +29,19 @@ def get_cart():
 @jwt_required()
 def add_item():
     data = request.get_json(silent=True) or {}
-    product_id = data.get("product_id")
+    variant_id = data.get("variant_id")
     routine_id = data.get("routine_id")
     quantity = int(data.get("quantity", 1))
 
-    if not product_id and not routine_id:
-        return jsonify({"error": "either product_id or routine_id is required"}), 400
-    if product_id and routine_id:
-        return jsonify({"error": "provide only one of product_id or routine_id"}), 400
+    if not variant_id and not routine_id:
+        return jsonify({"error": "either variant_id or routine_id is required"}), 400
+    if variant_id and routine_id:
+        return jsonify({"error": "provide only one of variant_id or routine_id"}), 400
     if quantity < 1:
         return jsonify({"error": "quantity must be at least 1"}), 400
 
-    if product_id and not Product.query.get(product_id):
-        return jsonify({"error": "product not found"}), 404
+    if variant_id and not ProductVariant.query.get(variant_id):
+        return jsonify({"error": "product variant not found"}), 404
     if routine_id and not Routine.query.get(routine_id):
         return jsonify({"error": "routine not found"}), 404
 
@@ -51,14 +51,14 @@ def add_item():
         (
             item
             for item in cart.items
-            if item.product_id == product_id and item.routine_id == routine_id
+            if item.variant_id == variant_id and item.routine_id == routine_id
         ),
         None,
     )
     if existing:
         existing.quantity += quantity
     else:
-        cart.items.append(CartItem(product_id=product_id, routine_id=routine_id, quantity=quantity))
+        cart.items.append(CartItem(variant_id=variant_id, routine_id=routine_id, quantity=quantity))
 
     db.session.commit()
     return jsonify(cart.to_dict()), 200

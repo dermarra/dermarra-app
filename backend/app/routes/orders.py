@@ -57,19 +57,22 @@ def checkout():
     subtotal_cents = 0
     order_items = []
     for item in cart.items:
-        if item.product:
-            unit_price = item.product.price_cents
-            name = item.product.name
+        if item.variant:
+            unit_price = item.variant.price_cents
+            name = f"{item.variant.product.name} — {item.variant.label}"
+            product_id = item.variant.product_id
         else:
-            step_total = sum(step.product.price_cents for step in item.routine.steps)
+            step_total = sum(step.variant.price_cents for step in item.routine.steps)
             discount = item.routine.bundle_discount_percent or 0
             unit_price = round(step_total * (100 - discount) / 100)
             name = f"{item.routine.name} (Full Routine)"
+            product_id = None
 
         subtotal_cents += unit_price * item.quantity
         order_items.append(
             OrderItem(
-                product_id=item.product_id,
+                product_id=product_id,
+                variant_id=item.variant_id,
                 routine_id=item.routine_id,
                 name_snapshot=name,
                 unit_price_cents_snapshot=unit_price,

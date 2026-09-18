@@ -3,6 +3,9 @@ receipts and manual adjustments, all backed by the InventoryTransaction
 ledger. See app/models/inventory.py for the data model and the "why" of
 each table.
 
+Everything here is keyed on ProductVariant (the sellable/stockable unit),
+not Product (the catalogue family) -- see the ProductVariant migration.
+
 Every function here assumes it's called inside an existing db.session
 transaction and leaves the commit to the caller (matches the rest of this
 codebase's route-owns-the-commit convention).
@@ -11,9 +14,8 @@ from datetime import date, datetime, timedelta, timezone
 
 from app.extensions import db
 from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction, InventoryReservation
-from app.models.product import Product
-from app.models.routine import Routine
-from app.utils.order_lines import stock_lines
+from app.models.product import ProductVariant
+from app.utils.order_lines import order_stock_lines
 
 RESERVATION_TTL_MINUTES = 20
 
@@ -32,7 +34,7 @@ _ALWAYS_NEGATIVE_TYPES = set(MANUAL_ADJUSTMENT_TYPES) - {"ADJUSTMENT"}
 
 class InsufficientStockError(Exception):
     def __init__(self, shortages):
-        self.shortages = shortages  # {product_name_or_id: available_quantity}
+        self.shortages = shortages  # {variant_label_or_id: available_quantity}
         super().__init__(f"insufficient stock: {shortages}")
 
 
@@ -41,24 +43,24 @@ class InventoryError(ValueError):
     result, missing reason, etc.) -- a 400, not a 5xx."""
 
 
-def _get_or_create_inventory(product_id):
-    """Locks (or creates + locks) a product's Inventory row. Always call
+def _get_or_create_inventory(variant_id):
+    """Locks (or creates + locks) a variant's Inventory row. Always call
     this -- never query Inventory directly -- when you're about to change
     on_hand/reserved, so the row-level lock is actually held."""
-    inv = Inventory.query.filter_by(product_id=product_id).with_for_update().first()
+    inv = Inventory.query.filter_by(variant_id=variant_id).with_for_update().first()
     if inv:
         return inv
-    inv = Inventory(product_id=product_id, on_hand=0, reserved=0, reorder_level=10)
+    inv = Inventory(variant_id=variant_id, on_hand=0, reserved=0, reorder_level=10)
     db.session.add(inv)
     db.session.flush()
     return inv
 
 
-def _lock_inventories_for(product_ids):
-    """Locks every distinct product's Inventory row up front, in a fixed
+def _lock_inventories_for(variant_ids):
+    """Locks every distinct variant's Inventory row up front, in a fixed
     (sorted) order, so two transactions that both touch several of the
-    same products can never deadlock against each other."""
-    return {pid: _get_or_create_inventory(pid) for pid in sorted(set(product_ids))}
+    same variants can never deadlock against each other."""
+    return {vid: _get_or_create_inventory(vid) for vid in sorted(set(variant_ids))}
 
 
 # ---------- Reservations ----------
@@ -76,14 +78,14 @@ def expire_stale_reservations():
     if not stale:
         return 0
 
-    _lock_inventories_for(r.product_id for r in stale)
+    _lock_inventories_for(r.variant_id for r in stale)
     for reservation in stale:
         _apply_release(reservation, new_status="expired")
     return len(stale)
 
 
 def _apply_release(reservation, new_status):
-    inv = _get_or_create_inventory(reservation.product_id)
+    inv = _get_or_create_inventory(reservation.variant_id)
     inv.reserved = max(0, inv.reserved - reservation.quantity)
     reservation.status = new_status
     reservation.released_at = datetime.now(timezone.utc)
@@ -91,42 +93,46 @@ def _apply_release(reservation, new_status):
 
 def reserve_stock_for_order(order):
     """Places a hold on stock for everything an order needs -- one
-    InventoryReservation per (order_item, product) line. Raises
-    InsufficientStockError (nothing written) if any product can't be
+    InventoryReservation per (order_item, variant) line. Raises
+    InsufficientStockError (nothing written) if any variant can't be
     fully covered; caller commits on success.
 
-    Concurrency: locks every distinct product's Inventory row (FOR
-    UPDATE, fixed product-id order) before checking any of them, so two
+    Concurrency: locks every distinct variant's Inventory row (FOR
+    UPDATE, fixed variant-id order) before checking any of them, so two
     concurrent checkouts racing for the last unit can't both succeed --
     the second one blocks until the first commits or rolls back, then
     sees the updated `reserved` total.
     """
     expire_stale_reservations()
 
-    lines = list(_order_lines(order))
-    needed_by_product = {}
-    for _, product_row, qty in lines:
-        needed_by_product[product_row.id] = needed_by_product.get(product_row.id, 0) + qty
+    lines = list(order_stock_lines(order))
+    needed_by_variant = {}
+    for _, variant_row, qty in lines:
+        needed_by_variant[variant_row.id] = needed_by_variant.get(variant_row.id, 0) + qty
 
-    inventories = _lock_inventories_for(needed_by_product.keys())
+    inventories = _lock_inventories_for(needed_by_variant.keys())
 
     shortages = {
-        pid: inventories[pid].available
-        for pid, needed in needed_by_product.items()
-        if inventories[pid].available < needed
+        vid: inventories[vid].available
+        for vid, needed in needed_by_variant.items()
+        if inventories[vid].available < needed
     }
     if shortages:
-        names = {p.id: p.name for p in Product.query.filter(Product.id.in_(shortages)).all()}
-        raise InsufficientStockError({names.get(pid, pid): avail for pid, avail in shortages.items()})
+        variants = {v.id: v for v in ProductVariant.query.filter(ProductVariant.id.in_(shortages)).all()}
+        names = {
+            vid: f"{v.product.name} ({v.label})" if v else vid
+            for vid, v in variants.items()
+        }
+        raise InsufficientStockError({names.get(vid, vid): avail for vid, avail in shortages.items()})
 
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=RESERVATION_TTL_MINUTES)
     reservations = []
-    for order_item, product_row, qty in lines:
-        inventories[product_row.id].reserved += qty
+    for order_item, variant_row, qty in lines:
+        inventories[variant_row.id].reserved += qty
         reservation = InventoryReservation(
             order_id=order.id,
             order_item_id=order_item.id,
-            product_id=product_row.id,
+            variant_id=variant_row.id,
             quantity=qty,
             status="active",
             expires_at=expires_at,
@@ -134,14 +140,6 @@ def reserve_stock_for_order(order):
         db.session.add(reservation)
         reservations.append(reservation)
     return reservations
-
-
-def _order_lines(order):
-    for order_item in order.items:
-        product = Product.query.get(order_item.product_id) if order_item.product_id else None
-        routine = Routine.query.get(order_item.routine_id) if order_item.routine_id else None
-        for product_row, needed_qty in stock_lines(product, routine, order_item.quantity):
-            yield order_item, product_row, needed_qty
 
 
 def release_reservations_for_order(order):
@@ -152,7 +150,7 @@ def release_reservations_for_order(order):
     reservations = InventoryReservation.query.filter_by(order_id=order.id, status="active").all()
     if not reservations:
         return []
-    _lock_inventories_for(r.product_id for r in reservations)
+    _lock_inventories_for(r.variant_id for r in reservations)
     for reservation in reservations:
         _apply_release(reservation, new_status="released")
     return reservations
@@ -173,7 +171,7 @@ def consume_reservations_for_order(order, created_by=None):
     if not reservations:
         return []
 
-    inventories = _lock_inventories_for(r.product_id for r in reservations)
+    inventories = _lock_inventories_for(r.variant_id for r in reservations)
     today = date.today()
     transactions = []
 
@@ -182,7 +180,7 @@ def consume_reservations_for_order(order, created_by=None):
         batches = (
             InventoryBatch.query
             .filter(
-                InventoryBatch.product_id == reservation.product_id,
+                InventoryBatch.variant_id == reservation.variant_id,
                 InventoryBatch.status == "active",
                 InventoryBatch.quantity_remaining > 0,
                 db.or_(InventoryBatch.expiry_date.is_(None), InventoryBatch.expiry_date >= today),
@@ -206,7 +204,7 @@ def consume_reservations_for_order(order, created_by=None):
             txn = InventoryTransaction(
                 type="SALE",
                 quantity=-draw,
-                product_id=reservation.product_id,
+                variant_id=reservation.variant_id,
                 batch_id=batch.id,
                 reference_type="order_item",
                 reference_id=reservation.order_item_id,
@@ -223,9 +221,9 @@ def consume_reservations_for_order(order, created_by=None):
             # batch expired between reservation and payment. Never
             # silently short-ship: surface it instead of leaving on_hand/
             # reserved inconsistent.
-            raise InsufficientStockError({reservation.product_id: -remaining})
+            raise InsufficientStockError({reservation.variant_id: -remaining})
 
-        inv = inventories[reservation.product_id]
+        inv = inventories[reservation.variant_id]
         inv.on_hand -= reservation.quantity
         inv.reserved = max(0, inv.reserved - reservation.quantity)
         reservation.status = "consumed"
@@ -254,7 +252,7 @@ def restock_order(order, created_by=None):
     if not sale_txns:
         return []
 
-    inventories = _lock_inventories_for(t.product_id for t in sale_txns)
+    inventories = _lock_inventories_for(t.variant_id for t in sale_txns)
     batch_ids = sorted({t.batch_id for t in sale_txns})
     batches = {
         b.id: b
@@ -269,12 +267,12 @@ def restock_order(order, created_by=None):
         if batch.status == "depleted" and batch.quantity_remaining > 0:
             batch.status = "active"
 
-        inventories[sale.product_id].on_hand += qty
+        inventories[sale.variant_id].on_hand += qty
 
         txn = InventoryTransaction(
             type="RETURN",
             quantity=qty,
-            product_id=sale.product_id,
+            variant_id=sale.variant_id,
             batch_id=batch.id,
             reference_type="order_item",
             reference_id=sale.reference_id,
@@ -290,7 +288,7 @@ def restock_order(order, created_by=None):
 # ---------- Production receipts & manual adjustments ----------
 
 def record_production_run(
-    product_id, *, batch_number, quantity_produced, unit_cost_cents=None,
+    variant_id, *, batch_number, quantity_produced, unit_cost_cents=None,
     expiry_date=None, produced_at=None, notes=None, created_by=None,
 ):
     """Logs a finished in-house production run into inventory: creates the
@@ -300,10 +298,10 @@ def record_production_run(
     if not isinstance(quantity_produced, int) or quantity_produced <= 0:
         raise InventoryError("quantity_produced must be a positive integer")
 
-    inv = _get_or_create_inventory(product_id)
+    inv = _get_or_create_inventory(variant_id)
 
     batch = InventoryBatch(
-        product_id=product_id,
+        variant_id=variant_id,
         batch_number=batch_number,
         quantity_produced=quantity_produced,
         quantity_remaining=quantity_produced,
@@ -321,7 +319,7 @@ def record_production_run(
     txn = InventoryTransaction(
         type="PRODUCTION_RECEIPT",
         quantity=quantity_produced,
-        product_id=product_id,
+        variant_id=variant_id,
         batch_id=batch.id,
         reference_type=None,
         reference_id=None,
@@ -332,7 +330,7 @@ def record_production_run(
     return batch, txn
 
 
-def adjust_stock(product_id, *, batch_id, transaction_type, quantity, reason, created_by=None):
+def adjust_stock(variant_id, *, batch_id, transaction_type, quantity, reason, created_by=None):
     """A manual correction against one batch -- DAMAGE/EXPIRY/LOSS/SAMPLE/
     PROMOTION/INTERNAL_USE (`quantity` a positive count, this function
     applies the sign) or ADJUSTMENT (`quantity` a signed delta the caller
@@ -348,12 +346,12 @@ def adjust_stock(product_id, *, batch_id, transaction_type, quantity, reason, cr
 
     batch = (
         InventoryBatch.query
-        .filter_by(id=batch_id, product_id=product_id)
+        .filter_by(id=batch_id, variant_id=variant_id)
         .with_for_update()
         .first()
     )
     if not batch:
-        raise InventoryError("batch not found for this product")
+        raise InventoryError("batch not found for this variant")
 
     signed_qty = quantity if transaction_type == "ADJUSTMENT" else -abs(quantity)
 
@@ -361,7 +359,7 @@ def adjust_stock(product_id, *, batch_id, transaction_type, quantity, reason, cr
     if new_remaining < 0:
         raise InventoryError("this adjustment would take the batch's remaining quantity below zero")
 
-    inv = _get_or_create_inventory(product_id)
+    inv = _get_or_create_inventory(variant_id)
     new_on_hand = inv.on_hand + signed_qty
     if new_on_hand < 0:
         raise InventoryError("this adjustment would take on-hand stock below zero")
@@ -377,7 +375,7 @@ def adjust_stock(product_id, *, batch_id, transaction_type, quantity, reason, cr
     txn = InventoryTransaction(
         type=transaction_type,
         quantity=signed_qty,
-        product_id=product_id,
+        variant_id=variant_id,
         batch_id=batch.id,
         reference_type=None,
         reference_id=None,
@@ -392,12 +390,16 @@ def adjust_stock(product_id, *, batch_id, transaction_type, quantity, reason, cr
 
 def inventory_summary():
     """Dashboard/admin summary: counts behind the "total/low/out/expiring"
-    cards. Active products only -- a discontinued product's stock isn't
-    actionable the same way."""
-    active_product_ids = [p.id for p in Product.query.filter_by(is_active=True).with_entities(Product.id).all()]
-    total_products = len(active_product_ids)
+    cards. Active variants of active products only -- a discontinued
+    product/variant's stock isn't actionable the same way."""
+    active_variant_ids = [
+        v.id for v in ProductVariant.query.join(ProductVariant.product)
+        .filter(ProductVariant.is_active.is_(True))
+        .with_entities(ProductVariant.id).all()
+    ]
+    total_products = len(active_variant_ids)
 
-    invs = Inventory.query.filter(Inventory.product_id.in_(active_product_ids)).all() if active_product_ids else []
+    invs = Inventory.query.filter(Inventory.variant_id.in_(active_variant_ids)).all() if active_variant_ids else []
     low_stock = sum(1 for inv in invs if inv.stock_status() == "low_stock")
     out_of_stock = sum(1 for inv in invs if inv.stock_status() == "out_of_stock")
 

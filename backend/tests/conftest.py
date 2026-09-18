@@ -16,7 +16,7 @@ from app import create_app
 from app.extensions import db
 from app.models.inventory import Inventory, InventoryBatch, InventoryReservation, InventoryTransaction
 from app.models.order import Order, OrderItem
-from app.models.product import Product
+from app.models.product import Product, ProductVariant
 from app.models.user import User
 
 
@@ -52,66 +52,79 @@ def test_user(app):
 
 
 @pytest.fixture
-def make_product(app):
-    """Factory fixture: make_product(name="...") -> Product, with an empty
-    Inventory row already attached (matching what create_product does).
-    Everything it touches is deleted, in FK-safe order, on teardown."""
-    created = []
+def make_variant(app):
+    """Factory fixture: make_variant(name="...") -> ProductVariant, with a
+    backing Product family row and an empty Inventory row already attached
+    (matching what the admin "create variant" endpoint does). Stock/price
+    live on the variant, not the product -- see the ProductVariant
+    migration. Everything it touches is deleted, in FK-safe order, on
+    teardown."""
+    created = []  # list of (variant_id, product_id)
 
-    def _make(name="__TEST__ product", reorder_level=10, slug=None):
+    def _make(name="__TEST__ product", reorder_level=10, slug=None, price_cents=1000):
         import uuid
+        suffix = uuid.uuid4().hex[:8]
         product = Product(
             name=name,
-            slug=slug or f"__test__-{uuid.uuid4().hex[:8]}",
+            slug=slug or f"__test__-{suffix}",
             step_type="serum",
-            price_cents=1000,
         )
         db.session.add(product)
         db.session.flush()
-        db.session.add(Inventory(product_id=product.id, reorder_level=reorder_level))
+        variant = ProductVariant(
+            product_id=product.id,
+            label="Standard",
+            sku=f"__test__-{suffix}-STD",
+            price_cents=price_cents,
+        )
+        db.session.add(variant)
+        db.session.flush()
+        db.session.add(Inventory(variant_id=variant.id, reorder_level=reorder_level))
         db.session.commit()
-        created.append(product.id)
-        return product
+        created.append((variant.id, product.id))
+        return variant
 
     yield _make
 
-    for product_id in created:
-        InventoryReservation.query.filter_by(product_id=product_id).delete()
+    for variant_id, product_id in created:
+        InventoryReservation.query.filter_by(variant_id=variant_id).delete()
         order_item_ids = [
-            row.id for row in OrderItem.query.filter_by(product_id=product_id).all()
+            row.id for row in OrderItem.query.filter_by(variant_id=variant_id).all()
         ]
         order_ids = {
             row.order_id for row in OrderItem.query.filter(OrderItem.id.in_(order_item_ids)).all()
         } if order_item_ids else set()
-        OrderItem.query.filter_by(product_id=product_id).delete()
+        OrderItem.query.filter_by(variant_id=variant_id).delete()
         for order_id in order_ids:
             Order.query.filter_by(id=order_id).delete()
-        InventoryTransaction.query.filter_by(product_id=product_id).delete()
-        InventoryBatch.query.filter_by(product_id=product_id).delete()
-        Inventory.query.filter_by(product_id=product_id).delete()
+        InventoryTransaction.query.filter_by(variant_id=variant_id).delete()
+        InventoryBatch.query.filter_by(variant_id=variant_id).delete()
+        Inventory.query.filter_by(variant_id=variant_id).delete()
+        ProductVariant.query.filter_by(id=variant_id).delete()
         Product.query.filter_by(id=product_id).delete()
     db.session.commit()
 
 
 @pytest.fixture
 def make_order(app, test_user):
-    """Factory fixture: make_order(product, quantity) -> Order (flushed,
+    """Factory fixture: make_order(variant, quantity) -> Order (flushed,
     has an id and its OrderItem has an id, not committed). Caller is
     responsible for committing/rolling back; cleanup happens via the
-    owning make_product fixture since OrderItem.product_id ties it back."""
-    def _make(product, quantity=1):
+    owning make_variant fixture since OrderItem.variant_id ties it back."""
+    def _make(variant, quantity=1):
         order = Order(
             user_id=test_user.id,
             status="pending",
-            subtotal_cents=product.price_cents * quantity,
-            total_cents=product.price_cents * quantity,
+            subtotal_cents=variant.price_cents * quantity,
+            total_cents=variant.price_cents * quantity,
             shipping_name="__TEST__", shipping_address_line1="__TEST__",
             shipping_city="__TEST__", shipping_country="__TEST__",
             shipping_postal_code="00000", shipping_phone="0700000000",
         )
         item = OrderItem(
-            product_id=product.id, name_snapshot=product.name,
-            unit_price_cents_snapshot=product.price_cents, quantity=quantity,
+            product_id=variant.product_id, variant_id=variant.id,
+            name_snapshot=f"{variant.product.name} — {variant.label}",
+            unit_price_cents_snapshot=variant.price_cents, quantity=quantity,
         )
         order.items.append(item)
         db.session.add(order)

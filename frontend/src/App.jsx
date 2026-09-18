@@ -85,7 +85,7 @@ export default function App() {
             <Route path="orders/:orderId" element={<AdminOrderDetail />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="inventory" element={<AdminInventory />} />
-            <Route path="inventory/:productId" element={<AdminInventoryDetail />} />
+            <Route path="inventory/:variantId" element={<AdminInventoryDetail />} />
             <Route path="routines" element={<AdminRoutines />} />
             <Route path="concerns" element={<AdminConcerns />} />
             <Route path="ingredients" element={<AdminIngredients />} />

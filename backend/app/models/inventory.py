@@ -5,10 +5,12 @@ from app.extensions import db
 
 
 class Inventory(db.Model):
-    """The single source of truth for a product's stock level -- supersedes
+    """The single source of truth for a variant's stock level -- supersedes
     the old Product.stock_quantity column (dropped in the migration that
     introduced this table; existing quantities were backfilled here and
-    into an initial InventoryBatch, not lost).
+    into an initial InventoryBatch, not lost). Keyed on ProductVariant, not
+    Product, since price_cents also moved to the variant, that's the actual
+    sellable/stockable unit -- see the ProductVariant migration.
 
     `available` (on_hand - reserved) is computed, never stored, so it can
     never drift out of sync with the numbers it's derived from.
@@ -17,12 +19,12 @@ class Inventory(db.Model):
     __tablename__ = "inventory"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=False, unique=True)
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False, unique=True)
     on_hand = db.Column(db.Integer, default=0, nullable=False)
     reserved = db.Column(db.Integer, default=0, nullable=False)
     reorder_level = db.Column(db.Integer, default=10, nullable=False)
 
-    product = db.relationship("Product", backref=db.backref("inventory", uselist=False, lazy="joined"))
+    variant = db.relationship("ProductVariant", backref=db.backref("inventory", uselist=False, lazy="joined"))
 
     @property
     def available(self):
@@ -36,7 +38,7 @@ class Inventory(db.Model):
         return "in_stock"
 
     def to_dict(self, include_admin_fields=False):
-        data = {"product_id": self.product_id, "stock_status": self.stock_status()}
+        data = {"variant_id": self.variant_id, "stock_status": self.stock_status()}
         if include_admin_fields:
             data.update({
                 "on_hand": self.on_hand,
@@ -66,7 +68,7 @@ class InventoryBatch(db.Model):
     STATUSES = ("active", "depleted", "expired", "recalled")
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=False)
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False)
     batch_number = db.Column(db.String(60), nullable=False)
     quantity_produced = db.Column(db.Integer, nullable=False)
     quantity_remaining = db.Column(db.Integer, nullable=False)
@@ -77,12 +79,12 @@ class InventoryBatch(db.Model):
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    __table_args__ = (db.UniqueConstraint("product_id", "batch_number", name="uq_batch_product_number"),)
+    __table_args__ = (db.UniqueConstraint("variant_id", "batch_number", name="uq_batch_variant_number"),)
 
     def to_dict(self):
         return {
             "id": self.id,
-            "product_id": self.product_id,
+            "variant_id": self.variant_id,
             "batch_number": self.batch_number,
             "quantity_produced": self.quantity_produced,
             "quantity_remaining": self.quantity_remaining,
@@ -119,7 +121,7 @@ class InventoryTransaction(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     type = db.Column(db.String(20), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=False)
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False)
     batch_id = db.Column(db.String(36), db.ForeignKey("inventory_batches.id"), nullable=False)
     reference_type = db.Column(db.String(30), nullable=True)
     reference_id = db.Column(db.String(36), nullable=True)
@@ -132,7 +134,7 @@ class InventoryTransaction(db.Model):
             "id": self.id,
             "type": self.type,
             "quantity": self.quantity,
-            "product_id": self.product_id,
+            "variant_id": self.variant_id,
             "batch_id": self.batch_id,
             "reference_type": self.reference_type,
             "reference_id": self.reference_id,
@@ -161,7 +163,7 @@ class InventoryReservation(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     order_id = db.Column(db.String(36), db.ForeignKey("orders.id"), nullable=False)
     order_item_id = db.Column(db.String(36), db.ForeignKey("order_items.id"), nullable=False)
-    product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=False)
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False)
     batch_id = db.Column(db.String(36), db.ForeignKey("inventory_batches.id"), nullable=True)
     quantity = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(20), default="active", nullable=False)
@@ -174,7 +176,7 @@ class InventoryReservation(db.Model):
             "id": self.id,
             "order_id": self.order_id,
             "order_item_id": self.order_item_id,
-            "product_id": self.product_id,
+            "variant_id": self.variant_id,
             "batch_id": self.batch_id,
             "quantity": self.quantity,
             "status": self.status,

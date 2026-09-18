@@ -89,7 +89,12 @@ class OrderItem(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     order_id = db.Column(db.String(36), db.ForeignKey("orders.id"), nullable=False)
 
+    # `product_id` is kept denormalized alongside `variant_id` (rather than
+    # replaced) specifically so order history keeps reading correctly even
+    # if the variant it was bought as is later deleted -- see the
+    # ProductVariant migration notes.
     product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=True)
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=True)
     routine_id = db.Column(db.String(36), db.ForeignKey("routines.id"), nullable=True)
     name_snapshot = db.Column(db.String(255), nullable=False)
     unit_price_cents_snapshot = db.Column(db.Integer, nullable=False)
@@ -100,6 +105,7 @@ class OrderItem(db.Model):
             "id": self.id,
             "name": self.name_snapshot,
             "product_id": self.product_id,
+            "variant_id": self.variant_id,
             "routine_id": self.routine_id,
             "unit_price_cents": self.unit_price_cents_snapshot,
             "quantity": self.quantity,

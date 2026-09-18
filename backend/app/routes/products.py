@@ -22,7 +22,9 @@ def list_products():
         query = query.join(Product.ingredients).filter(Ingredient.slug == ingredient_slug)
 
     products = query.order_by(Product.created_at.desc()).all()
-    return jsonify([p.to_dict() for p in products]), 200
+    # Card/list views only need price_from_cents/in_stock (already flat on
+    # to_dict()) -- skip nesting the full variants array for every card.
+    return jsonify([p.to_dict(include_variants=False) for p in products]), 200
 
 
 @products_bp.get("/concerns")

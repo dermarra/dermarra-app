@@ -36,8 +36,15 @@
    where the host begins.
 
 ## Architecture notes
+- **`Product` is a catalogue family, `ProductVariant` is the sellable/
+  stockable unit** (see "ProductVariant" below for the full migration) —
+  `price_cents`/`currency`/SKU live on the variant, not the product.
+  `Cart`/`Order` items, `Inventory`/`InventoryBatch`/etc., and
+  `RoutineStep` all key off `variant_id`, not `product_id`.
 - Routines (not standalone products) are the core sell: `Routine` has ordered
-  `RoutineStep`s, each pointing at a `Product`. See `backend/app/models/routine.py`.
+  `RoutineStep`s, each pinned to a specific `ProductVariant` (a curated
+  bundle names an exact size, not just a product family). See
+  `backend/app/models/routine.py`.
 - Product taxonomy, all in `backend/app/models/product.py`: `SkinConcern` and
   `Ingredient` are open-ended, admin-manageable tags (many-to-many with
   `Product` via `product_concerns`/`product_ingredients`); `StepGroup` is a
@@ -166,7 +173,7 @@ directly from a route.
   that did complete was correct in every run. Worth a re-run if it's ever
   seen again rather than assumed fixed for good.
 
-## Catalog Taxonomy, Account Self-Service & Storefront Rebrand (in progress, uncommitted)
+## Catalog Taxonomy, Account Self-Service & Storefront Rebrand (shipped)
 
 ### Why
 Follow-on work after the admin dashboard: give the storefront proper
@@ -183,8 +190,9 @@ type and not just concern, and give the landing/shop pages a visual pass
   `default_shipping_*` fields, `OrderItem.to_dict()` now exposes
   `product_id`/`routine_id`. Four new migrations in
   `backend/migrations/versions/` (`bdec962eaa7c`, `07244c98c0f6`,
-  `46f80398af62`, `2a735e468547`) — not yet confirmed applied to the dev DB
-  this session, check `flask db current` before assuming so.
+  `46f80398af62`, `2a735e468547`) — part of the single linear migration
+  chain confirmed applied and live in production (see "Current
+  Implementation Status" below).
 - **New/changed endpoints**: `GET /api/products/ingredients`,
   `GET /api/products/step-groups`, `?ingredient=` filter on
   `GET /api/products`; admin CRUD for ingredients (mirrors concerns) and
@@ -209,14 +217,24 @@ type and not just concern, and give the landing/shop pages a visual pass
   optional crop step (`react-easy-crop` + `frontend/src/lib/imageCrop.js`).
   `ProductCard.jsx` also gained a quick-add-to-cart button.
 
-### Not done yet
-- Nothing has been committed.
-- `backend/README.md` / `frontend/README.md` don't reflect any of the above
-  (new endpoints, dropped `hair` step type, new models).
-- No automated tests; no noted manual verification pass (backend curl or
-  frontend click-through) for this batch — treat as unverified until run.
+### Status
+- **Committed and shipped** (`1fb2a3e`, "Add catalog taxonomy, account
+  self-service, and storefront rebrand") — confirmed live in production as
+  of the 2026-09-18 audit (see "Current Implementation Status" below). The
+  "Not done yet" framing that used to live here was stale; correcting it
+  here rather than leaving future sessions to re-discover this from
+  scratch.
+- `backend/README.md` / `frontend/README.md` still don't reflect all of
+  the above (new endpoints, dropped `hair` step type, new models) as of
+  last check — still an open doc-drift item.
+- Still **no automated tests** for this batch specifically (auth,
+  catalog/taxonomy, account self-service) — the only backend tests that
+  exist anywhere in the project cover inventory logic only (see "Current
+  Implementation Status" below). No noted manual click-through of the
+  frontend for this batch either — functionality is live and used, but
+  formally "unverified by an explicit test pass."
 
-## Landing Page Expansion (in progress, uncommitted)
+## Landing Page Expansion (shipped)
 
 ### Why
 A large redesign spec covering the homepage hero, footer, wishlist, and a
@@ -513,5 +531,286 @@ dashboards to `dermarra/dermarra-app` (no CLI) as planned above.
   in `tailwind.config.js`, so don't assume it should match those).
   Wired into `frontend/index.html` via `<link rel="icon">`/
   `apple-touch-icon`. `npm run build` verified all four files land in
-  `dist/`. **Not yet committed/pushed** — pending the user previewing it
-  locally first.
+  `dist/`. Committed (`3d17c4c`) and live in production — visible on
+  `https://dermarra.netlify.app`.
+
+## Current Implementation Status (2026-09-18)
+
+A three-way audit (backend, frontend, deployment/ops — each re-verified against
+actual code and `git log`, not against this file's own claims) confirmed the full
+current state of the system. This section is the authoritative, current picture;
+where it conflicts with older dated sections above, trust this one. The system is
+**live and functionally complete for a soft launch**, but **not yet safe to accept
+real M-Pesa payments** — see "Not production-ready yet" below before flipping
+`MPESA_ENV` to `production`.
+
+### What's shipped and live
+
+- **Auth**: signup, login, forgot-password/reset-password (single-use,
+  time-limited `itsdangerous` token, not a JWT — see "Auth pages" above),
+  change-password, profile + shipping-defaults editing
+  (`PATCH /api/auth/me`). `backend/app/routes/auth.py`.
+- **Catalog & taxonomy**: products, `SkinConcern`, `Ingredient`, `StepGroup`
+  (fixed 4-row prep/treat/seal/protect set), all admin-manageable except
+  `StepGroup` rows themselves (PATCH-only, no create/delete).
+  `backend/app/routes/products.py`, `backend/app/models/product.py`.
+- **Storefront browse pages**: `/shop/concern/:slug`, `/shop/ingredient/:slug`,
+  `/shop/step/:key` (`ConcernShop.jsx`/`IngredientShop.jsx`/`StepShop.jsx`),
+  with breadcrumbs.
+- **Cart & Wishlist**: standard cart; wishlist mirrors cart's model shape
+  (`Wishlist`/`WishlistItem`), one-click heart toggle on `ProductCard.jsx`.
+- **Routine quiz + bundles**: `POST /api/routines/quiz` matches on concern
+  and (optionally) skin type in three fallback tiers so it never refuses a
+  match; `Routine.bundle_discount_percent` is the only discount mechanic in
+  the app (see "Deferred" below).
+- **Checkout + M-Pesa STK Push**: `backend/app/routes/payments.py`,
+  `backend/app/services/mpesa_service.py`. Order state machine `pending` →
+  `payment_pending` → `paid`/`payment_failed`. **`MPESA_ENV=sandbox`** in
+  production today (hardcoded default in `render.yaml`, deliberately not
+  `production`) — no real money has moved through this system yet.
+- **Inventory (FEFO batch/lot tracking)**: `backend/app/services/inventory_service.py`.
+  The best-tested subsystem in the project — `backend/tests/test_inventory.py`
+  (8 tests: reservation concurrency via row locking, FEFO allocation +
+  expired-batch exclusion, idempotent consumption, release, restock
+  reversal) — all passing, though **not run in CI** (see gaps below).
+- **Admin dashboard**: orders (delivery pipeline + proof-of-delivery photo),
+  products, routines, inventory, taxonomy (concerns/ingredients/step-groups),
+  hero slides, user role promotion — full UI, not API-only.
+- **Transactional email**: 6 types (welcome, password reset, order
+  confirmation, shipping update, invoice, newsletter contact-add) via
+  `backend/app/services/brevo_service.py`, all HTML-escaped, sender domain
+  (`dermarra.com`) verified with DKIM/DMARC.
+- **Homepage/landing**: `HeroCarousel.jsx` (admin-managed via
+  `GET /api/hero-slides`, also reused as `AuthPromoPanel.jsx` on the auth
+  pages), `Footer.jsx` (newsletter signup wired to
+  `POST /api/newsletter/subscribe`), account self-service pages under
+  `/account/*` (`AccountProfile`/`AccountRoutines`/`AccountOrders`/
+  `AccountOrderDetail`/`AccountWishlist`).
+- **Responsive nav**: `Navbar.jsx` (desktop, `sm:flex`) +
+  `BottomNav.jsx` (mobile, `sm:hidden`, 5-tab bar with live cart badge),
+  both unconditional across every route including `/admin/*`.
+- **Favicon**: real brand mark, SVG + ICO/PNG fallbacks, live.
+- **Deployment**: `https://dermarra-backend.onrender.com` (Render, free
+  tier, Python/gunicorn) + `https://dermarra.netlify.app` (Netlify,
+  Vite build) + Supabase Postgres. Both connected directly to
+  `dermarra/dermarra-app` via each platform's own dashboard (no CLI, no
+  GitHub Actions deploy step). Database connectivity verified live via a
+  real DB-backed endpoint, not just the static `/api/health` check.
+
+### Not production-ready yet (found by the 2026-09-18 audit)
+
+**Security — the most urgent gaps:**
+- **`POST /api/payments/mpesa/callback` (`backend/app/routes/payments.py:75-123`)
+  has zero request verification** — no signature, no shared secret, no IP
+  allowlist. Anyone who obtains a valid `CheckoutRequestID` (trivially — start
+  a real STK push for your own order, then skip paying) can POST a forged
+  `ResultCode: 0` directly and get any order marked `paid` for free. Must fix
+  before `MPESA_ENV` ever goes to `production` — see the "Path to Real
+  Production" plan (Phase 1.1).
+- **No rate limiting anywhere** — login, signup, forgot-password,
+  change-password, and STK-push initiation are all unthrottled (brute-force
+  and STK-push-spam risk).
+- **No security headers** — no HSTS/CSP/X-Frame-Options/X-Content-Type-Options
+  (no Flask-Talisman or manual equivalent).
+- **No input-validation library** — every route does manual `.get()` +
+  presence/length checks; no marshmallow/pydantic/WTForms schema layer.
+- **No error tracking** (no Sentry or equivalent) and **no log persistence**
+  beyond Render's ephemeral stdout stream — a production incident today would
+  be debugged blind once Render's log retention window passes.
+
+**Legal/compliance:**
+- `frontend/src/pages/Privacy.jsx` and `Terms.jsx` are still literal
+  10-line placeholder stubs ("replace this with Dermarra Skincare's actual
+  privacy policy") on a live site that collects real names, addresses,
+  phone numbers, and (once M-Pesa goes to production) payment activity.
+- **No cookie-consent mechanism** anywhere in the frontend.
+
+**Testing/CI:**
+- `.github/workflows/ci.yml` only lints (`flake8` backend, `eslint`+
+  `npm run build` frontend) — **`backend/tests/` is never run in CI**, only
+  locally, and only covers inventory (nothing for auth, catalog, orders, or
+  the M-Pesa callback specifically). `backend/tests/conftest.py` also
+  requires a real Postgres connection (runs against the actual dev DB, no
+  isolated test DB or SQLite fallback).
+- No frontend tests of any kind.
+
+**Frontend performance:**
+- **Single ~993KB JS bundle** (288KB gzipped) — zero code-splitting
+  (`React.lazy`/`Suspense`/dynamic `import()` used nowhere), so every
+  anonymous shopper downloads the entire admin dashboard's dependencies
+  (recharts, dnd-kit) along with the storefront.
+- **No SEO basics**: static site-wide `<title>` (no per-page titles), no
+  meta description/Open Graph/Twitter tags, no `robots.txt`, no
+  `sitemap.xml`.
+- **No error boundary** — an unhandled render error white-screens the
+  entire app.
+- **`npm audit`**: 2 moderate CVEs in `react-router`/`react-router-dom`
+  (open-redirect + a deserialization issue), fixable with a targeted patch
+  bump, not necessarily the full v7 major upgrade.
+- Minor a11y gaps: `Navbar.jsx`'s cart icon-link has no `aria-label`;
+  `Login`/`Signup`/`Checkout` inputs rely on placeholder text rather than a
+  real visible `<label>`.
+
+**Ops/data safety:**
+- **No documented or verified database backup strategy** for the Supabase
+  Postgres instance — not mentioned anywhere in any README.
+- Root `README.md`'s migration runbook is **stale**: it tells readers to
+  run `flask db upgrade` via Render's Shell tab, which **doesn't exist on
+  the free plan actually in use** (`render.yaml` has `plan: free`) — the
+  real workaround (documented in this file's "First live deploy" section
+  above, not yet ported into `README.md` itself) is running the migration
+  from a local machine against the production `DATABASE_URL`.
+- Render free tier spins the backend down after inactivity — first request
+  after idling can take 50+ seconds. Acceptable for a soft launch, a real
+  UX/conversion risk once real customers show up; upgrading is a cost
+  decision, not yet made.
+- `dermarra.com` is verified and in use for **email only** — the website
+  itself is still on `onrender.com`/`netlify.app` subdomains; wiring the
+  custom domain to the site was explicitly deferred by the user for now.
+
+### Deferred by deliberate product decision (not bugs, not forgotten)
+
+- ~~Product variant/size model~~ — **shipped 2026-09-18**, see "ProductVariant"
+  below. This item is stale; kept struck through rather than deleted so
+  nobody re-reads an old copy of this file and thinks it's still open.
+- **Coupon/discount-code system**: the only discount mechanic anywhere is
+  `Routine.bundle_discount_percent`. The homepage's "Become a member"
+  section is copy + a `/signup` link only — it applies no actual discount.
+  Needs a choice between a hardcoded first-order discount vs. a real
+  admin-editable `Coupon` model before wiring real money off checkout.
+
+A full phased plan for closing the "not production-ready yet" gaps above,
+in risk order, is maintained as a Claude Code plan file (not duplicated
+here since plan files are session-specific) — ask Claude to regenerate it
+from this section if it's not available.
+
+## ProductVariant (2026-09-18)
+
+Phase 1 of a larger next-build brief (coupons, brand naming/client areas, CI,
+blog/reviews/search, card payments, hardening — all sequenced after this).
+`Product` is now a catalogue "family" (name, description, images, concern/
+ingredient tags); each sellable size/SKU is a `ProductVariant`, which owns
+`price_cents`/`currency`/`sku` and is what stock is tracked against. This
+unblocks the size-selector UI that had been explicitly deferred since the
+landing-page work.
+
+Two architecture questions surfaced during planning that the original brief
+didn't address, both resolved with the user before writing any code:
+- **`RoutineStep` pins to a specific `ProductVariant`**, not the `Product`
+  family — a curated bundle names an exact size ("the 50ml serum"),
+  deterministic pricing, no "default variant" concept needed.
+- **`Wishlist` stays at the `Product` level, unchanged** — the heart-toggle
+  on `ProductCard` has no size selector and doesn't need one; saving a
+  product for later is inherently family-level.
+
+### What changed
+
+- **New model**: `ProductVariant` (`backend/app/models/product.py`) — `id`,
+  `product_id`, `label` (free string, e.g. "30ml" — not everything sold is
+  measured in ml), `sku` (unique), `price_cents`, `currency`, `is_active`,
+  `position`.
+- **Moved off `Product`, onto `ProductVariant`**: `price_cents`, `currency`.
+  Stayed on `Product` (family-level): everything else, including `images`
+  (shared gallery across variants) and concern/ingredient tags.
+- **Moved from `product_id` → `variant_id`**: all four inventory tables
+  (`Inventory`, `InventoryBatch`, `InventoryTransaction`,
+  `InventoryReservation`), `CartItem`, `RoutineStep`. `OrderItem` gained
+  `variant_id` **alongside** its existing `product_id` (kept denormalized
+  on purpose — order history must keep reading correctly even if a variant
+  is later deleted; `OrderItem` is already snapshot-priced via
+  `name_snapshot`/`unit_price_cents_snapshot`, so no historical-price
+  backfill was needed there). `WishlistItem` deliberately untouched.
+- **Migration** (`fc2dafba970e_add_product_variants.py`): follows
+  `a9322b7ec397`'s established style (raw `op`-level DDL, `sa.table()`
+  shadow objects for the backfill, drop superseded columns in the same
+  migration, a real tested `downgrade()`). Backfills exactly one
+  `ProductVariant` per existing product (`label="Standard"`, carrying that
+  product's old price), then re-points every dependent row at that default
+  variant before dropping `product_id`/`price_cents`/`currency`. **Applied
+  to the dev DB this session** — 5 products → 5 variants, all inventory/
+  order/routine-step rows correctly backfilled, verified via direct query
+  (see "Verified" below).
+- **Deduplicated while touching this code**: `inventory_service.py` used to
+  reimplement `utils/order_lines.py`'s order-line-expansion logic inline
+  (found by this session's own audit). It now imports and calls
+  `order_stock_lines()` instead — one implementation, not two.
+- **`inventory_service.py`**: every function rewritten to key on
+  `variant_id`. The deadlock-safety property (`_lock_inventories_for`
+  locking in `sorted(set(...))` order before any `SELECT ... FOR UPDATE`)
+  was specifically preserved, not just superficially resembled — reverified
+  by rerunning the concurrency test after the rewrite (see "Verified").
+- **Routes**: `GET /api/products` (list) now returns `price_from_cents`
+  (min active-variant price), `in_stock` (any active variant in stock), and
+  `default_variant_id` (cheapest in-stock variant — lets `ProductCard`'s
+  one-click quick-add keep working without a size picker).
+  `GET /api/products/<slug>` nests a full `variants` array.
+  `POST /api/cart/items` takes `variant_id` instead of `product_id`. Admin
+  gained `/admin/products/<id>/variants[/<id>]` CRUD (mirrors the existing
+  `ProductImage` sub-resource pattern) and `/admin/inventory/<variant_id>/*`
+  replaces the old product-keyed inventory endpoints.
+  `PUT /admin/routines/<id>/steps` body changed from `product_id` to
+  `variant_id` per step.
+- **Frontend**: `ProductDetail.jsx` gained the size selector (pills, price/
+  stock update per selection). `ProductCard.jsx` shows "From KES X" and
+  quick-adds `default_variant_id`. New `frontend/src/lib/cartTotals.js`
+  extracts the cart-total math that used to be copy-pasted across
+  `Cart.jsx`/`Checkout.jsx` (plus a third inline copy in `Cart.jsx` for the
+  routine strikethrough price) into one variant-aware implementation.
+  `AdminProducts.jsx`'s single `price_kes` field and its separate inline-
+  price-edit-in-table-cell flow are both gone, replaced by an inline
+  variant editor (`VariantRow`, immediate per-row save/delete — deliberately
+  *not* the "stage then bulk-save" pattern `AdminRoutines.jsx`'s Steps panel
+  uses, since this file's own image gallery already established an
+  immediate-per-op convention and consistency within the file won out).
+  `AdminRoutines.jsx`'s step picker now lists "Product — Size" options.
+  `AdminInventory.jsx`/`AdminInventoryDetail.jsx` updated for the variant-
+  keyed endpoints (`:variantId` route param, `detail.variant` instead of
+  `detail.product`). Confirmed **zero changes needed** in
+  `RoutineStepRail.jsx` or any order-history view (`AccountOrderDetail.jsx`,
+  admin order detail) — both already only read family-level `product.*`
+  fields or the frozen `name_snapshot`/`unit_price_cents_snapshot`.
+
+### Verified
+
+`backend/tests/test_inventory.py`'s fixtures (`conftest.py`) rewritten to
+create a `Product`+`ProductVariant` pair (`make_variant`, was
+`make_product`) — all 8 tests pass, specifically including the concurrency
+test that proves real row-locking still holds under the new `variant_id`
+key. `flake8` clean. `npm run lint`/`npm run build` clean (build output
+unchanged at ~997KB — this phase didn't touch the known bundle-size issue,
+that's Phase 5).
+
+Full API-level walkthrough against a temporary `flask run --port 5001`
+(same convention as prior sessions — kept separate from the user's own dev
+server): signup → add a real product's variant to cart → verify the nested
+`{product, variant}` cart-item shape → checkout → confirmed
+`name_snapshot` correctly bakes in the variant label ("Mineral SPF 50 —
+Standard") and both `product_id`/`variant_id` land on the `OrderItem` →
+confirmed the reservation actually held (`on_hand`/`reserved` via the admin
+inventory-detail endpoint) → cancelled the order and confirmed the
+reservation released. Separately created a two-variant test product (30ml/
+50ml, different prices), received stock for only one size, and confirmed
+`GET /api/products/<slug>` correctly reports family-level `in_stock: true`
+(because *a* variant has stock) with `price_from_cents` picking the
+cheaper size, while each variant's own `stock_status` stays independent.
+All verification data (test product, test order/reservation, disposable
+test user) cleaned up afterward — dev DB confirmed back to baseline (5
+products/5 variants, 0 leftover test rows).
+
+**Not done this session**: no in-browser click-through of the new frontend
+(size selector, admin variant editor) — API-level and build/lint
+verification only, consistent with prior sessions' own noted gaps when a
+real browser wasn't used. `backend/README.md`/`frontend/README.md` don't
+yet document the new `ProductVariant` endpoints/shapes.
+
+**Deployment note for whoever ships this**: this migration has been applied
+to the **dev** database only. The live Render backend is still running
+against the pre-migration schema. Do **not** push this branch to
+`dermarra/dermarra-app` and let Render auto-deploy without immediately
+following up with `flask db upgrade` against the **production**
+`DATABASE_URL` (session pooler, port 5432, temporarily) — deploying the new
+code before running the migration will crash every request that touches
+`Product`/`Inventory`/`Cart`/`Order`/`RoutineStep` on the live site, since
+those tables/columns won't match what the new code expects. This should be
+done as one supervised push-then-migrate sequence, not two separate
+unsupervised steps.

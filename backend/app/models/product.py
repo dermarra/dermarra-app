@@ -100,8 +100,6 @@ class Product(db.Model):
     short_description = db.Column(db.String(500))
     description = db.Column(db.Text)
     key_actives = db.Column(db.String(255))
-    price_cents = db.Column(db.Integer, nullable=False)
-    currency = db.Column(db.String(3), default="KES", nullable=False)
     cloudinary_public_id = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -116,12 +114,25 @@ class Product(db.Model):
         "ProductImage", backref="product", order_by="ProductImage.position",
         cascade="all, delete-orphan",
     )
+    variants = db.relationship(
+        "ProductVariant", backref="product", order_by="ProductVariant.position",
+        cascade="all, delete-orphan",
+    )
 
-    def to_dict(self, include_concerns=True, include_admin_fields=False):
-        # `inventory` may be briefly absent right after a product is
-        # created (before a stock level is ever set) -- never let a
-        # missing row read as "in stock".
-        stock_status = self.inventory.stock_status() if self.inventory else "out_of_stock"
+    def to_dict(self, include_concerns=True, include_admin_fields=False, include_variants=True):
+        active_variants = [v for v in self.variants if v.is_active]
+        price_from_cents = min((v.price_cents for v in active_variants), default=None)
+        purchasable = [
+            v for v in active_variants if v.inventory and v.inventory.stock_status() != "out_of_stock"
+        ]
+        # in_stock: true if ANY active variant has stock -- a family with one
+        # sold-out size and one in-stock size should still read as buyable.
+        in_stock = bool(purchasable)
+        # The variant a one-click "quick add" (ProductCard, no size picker)
+        # should add -- cheapest in-stock variant, or just the cheapest
+        # active one if nothing's in stock (so the disabled button/link still
+        # has something to point at).
+        default_variant = min(purchasable or active_variants, key=lambda v: v.price_cents, default=None)
         data = {
             "id": self.id,
             "name": self.name,
@@ -130,27 +141,67 @@ class Product(db.Model):
             "short_description": self.short_description,
             "description": self.description,
             "key_actives": self.key_actives,
-            "price_cents": self.price_cents,
-            "currency": self.currency,
-            "in_stock": stock_status != "out_of_stock",
-            "stock_status": stock_status,
+            "price_from_cents": price_from_cents,
+            "in_stock": in_stock,
+            "default_variant_id": default_variant.id if default_variant else None,
             "cloudinary_public_id": self.cloudinary_public_id,
             "images": [image.to_dict() for image in self.images],
         }
+        if include_variants:
+            data["variants"] = [v.to_dict(include_admin_fields=include_admin_fields) for v in self.variants]
         if include_concerns:
             data["skin_concerns"] = [c.to_dict() for c in self.skin_concerns]
             data["ingredients"] = [i.to_dict() for i in self.ingredients]
         if include_admin_fields:
             data["is_active"] = self.is_active
-            if self.inventory:
-                data.update({
-                    "on_hand": self.inventory.on_hand,
-                    "reserved": self.inventory.reserved,
-                    "available": self.inventory.available,
-                    "reorder_level": self.inventory.reorder_level,
-                })
-            else:
-                data.update({"on_hand": 0, "reserved": 0, "available": 0, "reorder_level": 10})
+        return data
+
+
+class ProductVariant(db.Model):
+    """A sellable size/SKU of a Product -- Product is the catalogue "family"
+    (name, description, images, concern/ingredient tags); each variant has
+    its own price and its own Inventory/InventoryBatch rows. `label` is a
+    free display string ("30ml", "Travel size") rather than a structured
+    unit, since not everything sold is measured in ml."""
+
+    __tablename__ = "product_variants"
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=False)
+    label = db.Column(db.String(60), nullable=False)
+    sku = db.Column(db.String(60), unique=True, nullable=False)
+    price_cents = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(3), default="KES", nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    position = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self, include_admin_fields=False):
+        # `inventory` may be briefly absent right after a variant is
+        # created (before a stock level is ever set) -- never let a
+        # missing row read as "in stock".
+        stock_status = self.inventory.stock_status() if self.inventory else "out_of_stock"
+        data = {
+            "id": self.id,
+            "product_id": self.product_id,
+            "label": self.label,
+            "sku": self.sku,
+            "price_cents": self.price_cents,
+            "currency": self.currency,
+            "is_active": self.is_active,
+            "position": self.position,
+            "in_stock": stock_status != "out_of_stock",
+            "stock_status": stock_status,
+        }
+        if include_admin_fields and self.inventory:
+            data.update({
+                "on_hand": self.inventory.on_hand,
+                "reserved": self.inventory.reserved,
+                "available": self.inventory.available,
+                "reorder_level": self.inventory.reorder_level,
+            })
+        elif include_admin_fields:
+            data.update({"on_hand": 0, "reserved": 0, "available": 0, "reorder_level": 10})
         return data
 
 

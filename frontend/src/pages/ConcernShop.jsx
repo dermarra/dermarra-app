@@ -65,8 +65,8 @@ export default function ConcernShop() {
   const visibleProducts = useMemo(() => {
     let list = stepType ? products.filter((p) => p.step_type === stepType) : products;
     const sorted = [...list].sort((a, b) => {
-      if (sort === "price_asc") return a.price_cents - b.price_cents;
-      if (sort === "price_desc") return b.price_cents - a.price_cents;
+      if (sort === "price_asc") return a.price_from_cents - b.price_from_cents;
+      if (sort === "price_desc") return b.price_from_cents - a.price_from_cents;
       if (sort === "name") return a.name.localeCompare(b.name);
       return 0; // featured -- keep server order
     });

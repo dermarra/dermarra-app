@@ -20,6 +20,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [addError, setAddError] = useState(null);
@@ -31,6 +32,7 @@ export default function ProductDetail() {
     setSelectedIndex(0);
     client.get(`/products/${slug}`).then(({ data }) => {
       setProduct(data);
+      setSelectedVariantId(data.default_variant_id || data.variants?.[0]?.id || null);
       client
         .get("/products", { params: { step_type: data.step_type } })
         .then(({ data: relatedData }) => setRelated(relatedData.filter((p) => p.id !== data.id).slice(0, 4)));
@@ -39,7 +41,10 @@ export default function ProductDetail() {
 
   if (!product) return <p className="p-4 text-sm text-ink/60">Loading…</p>;
 
-  const price = (product.price_cents / 100).toFixed(0);
+  const selectedVariant =
+    product.variants?.find((v) => v.id === selectedVariantId) || product.variants?.[0];
+  const variantInStock = selectedVariant?.in_stock ?? product.in_stock;
+  const price = ((selectedVariant?.price_cents ?? 0) / 100).toFixed(0);
   const galleryIds =
     product.images?.length > 0
       ? product.images.map((img) => img.cloudinary_public_id)
@@ -53,10 +58,11 @@ export default function ProductDetail() {
       navigate("/login");
       return;
     }
+    if (!selectedVariant) return;
     setAddError(null);
     setAdding(true);
     try {
-      await addItem({ productId: product.id });
+      await addItem({ variantId: selectedVariant.id });
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
     } catch (err) {
@@ -67,7 +73,7 @@ export default function ProductDetail() {
   };
 
   const buttonLabel = (withPrice) => {
-    if (!product.in_stock) return "Out of stock";
+    if (!variantInStock) return "Out of stock";
     if (!user) return "Sign in to add to cart";
     if (added) return "Added to cart";
     if (adding) return "Adding…";
@@ -125,8 +131,30 @@ export default function ProductDetail() {
           <h1 className="font-display text-2xl mt-1 text-ink">{product.name}</h1>
           <p className="text-ink/70 mt-2">{product.short_description}</p>
           <p className="text-xl font-semibold mt-4 text-ink">KES {price}</p>
-          {product.stock_status === "low_stock" && (
+          {selectedVariant?.stock_status === "low_stock" && (
             <p className="text-xs font-semibold text-amber-dark mt-2">Only a few left in stock</p>
+          )}
+
+          {product.variants?.length > 1 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {product.variants
+                .filter((v) => v.is_active)
+                .map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVariantId(v.id)}
+                    disabled={!v.in_stock}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                      v.id === selectedVariantId
+                        ? "border-amber bg-amber/10 text-amber-dark"
+                        : "border-mist text-ink/70 hover:border-ink/30"
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+            </div>
           )}
 
           {product.skin_concerns?.length > 0 && (
@@ -146,13 +174,13 @@ export default function ProductDetail() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleAdd}
-            disabled={adding || !product.in_stock}
+            disabled={adding || !variantInStock}
             className={`hidden sm:flex mt-6 w-full py-3 rounded-sm font-semibold transition-colors disabled:opacity-50 items-center justify-center gap-2 ${
               added ? "bg-sage text-bone-light" : "bg-amber text-bone-light hover:bg-amber-dark"
             }`}
           >
             {added && <CheckIcon className="w-4 h-4" />}
-            {!added && product.in_stock && <BagIcon className="w-4 h-4" />}
+            {!added && variantInStock && <BagIcon className="w-4 h-4" />}
             {buttonLabel(false)}
           </motion.button>
           {addError && <p className="text-sm text-clay mt-2">{addError}</p>}
@@ -203,7 +231,7 @@ export default function ProductDetail() {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleAdd}
-          disabled={adding || !product.in_stock}
+          disabled={adding || !variantInStock}
           className={`w-full py-3 rounded-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 ${
             added ? "bg-sage text-bone-light" : "bg-amber text-bone-light"
           }`}

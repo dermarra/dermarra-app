@@ -119,20 +119,27 @@ export default function AdminRoutines() {
     }
   };
 
+  // Flattened "Product — Size" options for the step picker -- a routine
+  // step pins to a specific sellable variant, not just the product family,
+  // so the bundle's price is deterministic (see backend RoutineStep model).
+  const variantOptions = products.flatMap((p) =>
+    (p.variants || []).map((v) => ({ id: v.id, label: `${p.name} — ${v.label}` }))
+  );
+
   const openSteps = (routine) => {
     setStepsError(null);
     setStepsRoutineId(routine.id);
     setSteps(
       routine.steps.map((s) => ({
-        product_id: s.product.id,
+        variant_id: s.variant.id,
         time_of_day: s.time_of_day,
       }))
     );
   };
 
   const addStep = () => {
-    if (products.length === 0) return;
-    setSteps((s) => [...s, { product_id: products[0].id, time_of_day: "both" }]);
+    if (variantOptions.length === 0) return;
+    setSteps((s) => [...s, { variant_id: variantOptions[0].id, time_of_day: "both" }]);
   };
 
   const removeStep = (index) => {
@@ -159,7 +166,7 @@ export default function AdminRoutines() {
     try {
       const payload = {
         steps: steps.map((s, i) => ({
-          product_id: s.product_id,
+          variant_id: s.variant_id,
           order_index: i + 1,
           time_of_day: s.time_of_day,
         })),
@@ -311,12 +318,12 @@ export default function AdminRoutines() {
             <div key={index} className="flex items-center gap-2">
               <span className="font-mono text-xs text-ink/60 w-5">{index + 1}</span>
               <select
-                value={step.product_id}
-                onChange={(e) => updateStep(index, "product_id", e.target.value)}
+                value={step.variant_id}
+                onChange={(e) => updateStep(index, "variant_id", e.target.value)}
                 className="border border-mist rounded-sm px-3 py-2 text-sm flex-1"
               >
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                {variantOptions.map((v) => (
+                  <option key={v.id} value={v.id}>{v.label}</option>
                 ))}
               </select>
               <select

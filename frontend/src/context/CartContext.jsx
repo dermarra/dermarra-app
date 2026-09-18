@@ -25,9 +25,9 @@ export function CartProvider({ children }) {
     else setCart({ items: [] });
   }, [user, refreshCart]);
 
-  const addItem = useCallback(async ({ productId, routineId, quantity = 1 }) => {
+  const addItem = useCallback(async ({ variantId, routineId, quantity = 1 }) => {
     const { data } = await client.post("/cart/items", {
-      product_id: productId,
+      variant_id: variantId,
       routine_id: routineId,
       quantity,
     });

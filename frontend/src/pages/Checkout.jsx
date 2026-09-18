@@ -5,6 +5,7 @@ import client from "../api/client";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { UserIcon, MapPinIcon, PhoneIcon, CheckIcon } from "../components/Icons.jsx";
+import { cartTotalCents } from "../lib/cartTotals.js";
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 90000;
@@ -51,14 +52,7 @@ export default function Checkout() {
 
   const handleChange = (field) => (e) => setShipping({ ...shipping, [field]: e.target.value });
 
-  const total = cart.items.reduce((sum, item) => {
-    const unit = item.product
-      ? item.product.price_cents
-      : (item.routine.steps.reduce((s, step) => s + step.product.price_cents, 0) *
-          (100 - (item.routine.bundle_discount_percent || 0))) /
-        100;
-    return sum + unit * item.quantity;
-  }, 0);
+  const total = cartTotalCents(cart.items);
 
   const startPolling = (orderId) => {
     pollDeadline.current = Date.now() + POLL_TIMEOUT_MS;

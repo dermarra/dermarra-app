@@ -30,7 +30,6 @@ const STEP_TYPES = ["cleanser", "serum", "barrier_cream", "spf"];
 const STOCK_FILTERS = [
   { value: "", label: "All stock" },
   { value: "in_stock", label: "In stock" },
-  { value: "low_stock", label: "Low stock" },
   { value: "out_of_stock", label: "Out of stock" },
 ];
 
@@ -40,24 +39,125 @@ const emptyForm = {
   step_type: STEP_TYPES[0],
   short_description: "",
   key_actives: "",
-  price_kes: "",
   is_active: true,
   skin_concern_ids: [],
   ingredient_ids: [],
   images: [],
 };
 
-const STOCK_LABELS = { in_stock: "In stock", low_stock: "Low stock", out_of_stock: "Out of stock" };
-
 function StockBadge({ product }) {
-  const status = product.stock_status;
-  const cls =
-    status === "out_of_stock"
-      ? "text-clay border-clay/30"
-      : status === "low_stock"
-      ? "text-amber-dark border-amber/30"
-      : "text-sage-dark border-sage/30";
-  return <span className={`text-[11px] px-2 py-0.5 rounded-full border ${cls}`}>{STOCK_LABELS[status]}</span>;
+  const cls = product.in_stock ? "text-sage-dark border-sage/30" : "text-clay border-clay/30";
+  return (
+    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${cls}`}>
+      {product.in_stock ? "In stock" : "Out of stock"}
+    </span>
+  );
+}
+
+function VariantRow({ productId, variant, onSaved, onDeleted }) {
+  const [form, setForm] = useState({
+    label: variant.label,
+    sku: variant.sku,
+    price_kes: variant.price_cents / 100,
+    is_active: variant.is_active,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  const dirty =
+    form.label !== variant.label ||
+    form.sku !== variant.sku ||
+    Number(form.price_kes) !== variant.price_cents / 100 ||
+    form.is_active !== variant.is_active;
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const { data } = await client.patch(`/admin/products/${productId}/variants/${variant.id}`, {
+        label: form.label,
+        sku: form.sku,
+        price_cents: Math.round(Number(form.price_kes) * 100),
+        is_active: form.is_active,
+      });
+      onSaved(data);
+    } catch (err) {
+      setError(err.response?.data?.error || "Couldn't save this variant.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await client.delete(`/admin/products/${productId}/variants/${variant.id}`);
+      onDeleted(variant.id);
+    } catch (err) {
+      setError(err.response?.data?.error || "Couldn't delete this variant.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1 border border-mist rounded-sm p-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={form.label}
+          onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+          placeholder="Size/label, e.g. 30ml"
+          className="border border-mist rounded-sm px-2 py-1 text-sm w-32"
+        />
+        <input
+          value={form.sku}
+          onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
+          placeholder="SKU"
+          className="border border-mist rounded-sm px-2 py-1 text-sm w-36"
+        />
+        <input
+          type="number"
+          min="0"
+          value={form.price_kes}
+          onChange={(e) => setForm((f) => ({ ...f, price_kes: e.target.value }))}
+          placeholder="Price (KES)"
+          className="border border-mist rounded-sm px-2 py-1 text-sm w-28"
+        />
+        <label className="flex items-center gap-1 text-xs">
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
+          />
+          Active
+        </label>
+        <Link
+          to={`/admin/inventory/${variant.id}`}
+          className="text-xs text-ink/60 underline decoration-dotted"
+        >
+          Manage stock →
+        </Link>
+        <div className="flex-1" />
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving || !dirty}
+          className="px-3 py-1 rounded-sm bg-amber text-bone-light text-xs font-semibold disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={remove}
+          disabled={saving}
+          className="px-3 py-1 rounded-sm border border-mist text-clay text-xs disabled:opacity-50"
+        >
+          Delete
+        </button>
+      </div>
+      {error && <p className="text-xs text-clay">{error}</p>}
+    </div>
+  );
 }
 
 function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
@@ -129,8 +229,9 @@ export default function AdminProducts() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
-  const [editingPriceId, setEditingPriceId] = useState(null);
-  const [editingPriceValue, setEditingPriceValue] = useState("");
+  const [addingVariant, setAddingVariant] = useState(false);
+  const [newVariantForm, setNewVariantForm] = useState({ label: "", sku: "", price_kes: "" });
+  const [newVariantError, setNewVariantError] = useState(null);
 
   const [cropFile, setCropFile] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -172,7 +273,6 @@ export default function AdminProducts() {
       step_type: product.step_type,
       short_description: product.short_description || "",
       key_actives: product.key_actives || "",
-      price_kes: product.price_cents / 100,
       is_active: product.is_active,
       skin_concern_ids: product.skin_concerns?.map((c) => c.id) || [],
       ingredient_ids: product.ingredients?.map((i) => i.id) || [],
@@ -180,7 +280,48 @@ export default function AdminProducts() {
     });
     setError(null);
     setImageError(null);
+    setAddingVariant(false);
+    setNewVariantForm({ label: "", sku: "", price_kes: "" });
+    setNewVariantError(null);
     setEditingId(product.id);
+  };
+
+  // Variants are managed immediately against the API (like the image
+  // gallery below), not staged into `form` -- keep the `products` list in
+  // sync directly so the table's price/stock columns don't go stale.
+  const syncProductVariants = (variants) => {
+    setProducts((prev) => prev.map((p) => (p.id === editingId ? { ...p, variants } : p)));
+  };
+
+  const currentProduct = () => products.find((p) => p.id === editingId);
+
+  const handleVariantSaved = (variant) => {
+    const next = (currentProduct()?.variants || []).map((v) => (v.id === variant.id ? variant : v));
+    syncProductVariants(next);
+  };
+
+  const handleVariantDeleted = (variantId) => {
+    const next = (currentProduct()?.variants || []).filter((v) => v.id !== variantId);
+    syncProductVariants(next);
+  };
+
+  const handleAddVariant = async (e) => {
+    e.preventDefault();
+    setAddingVariant(true);
+    setNewVariantError(null);
+    try {
+      const { data } = await client.post(`/admin/products/${editingId}/variants`, {
+        label: newVariantForm.label,
+        sku: newVariantForm.sku,
+        price_cents: Math.round(Number(newVariantForm.price_kes) * 100),
+      });
+      syncProductVariants([...(currentProduct()?.variants || []), data]);
+      setNewVariantForm({ label: "", sku: "", price_kes: "" });
+    } catch (err) {
+      setNewVariantError(err.response?.data?.error || "Couldn't add this variant.");
+    } finally {
+      setAddingVariant(false);
+    }
   };
 
   const toggleConcern = (concernId) => {
@@ -212,7 +353,6 @@ export default function AdminProducts() {
         step_type: form.step_type,
         short_description: form.short_description,
         key_actives: form.key_actives,
-        price_cents: Math.round(Number(form.price_kes) * 100),
         is_active: form.is_active,
         skin_concern_ids: form.skin_concern_ids,
         ingredient_ids: form.ingredient_ids,
@@ -240,33 +380,6 @@ export default function AdminProducts() {
       setRowState((s) => ({
         ...s,
         [productId]: err.response?.data?.error || "Couldn't delete this product.",
-      }));
-    }
-  };
-
-  // ---------- Inline price edit ----------
-  const startPriceEdit = (product) => {
-    setEditingPriceId(product.id);
-    setEditingPriceValue(String(product.price_cents / 100));
-  };
-
-  const commitPriceEdit = async (product) => {
-    const priceCents = Math.round(Number(editingPriceValue) * 100);
-    setEditingPriceId(null);
-    if (!Number.isFinite(priceCents) || priceCents < 0 || priceCents === product.price_cents) return;
-    setRowState((s) => ({ ...s, [product.id]: "saving" }));
-    try {
-      const { data } = await client.patch(`/admin/products/${product.id}`, { price_cents: priceCents });
-      setProducts((prev) => prev.map((p) => (p.id === product.id ? data : p)));
-      setRowState((s) => {
-        const next = { ...s };
-        delete next[product.id];
-        return next;
-      });
-    } catch (err) {
-      setRowState((s) => ({
-        ...s,
-        [product.id]: err.response?.data?.error || "Couldn't update the price.",
       }));
     }
   };
@@ -430,7 +543,7 @@ export default function AdminProducts() {
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     if (stepTypeFilter) list = list.filter((p) => p.step_type === stepTypeFilter);
-    if (stockFilter) list = list.filter((p) => p.stock_status === stockFilter);
+    if (stockFilter) list = list.filter((p) => (stockFilter === "in_stock" ? p.in_stock : !p.in_stock));
 
     const sorted = [...list].sort((a, b) => {
       let av, bv;
@@ -438,11 +551,11 @@ export default function AdminProducts() {
         av = a.name.toLowerCase();
         bv = b.name.toLowerCase();
       } else if (sortKey === "price") {
-        av = a.price_cents;
-        bv = b.price_cents;
+        av = a.price_from_cents ?? 0;
+        bv = b.price_from_cents ?? 0;
       } else if (sortKey === "stock") {
-        av = a.on_hand;
-        bv = b.on_hand;
+        av = (a.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0);
+        bv = (b.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0);
       } else {
         av = a.is_active ? 1 : 0;
         bv = b.is_active ? 1 : 0;
@@ -527,23 +640,7 @@ export default function AdminProducts() {
               onChange={(e) => setForm({ ...form, key_actives: e.target.value })}
               className="border border-mist rounded-sm px-3 py-2 text-sm"
             />
-            <input
-              required
-              type="number"
-              min="0"
-              step="1"
-              placeholder="Price (KES)"
-              value={form.price_kes}
-              onChange={(e) => setForm({ ...form, price_kes: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
           </div>
-
-          {editingId !== "new" && (
-            <Link to={`/admin/inventory/${editingId}`} className="text-xs text-ink/60 underline decoration-dotted self-start">
-              Manage stock (batches, production runs, adjustments) →
-            </Link>
-          )}
 
           <textarea
             placeholder="Short description"
@@ -591,6 +688,60 @@ export default function AdminProducts() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-ink/70 mb-2">
+              Sizes &amp; prices (each is a separately stocked, separately priced variant)
+            </p>
+            {editingId === "new" ? (
+              <p className="text-xs text-ink/60">Save the product first, then add sizes.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {(currentProduct()?.variants || []).map((v) => (
+                  <VariantRow
+                    key={v.id}
+                    productId={editingId}
+                    variant={v}
+                    onSaved={handleVariantSaved}
+                    onDeleted={handleVariantDeleted}
+                  />
+                ))}
+                <form onSubmit={handleAddVariant} className="flex flex-wrap items-center gap-2">
+                  <input
+                    required
+                    value={newVariantForm.label}
+                    onChange={(e) => setNewVariantForm((f) => ({ ...f, label: e.target.value }))}
+                    placeholder="Size/label, e.g. 30ml"
+                    className="border border-mist rounded-sm px-2 py-1 text-sm w-32"
+                  />
+                  <input
+                    required
+                    value={newVariantForm.sku}
+                    onChange={(e) => setNewVariantForm((f) => ({ ...f, sku: e.target.value }))}
+                    placeholder="SKU"
+                    className="border border-mist rounded-sm px-2 py-1 text-sm w-36"
+                  />
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    value={newVariantForm.price_kes}
+                    onChange={(e) => setNewVariantForm((f) => ({ ...f, price_kes: e.target.value }))}
+                    placeholder="Price (KES)"
+                    className="border border-mist rounded-sm px-2 py-1 text-sm w-28"
+                  />
+                  <button
+                    type="submit"
+                    disabled={addingVariant}
+                    className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs disabled:opacity-50"
+                  >
+                    {addingVariant ? "Adding…" : "+ Add size"}
+                  </button>
+                </form>
+                {newVariantError && <p className="text-xs text-clay">{newVariantError}</p>}
+              </div>
+            )}
           </div>
 
           <div>
@@ -815,33 +966,22 @@ export default function AdminProducts() {
                       )}
                     </td>
                     <td className="py-2 pr-2">
-                      {editingPriceId === product.id ? (
-                        <input
-                          autoFocus
-                          type="number"
-                          min="0"
-                          value={editingPriceValue}
-                          onChange={(e) => setEditingPriceValue(e.target.value)}
-                          onBlur={() => commitPriceEdit(product)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") commitPriceEdit(product);
-                            if (e.key === "Escape") setEditingPriceId(null);
-                          }}
-                          className="border border-mist rounded-sm px-2 py-1 text-sm w-24"
-                        />
+                      {product.price_from_cents == null ? (
+                        <span className="text-ink/40">No sizes yet</span>
                       ) : (
-                        <button
-                          onClick={() => startPriceEdit(product)}
-                          className="text-ink hover:text-amber underline decoration-dotted"
-                        >
-                          KES {(product.price_cents / 100).toFixed(0)}
-                        </button>
+                        <>
+                          {product.variants?.length > 1 ? "From " : ""}
+                          KES {(product.price_from_cents / 100).toFixed(0)}
+                        </>
                       )}
                     </td>
                     <td className="py-2 pr-2">
-                      <Link to={`/admin/inventory/${product.id}`} className="text-ink hover:text-amber underline decoration-dotted">
-                        {product.on_hand}
-                      </Link>
+                      <button
+                        onClick={() => openEdit(product)}
+                        className="text-ink hover:text-amber underline decoration-dotted"
+                      >
+                        {(product.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0)}
+                      </button>
                       <div><StockBadge product={product} /></div>
                     </td>
                     <td className="py-2 pr-2 text-xs text-ink/60">

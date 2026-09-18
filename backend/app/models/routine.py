@@ -57,16 +57,20 @@ class RoutineStep(db.Model):
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     routine_id = db.Column(db.String(36), db.ForeignKey("routines.id"), nullable=False)
-    product_id = db.Column(db.String(36), db.ForeignKey("products.id"), nullable=False)
+    # A routine step is pinned to a specific sellable variant (e.g. "the
+    # 50ml serum"), not just the product family -- pricing has to be
+    # deterministic for a curated bundle. See the ProductVariant migration.
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False)
     order_index = db.Column(db.Integer, nullable=False)
     time_of_day = db.Column(db.String(10), nullable=False, default="both")
 
-    product = db.relationship("Product", lazy="joined")
+    variant = db.relationship("ProductVariant", lazy="joined")
 
     def to_dict(self):
         return {
             "id": self.id,
             "order_index": self.order_index,
             "time_of_day": self.time_of_day,
-            "product": self.product.to_dict(include_concerns=False),
+            "variant": self.variant.to_dict(),
+            "product": self.variant.product.to_dict(include_concerns=False, include_variants=False),
         }

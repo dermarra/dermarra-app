@@ -36,7 +36,7 @@ function formatKES(cents) {
 }
 
 export default function AdminInventoryDetail() {
-  const { productId } = useParams();
+  const { variantId } = useParams();
   const navigate = useNavigate();
 
   const [detail, setDetail] = useState(null);
@@ -57,20 +57,20 @@ export default function AdminInventoryDetail() {
   const load = () => {
     setLoading(true);
     client
-      .get(`/admin/inventory/${productId}`)
+      .get(`/admin/inventory/${variantId}`)
       .then(({ data }) => setDetail(data))
-      .catch((err) => setError(err.response?.data?.error || "Couldn't load this product's inventory."))
+      .catch((err) => setError(err.response?.data?.error || "Couldn't load this variant's inventory."))
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, [productId]);
+  useEffect(load, [variantId]);
 
   const submitReceive = async (e) => {
     e.preventDefault();
     setReceiveError(null);
     setReceiveBusy(true);
     try {
-      await client.post(`/admin/inventory/${productId}/receive`, {
+      await client.post(`/admin/inventory/${variantId}/receive`, {
         batch_number: receiveForm.batch_number,
         quantity_produced: Number(receiveForm.quantity_produced),
         unit_cost_cents: receiveForm.unit_cost_kes ? Math.round(Number(receiveForm.unit_cost_kes) * 100) : null,
@@ -92,7 +92,7 @@ export default function AdminInventoryDetail() {
     setAdjustError(null);
     setAdjustBusy(true);
     try {
-      await client.post(`/admin/inventory/${productId}/adjust`, {
+      await client.post(`/admin/inventory/${variantId}/adjust`, {
         batch_id: adjustForm.batch_id,
         type: adjustForm.type,
         quantity: Number(adjustForm.quantity),
@@ -113,7 +113,7 @@ export default function AdminInventoryDetail() {
   if (error) return <p className="text-sm text-clay">{error}</p>;
   if (!detail) return null;
 
-  const { product, batches, transactions } = detail;
+  const { variant, batches, transactions } = detail;
   const activeBatches = batches.filter((b) => b.status === "active" && b.quantity_remaining > 0);
   const selectedBatch = batches.find((b) => b.id === adjustForm.batch_id);
 
@@ -130,14 +130,16 @@ export default function AdminInventoryDetail() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-xl text-ink">{product.name}</h2>
+          <h2 className="font-display text-xl text-ink">
+            {variant.product_name} — {variant.label}
+          </h2>
           <p className="text-xs text-ink/60 font-mono">
-            on hand {product.on_hand} · reserved {product.reserved} · available {product.available} · reorder at{" "}
-            {product.reorder_level}
+            on hand {variant.on_hand} · reserved {variant.reserved} · available {variant.available} · reorder at{" "}
+            {variant.reorder_level}
           </p>
         </div>
         <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1">
-          {STATUS_LABELS[product.stock_status]}
+          {STATUS_LABELS[variant.stock_status]}
         </span>
       </div>
 

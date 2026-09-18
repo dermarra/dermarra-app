@@ -80,7 +80,7 @@ export default function AdminInventory() {
           <div className="flex flex-col gap-1">
             {expiringSoon.map((batch) => (
               <p key={batch.id} className="text-xs text-ink/70">
-                {batch.product_name} — batch {batch.batch_number} ({batch.quantity_remaining} units) expires{" "}
+                {batch.product_name} ({batch.variant_label}) — batch {batch.batch_number} ({batch.quantity_remaining} units) expires{" "}
                 {batch.expiry_date}
               </p>
             ))}
@@ -103,7 +103,9 @@ export default function AdminInventory() {
                 className="flex items-center justify-between border border-mist rounded-sm px-4 py-3 hover:border-ink/40 transition-colors"
               >
                 <div>
-                  <p className="text-sm font-semibold text-ink">{row.name}</p>
+                  <p className="text-sm font-semibold text-ink">
+                    {row.product_name} — {row.label}
+                  </p>
                   <p className="text-xs text-ink/60 font-mono">
                     on hand {row.on_hand} · reserved {row.reserved} · available {row.available} · reorder at{" "}
                     {row.reorder_level}
