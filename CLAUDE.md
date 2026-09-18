@@ -803,14 +803,19 @@ verification only, consistent with prior sessions' own noted gaps when a
 real browser wasn't used. `backend/README.md`/`frontend/README.md` don't
 yet document the new `ProductVariant` endpoints/shapes.
 
-**Deployment note for whoever ships this**: this migration has been applied
-to the **dev** database only. The live Render backend is still running
-against the pre-migration schema. Do **not** push this branch to
-`dermarra/dermarra-app` and let Render auto-deploy without immediately
-following up with `flask db upgrade` against the **production**
-`DATABASE_URL` (session pooler, port 5432, temporarily) — deploying the new
-code before running the migration will crash every request that touches
-`Product`/`Inventory`/`Cart`/`Order`/`RoutineStep` on the live site, since
-those tables/columns won't match what the new code expects. This should be
-done as one supervised push-then-migrate sequence, not two separate
-unsupervised steps.
+**Correction, discovered the hard way right after this section was first
+written**: the claim above (migration applied to "dev" only, production
+still on the old schema) was **wrong** — dev and production share the
+**same Supabase database** (one `DATABASE_URL`, just accessed via
+different poolers depending on the task — see gotcha #1). There is no
+separate production database in this project today. So the moment the
+migration ran against "dev" this session, it altered the live schema too,
+while the still-deployed old Render backend code kept querying the now-
+dropped `Product.price_cents` column — every product/cart/order endpoint
+on the live site returned 500 until the new code was pushed and Render
+redeployed. **The real rule going forward**: running `flask db migrate`/
+`flask db upgrade` locally against `DATABASE_URL` — even just for "dev"
+testing — immediately affects the live production site too, for however
+long it takes to get the matching code deployed. Treat any local migration
+against this project's `DATABASE_URL` as a production change, full stop,
+and push the corresponding code immediately after, not "whenever."
