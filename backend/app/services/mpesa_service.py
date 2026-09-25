@@ -76,6 +76,12 @@ def stk_push(*, phone, amount_kes, account_reference, transaction_desc):
         headers={"Authorization": f"Bearer {access_token}"},
         timeout=15,
     )
+    if not response.ok:
+        current_app.logger.error(
+            "Daraja STK response %s: %s",
+            response.status_code,
+            response.text,
+        )
     response.raise_for_status()
     return response.json()
 
