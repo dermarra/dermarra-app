@@ -74,7 +74,7 @@ def stk_push(*, phone, amount_kes, account_reference, transaction_desc):
         f"{_base_url()}/mpesa/stkpush/v1/processrequest",
         json=payload,
         headers={"Authorization": f"Bearer {access_token}"},
-        timeout=15,
+        timeout=45,
     )
     if not response.ok:
         current_app.logger.error(
