@@ -44,11 +44,33 @@ export function CartProvider({ children }) {
     setCart(data);
   }, []);
 
+  const applyCoupon = useCallback(async (code) => {
+    const { data } = await client.post("/cart/apply-coupon", { code });
+    setCart(data);
+    return data;
+  }, []);
+
+  const removeCoupon = useCallback(async () => {
+    const { data } = await client.delete("/cart/coupon");
+    setCart(data);
+    return data;
+  }, []);
+
   const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <CartContext.Provider
-      value={{ cart, loading, itemCount, refreshCart, addItem, updateItem, removeItem }}
+      value={{
+        cart,
+        loading,
+        itemCount,
+        refreshCart,
+        addItem,
+        updateItem,
+        removeItem,
+        applyCoupon,
+        removeCoupon,
+      }}
     >
       {children}
     </CartContext.Provider>

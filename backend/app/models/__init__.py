@@ -8,6 +8,7 @@ from app.models.order import Order, OrderItem
 from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction, InventoryReservation
 from app.models.hero_slide import HeroSlide
 from app.models.wishlist import Wishlist, WishlistItem
+from app.models.coupon import Coupon
 
 __all__ = [
     "User",
@@ -31,4 +32,5 @@ __all__ = [
     "HeroSlide",
     "Wishlist",
     "WishlistItem",
+    "Coupon",
 ]

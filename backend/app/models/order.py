@@ -30,6 +30,13 @@ class Order(db.Model):
     total_cents = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(3), default="KES", nullable=False)
 
+    # Snapshotted at checkout -- same rationale as OrderItem.name_snapshot,
+    # order history must keep reading correctly even if the coupon is later
+    # edited or deleted. See coupon_service.py.
+    coupon_id = db.Column(db.String(36), db.ForeignKey("coupons.id"), nullable=True)
+    coupon_code_snapshot = db.Column(db.String(40), nullable=True)
+    discount_cents = db.Column(db.Integer, default=0, nullable=False)
+
     payment_method = db.Column(db.String(20))
     mpesa_phone = db.Column(db.String(15))
     mpesa_checkout_request_id = db.Column(db.String(60), index=True)
@@ -58,6 +65,8 @@ class Order(db.Model):
             "status": self.status,
             "subtotal_cents": self.subtotal_cents,
             "shipping_cents": self.shipping_cents,
+            "discount_cents": self.discount_cents,
+            "coupon_code": self.coupon_code_snapshot,
             "total_cents": self.total_cents,
             "currency": self.currency,
             "payment_method": self.payment_method,

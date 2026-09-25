@@ -9,14 +9,20 @@ class Cart(db.Model):
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False, unique=True)
+    coupon_id = db.Column(db.String(36), db.ForeignKey("coupons.id"), nullable=True)
     updated_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
     )
 
     items = db.relationship("CartItem", backref="cart", cascade="all, delete-orphan")
+    coupon = db.relationship("Coupon", lazy="joined")
 
     def to_dict(self):
-        return {"id": self.id, "items": [item.to_dict() for item in self.items]}
+        return {
+            "id": self.id,
+            "items": [item.to_dict() for item in self.items],
+            "coupon": self.coupon.to_dict() if self.coupon else None,
+        }
 
 
 class CartItem(db.Model):

@@ -9,10 +9,11 @@ from app.extensions import db
 from app.models.hero_slide import HeroSlide
 from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction
 from app.models.order import Order
+from app.models.coupon import Coupon
 from app.models.product import Product, ProductVariant, ProductImage, SkinConcern, Ingredient, StepGroup
 from app.models.routine import Routine, RoutineStep
 from app.models.user import User
-from app.services import mpesa_service, brevo_service
+from app.services import mpesa_service, brevo_service, coupon_service
 from app.services.cloudinary_service import upload_image, delete_image
 from app.services import inventory_service
 from app.services.inventory_service import InventoryError, restock_order
@@ -120,6 +121,86 @@ def delete_ingredient(ingredient_id):
     if ingredient.cloudinary_public_id:
         delete_image(ingredient.cloudinary_public_id)
     db.session.delete(ingredient)
+    db.session.commit()
+    return "", 204
+
+
+# ---------- Coupons ----------
+
+@admin_bp.get("/coupons")
+@admin_required
+def list_coupons():
+    coupons = Coupon.query.order_by(Coupon.created_at.desc()).all()
+    return jsonify([c.to_dict(include_admin_fields=True) for c in coupons]), 200
+
+
+@admin_bp.post("/coupons")
+@admin_required
+def create_coupon():
+    data = request.get_json(silent=True) or {}
+    required = ["code", "discount_type", "discount_value"]
+    missing = [f for f in required if data.get(f) is None]
+    if missing:
+        return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
+    if data["discount_type"] not in Coupon.DISCOUNT_TYPES:
+        return jsonify({"error": f"discount_type must be one of {Coupon.DISCOUNT_TYPES}"}), 400
+
+    try:
+        expires_at = _parse_datetime(data.get("expires_at"))
+    except InventoryError as e:
+        return jsonify({"error": str(e)}), 400
+
+    coupon = Coupon(
+        code=data["code"].strip().upper(),
+        discount_type=data["discount_type"],
+        discount_value=data["discount_value"],
+        is_active=data.get("is_active", True),
+        max_uses=data.get("max_uses"),
+        first_order_only=data.get("first_order_only", False),
+        expires_at=expires_at,
+    )
+    db.session.add(coupon)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "a coupon with this code already exists"}), 400
+    return jsonify(coupon.to_dict(include_admin_fields=True)), 201
+
+
+@admin_bp.patch("/coupons/<coupon_id>")
+@admin_required
+def update_coupon(coupon_id):
+    coupon = Coupon.query.get_or_404(coupon_id)
+    data = request.get_json(silent=True) or {}
+
+    if "discount_type" in data and data["discount_type"] not in Coupon.DISCOUNT_TYPES:
+        return jsonify({"error": f"discount_type must be one of {Coupon.DISCOUNT_TYPES}"}), 400
+
+    if "code" in data:
+        coupon.code = data["code"].strip().upper()
+    for field in ("discount_type", "discount_value", "is_active", "max_uses", "first_order_only"):
+        if field in data:
+            setattr(coupon, field, data[field])
+    if "expires_at" in data:
+        try:
+            coupon.expires_at = _parse_datetime(data["expires_at"])
+        except InventoryError as e:
+            return jsonify({"error": str(e)}), 400
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "a coupon with this code already exists"}), 400
+    return jsonify(coupon.to_dict(include_admin_fields=True)), 200
+
+
+@admin_bp.delete("/coupons/<coupon_id>")
+@admin_required
+def delete_coupon(coupon_id):
+    coupon = Coupon.query.get_or_404(coupon_id)
+    coupon.is_active = False
     db.session.commit()
     return "", 204
 
@@ -860,6 +941,7 @@ def cancel_order_admin(order_id):
     # can_cancel only allows paid/processing/shipped, all of which imply
     # stock was already decremented once when the order became paid.
     restock_order(order, created_by=get_jwt_identity())
+    coupon_service.release_usage(order)
     order.status = "cancelled"
     db.session.commit()
     return jsonify(order.to_dict(include_admin_fields=True)), 200

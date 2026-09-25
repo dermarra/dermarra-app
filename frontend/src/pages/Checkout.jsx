@@ -5,7 +5,7 @@ import client from "../api/client";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { UserIcon, MapPinIcon, PhoneIcon, CheckIcon } from "../components/Icons.jsx";
-import { cartTotalCents } from "../lib/cartTotals.js";
+import { cartSubtotalCents, cartDiscountCents } from "../lib/cartTotals.js";
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 90000;
@@ -52,7 +52,9 @@ export default function Checkout() {
 
   const handleChange = (field) => (e) => setShipping({ ...shipping, [field]: e.target.value });
 
-  const total = cartTotalCents(cart.items);
+  const subtotal = cartSubtotalCents(cart.items);
+  const discount = cartDiscountCents(cart, subtotal);
+  const total = subtotal - discount;
 
   const startPolling = (orderId) => {
     pollDeadline.current = Date.now() + POLL_TIMEOUT_MS;
@@ -162,7 +164,7 @@ export default function Checkout() {
         <h1 className="font-display text-2xl text-ink mb-2">Check your phone</h1>
         <p className="text-ink/70">
           We sent an M-Pesa prompt to <span className="font-mono">{shipping.phone}</span>. Enter your
-          PIN to complete the payment of <span className="font-semibold">KES {(total / 100).toFixed(0)}</span>.
+          PIN to complete the payment of <span className="font-semibold">KES {((order?.total_cents ?? total) / 100).toFixed(0)}</span>.
         </p>
         <div className="mt-6 flex justify-center">
           <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin" />
@@ -206,9 +208,10 @@ export default function Checkout() {
       </p>
       <h1 className="font-display text-2xl sm:text-3xl text-ink mb-4">Checkout</h1>
 
-      <div className="rounded-sm border border-mist bg-bone-light p-4 mb-6 flex justify-between text-sm">
-        <span className="text-ink/70">Total ({cart.items.length} item{cart.items.length !== 1 ? "s" : ""})</span>
-        <span className="font-semibold text-ink">KES {(total / 100).toFixed(0)}</span>
+      <div className="rounded-sm border border-mist bg-bone-light p-4 mb-6 text-sm">
+        <div className="flex justify-between text-ink/70"><span>Subtotal ({cart.items.length} item{cart.items.length !== 1 ? "s" : ""})</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>
+        {discount > 0 && <div className="flex justify-between text-sage-dark mt-1"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
+        <div className="flex justify-between font-semibold text-ink mt-2 pt-2 border-t border-mist"><span>Total</span><span>KES {(total / 100).toFixed(0)}</span></div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

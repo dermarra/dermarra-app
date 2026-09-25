@@ -96,12 +96,14 @@ export default function Home() {
   const [concerns, setConcerns] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [stepGroups, setStepGroups] = useState([]);
+  const [featuredCoupon, setFeaturedCoupon] = useState(null);
 
   useEffect(() => {
     client.get("/hero-slides").then(({ data }) => setHeroSlides(data));
     client.get("/products/concerns").then(({ data }) => setConcerns(data));
     client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6)));
     client.get("/products/step-groups").then(({ data }) => setStepGroups(data));
+    client.get("/coupons/featured").then(({ data }) => setFeaturedCoupon(data));
   }, []);
 
   return (
@@ -297,6 +299,13 @@ export default function Home() {
             Create your Dermarra account to save your quiz results, build a wishlist, track
             orders, and pick up your routine right where you left off.
           </motion.p>
+          {featuredCoupon && (
+            <motion.p variants={itemReveal} className="mt-4 text-sm font-semibold text-sage-dark">
+              Join now and use {featuredCoupon.code} for {featuredCoupon.discount_type === "percent"
+                ? `${featuredCoupon.discount_value}% off your first order.`
+                : `KES ${(featuredCoupon.discount_value / 100).toFixed(0)} off your first order.`}
+            </motion.p>
+          )}
           <motion.div
             variants={itemReveal}
             className="mt-6 inline-block"

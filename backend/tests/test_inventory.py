@@ -21,6 +21,13 @@ from app.services.inventory_service import InsufficientStockError, InventoryErro
 
 
 def _inv(variant_id):
+    # expire_all() first: in the concurrency test specifically, this
+    # session has been open since before background threads committed
+    # their own changes via separate sessions -- even a fresh
+    # .filter_by().first() on this session can otherwise still return what
+    # they committed as stale. Confirmed by direct repro (see
+    # test_coupons.py's analogous fix for the full explanation).
+    db.session.expire_all()
     return Inventory.query.filter_by(variant_id=variant_id).first()
 
 
@@ -45,6 +52,7 @@ def test_reservation_concurrency_last_unit_never_double_books(app, make_variant,
 
     def run_a():
         with app.app_context():
+            db.session.expire_all()
             order = Order.query.get(order_a_id)
             inventory_service.reserve_stock_for_order(order)
             # Hold the row lock open (uncommitted) so B's FOR UPDATE has
@@ -57,6 +65,7 @@ def test_reservation_concurrency_last_unit_never_double_books(app, make_variant,
     def run_b():
         with app.app_context():
             b_may_start.wait(timeout=5)
+            db.session.expire_all()
             start = time.monotonic()
             order = Order.query.get(order_b_id)
             try:
@@ -107,7 +116,8 @@ def test_fefo_allocates_earliest_expiry_first_and_splits_across_batches(app, mak
     db.session.commit()
 
     drawn = {t.batch_id: -t.quantity for t in transactions}
-    assert drawn == {near_batch.id: 3, far_batch.id: 2}, "should exhaust the soonest-expiring batch before the non-expiring one"
+    assert drawn == {near_batch.id: 3, far_batch.id: 2}, \
+        "should exhaust the soonest-expiring batch before the non-expiring one"
 
     assert InventoryBatch.query.get(near_batch.id).status == "depleted"
     assert InventoryBatch.query.get(far_batch.id).quantity_remaining == 8

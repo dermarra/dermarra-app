@@ -6,13 +6,16 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.extensions import db
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem
-from app.services import mpesa_service
+from app.models.user import User
+from app.services import mpesa_service, coupon_service
+from app.services.coupon_service import CouponError
 from app.services.inventory_service import (
     InsufficientStockError,
     consume_reservations_for_order,
     reserve_stock_for_order,
     release_reservations_for_order,
 )
+from app.utils.cart_totals import cart_item_unit_price_cents
 
 orders_bp = Blueprint("orders", __name__)
 
@@ -57,14 +60,11 @@ def checkout():
     subtotal_cents = 0
     order_items = []
     for item in cart.items:
+        unit_price = cart_item_unit_price_cents(item)
         if item.variant:
-            unit_price = item.variant.price_cents
             name = f"{item.variant.product.name} — {item.variant.label}"
             product_id = item.variant.product_id
         else:
-            step_total = sum(step.variant.price_cents for step in item.routine.steps)
-            discount = item.routine.bundle_discount_percent or 0
-            unit_price = round(step_total * (100 - discount) / 100)
             name = f"{item.routine.name} (Full Routine)"
             product_id = None
 
@@ -80,12 +80,27 @@ def checkout():
             )
         )
 
+    # Re-validate the cart's applied coupon (never trust it as-is -- it
+    # could have expired or hit max_uses since it was applied) and spend
+    # it only now, at the point it's actually used.
+    coupon = None
+    discount_cents = 0
+    if cart.coupon_id:
+        user = User.query.get(user_id)
+        try:
+            coupon, discount_cents = coupon_service.validate_and_price(cart.coupon.code, user, subtotal_cents)
+        except CouponError as e:
+            return jsonify({"error": str(e)}), 400
+
     order = Order(
         user_id=user_id,
         status="pending",
         subtotal_cents=subtotal_cents,
         shipping_cents=SHIPPING_FLAT_CENTS,
-        total_cents=subtotal_cents + SHIPPING_FLAT_CENTS,
+        discount_cents=discount_cents,
+        coupon_id=coupon.id if coupon else None,
+        coupon_code_snapshot=coupon.code if coupon else None,
+        total_cents=subtotal_cents - discount_cents + SHIPPING_FLAT_CENTS,
         shipping_name=shipping["name"],
         shipping_address_line1=shipping["address_line1"],
         shipping_address_line2=shipping.get("address_line2"),
@@ -106,8 +121,12 @@ def checkout():
             "error": f"not enough stock for: {', '.join(sorted(e.shortages))}"
         }), 400
 
+    if coupon:
+        coupon_service.apply_usage(coupon)
+
     for item in list(cart.items):
         db.session.delete(item)
+    cart.coupon_id = None
 
     db.session.commit()
 
@@ -130,6 +149,7 @@ def cancel_order(order_id):
 
     if order.status in ("pending", "payment_failed"):
         release_reservations_for_order(order)
+        coupon_service.release_usage(order)
         order.status = "cancelled"
         db.session.commit()
         return jsonify(order.to_dict()), 200
@@ -137,6 +157,7 @@ def cancel_order(order_id):
     if order.status == "payment_pending":
         if not order.mpesa_checkout_request_id:
             release_reservations_for_order(order)
+            coupon_service.release_usage(order)
             order.status = "cancelled"
             db.session.commit()
             return jsonify(order.to_dict()), 200
@@ -178,6 +199,7 @@ def cancel_order(order_id):
         # Any other non-zero ResultCode means Safaricom itself reports the
         # transaction as failed/cancelled/timed out -- safe to cancel.
         release_reservations_for_order(order)
+        coupon_service.release_usage(order)
         order.status = "cancelled"
         db.session.commit()
         return jsonify(order.to_dict()), 200

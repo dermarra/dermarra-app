@@ -20,6 +20,23 @@ export function cartItemUndiscountedCents(item) {
   return item.routine ? routineStepsTotalCents(item.routine) : null;
 }
 
-export function cartTotalCents(items) {
+export function cartSubtotalCents(items) {
   return items.reduce((sum, item) => sum + cartItemUnitPriceCents(item) * item.quantity, 0);
+}
+
+export function cartTotalCents(items) {
+  return cartSubtotalCents(items);
+}
+
+// Mirrors backend/app/services/coupon_service.py's validate_and_price math
+// (percent or fixed_cents off the subtotal, clamped so it can never exceed
+// it) -- this is a display-only preview; the backend always recomputes and
+// re-validates the real discount at checkout, never trusts this value.
+export function cartDiscountCents(cart, subtotalCents) {
+  if (!cart.coupon) return 0;
+  const raw =
+    cart.coupon.discount_type === "percent"
+      ? Math.round((subtotalCents * cart.coupon.discount_value) / 100)
+      : cart.coupon.discount_value;
+  return Math.min(raw, subtotalCents);
 }

@@ -14,6 +14,7 @@ import pytest
 
 from app import create_app
 from app.extensions import db
+from app.models.coupon import Coupon
 from app.models.inventory import Inventory, InventoryBatch, InventoryReservation, InventoryTransaction
 from app.models.order import Order, OrderItem
 from app.models.product import Product, ProductVariant
@@ -132,3 +133,36 @@ def make_order(app, test_user):
         return order
 
     return _make
+
+
+@pytest.fixture
+def make_coupon(app):
+    """Factory fixture: make_coupon(**overrides) -> Coupon. Teardown is
+    self-contained (doesn't rely on ordering relative to make_variant's
+    teardown): deletes any Order still referencing this coupon before
+    deleting the coupon row itself, since Order.coupon_id has no
+    ON DELETE CASCADE."""
+    created = []
+
+    def _make(code=None, discount_type="percent", discount_value=10, **overrides):
+        import uuid
+        coupon = Coupon(
+            code=code or f"__TEST__{uuid.uuid4().hex[:8].upper()}",
+            discount_type=discount_type,
+            discount_value=discount_value,
+            **overrides,
+        )
+        db.session.add(coupon)
+        db.session.commit()
+        created.append(coupon.id)
+        return coupon
+
+    yield _make
+
+    for coupon_id in created:
+        order_ids = [row.id for row in Order.query.filter_by(coupon_id=coupon_id).all()]
+        if order_ids:
+            OrderItem.query.filter(OrderItem.order_id.in_(order_ids)).delete(synchronize_session=False)
+            Order.query.filter(Order.id.in_(order_ids)).delete(synchronize_session=False)
+        Coupon.query.filter_by(id=coupon_id).delete()
+    db.session.commit()

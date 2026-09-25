@@ -118,11 +118,18 @@ class InventoryTransaction(db.Model):
         "INTERNAL_USE",
     )
 
+    # Indexes here match what actually exists in the DB (created via raw
+    # migration DDL in a9322b7ec397/fc2dafba970e) -- declared explicitly so
+    # `flask db migrate` stops seeing them as drift to be dropped.
+    __table_args__ = (
+        db.Index("ix_inventory_transactions_reference", "reference_type", "reference_id"),
+    )
+
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     type = db.Column(db.String(20), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False)
-    batch_id = db.Column(db.String(36), db.ForeignKey("inventory_batches.id"), nullable=False)
+    variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False, index=True)
+    batch_id = db.Column(db.String(36), db.ForeignKey("inventory_batches.id"), nullable=False, index=True)
     reference_type = db.Column(db.String(30), nullable=True)
     reference_id = db.Column(db.String(36), nullable=True)
     reason = db.Column(db.Text, nullable=True)
@@ -161,12 +168,12 @@ class InventoryReservation(db.Model):
     STATUSES = ("active", "consumed", "released", "expired", "cancelled")
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    order_id = db.Column(db.String(36), db.ForeignKey("orders.id"), nullable=False)
+    order_id = db.Column(db.String(36), db.ForeignKey("orders.id"), nullable=False, index=True)
     order_item_id = db.Column(db.String(36), db.ForeignKey("order_items.id"), nullable=False)
     variant_id = db.Column(db.String(36), db.ForeignKey("product_variants.id"), nullable=False)
     batch_id = db.Column(db.String(36), db.ForeignKey("inventory_batches.id"), nullable=True)
     quantity = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(20), default="active", nullable=False)
+    status = db.Column(db.String(20), default="active", nullable=False, index=True)
     expires_at = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     released_at = db.Column(db.DateTime, nullable=True)

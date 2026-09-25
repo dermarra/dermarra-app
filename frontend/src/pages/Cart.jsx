@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { cloudinaryUrl } from "../api/client";
 import { MinusIcon, PlusIcon, TrashIcon, BagIcon } from "../components/Icons.jsx";
-import { cartItemUnitPriceCents, cartItemUndiscountedCents, cartTotalCents } from "../lib/cartTotals.js";
+import { cartItemUnitPriceCents, cartItemUndiscountedCents, cartSubtotalCents, cartDiscountCents } from "../lib/cartTotals.js";
 
 export default function Cart() {
   const { user } = useAuth();
-  const { cart, updateItem, removeItem } = useCart();
+  const { cart, updateItem, removeItem, applyCoupon, removeCoupon } = useCart();
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   if (!user) {
     return (
@@ -40,7 +44,35 @@ export default function Cart() {
     );
   }
 
-  const total = cartTotalCents(cart.items);
+  const subtotal = cartSubtotalCents(cart.items);
+  const discount = cartDiscountCents(cart, subtotal);
+  const total = subtotal - discount;
+
+  const handleApplyCoupon = async (event) => {
+    event.preventDefault();
+    setCouponError(null);
+    setCouponLoading(true);
+    try {
+      await applyCoupon(couponCode);
+      setCouponCode("");
+    } catch (err) {
+      setCouponError(err.response?.data?.error || "We couldn't apply that code.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponError(null);
+    setCouponLoading(true);
+    try {
+      await removeCoupon();
+    } catch (err) {
+      setCouponError(err.response?.data?.error || "We couldn't remove that code.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 pb-32 sm:pb-6">
@@ -117,16 +149,48 @@ export default function Cart() {
         </AnimatePresence>
       </ul>
 
-      <div className="fixed sm:static bottom-16 inset-x-0 bg-bone-light border-t border-mist sm:border-0 p-4 sm:p-0 sm:mt-6 flex items-center justify-between">
-        <span className="font-semibold text-ink">Total: KES {(total / 100).toFixed(0)}</span>
-        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-          <Link
-            to="/checkout"
-            className="block px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold hover:bg-amber-dark transition-colors"
-          >
-            Checkout
-          </Link>
-        </motion.div>
+      <div className="mt-6 border-t border-mist pt-4">
+        <div className="flex gap-2">
+          <form onSubmit={handleApplyCoupon} className="flex flex-1 gap-2">
+            <input
+              value={couponCode}
+              onChange={(event) => setCouponCode(event.target.value)}
+              placeholder="Coupon code"
+              aria-label="Coupon code"
+              className="min-w-0 flex-1 border border-mist rounded-sm px-3 py-2 text-sm bg-bone text-ink uppercase focus:border-amber"
+              disabled={couponLoading || Boolean(cart.coupon)}
+            />
+            <button
+              type="submit"
+              disabled={couponLoading || !couponCode.trim() || Boolean(cart.coupon)}
+              className="px-3 py-2 rounded-sm border border-ink text-sm font-semibold text-ink disabled:opacity-40"
+            >
+              Apply
+            </button>
+          </form>
+          {cart.coupon && (
+            <button onClick={handleRemoveCoupon} disabled={couponLoading} className="text-sm text-clay underline disabled:opacity-40">
+              Remove
+            </button>
+          )}
+        </div>
+        {couponError && <p className="text-sm text-clay mt-2">{couponError}</p>}
+        {cart.coupon && <p className="text-sm text-sage-dark mt-2">{cart.coupon.code} applied</p>}
+        <div className="mt-4 flex flex-col gap-1 text-sm text-ink/70">
+          <div className="flex justify-between"><span>Subtotal</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>
+          {discount > 0 && <div className="flex justify-between text-sage-dark"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
+        </div>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="font-semibold text-ink">Total: KES {(total / 100).toFixed(0)}</span>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <Link
+              to="/checkout"
+              className="block px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold hover:bg-amber-dark transition-colors"
+            >
+              Checkout
+            </Link>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
