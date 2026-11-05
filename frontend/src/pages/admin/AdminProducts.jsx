@@ -18,6 +18,7 @@ import { CSS } from "@dnd-kit/utilities";
 import Cropper from "react-easy-crop";
 import client, { cloudinaryUrl } from "../../api/client";
 import NameSlugFields from "../../components/NameSlugFields.jsx";
+import Field from "../../components/admin/Field.jsx";
 import { finalizeSlug } from "../../lib/slug.js";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 import { getCroppedBlob } from "../../lib/imageCrop.js";
@@ -28,6 +29,12 @@ import { getCroppedBlob } from "../../lib/imageCrop.js";
 // animations on the same node would fight that mid-drag.
 
 const STEP_TYPES = ["cleanser", "serum", "barrier_cream", "spf"];
+const STEP_LABELS = {
+  cleanser: "Cleanser (prep)",
+  serum: "Serum (treat)",
+  barrier_cream: "Barrier cream (seal)",
+  spf: "SPF (protect)",
+};
 
 const STOCK_FILTERS = [
   { value: "", label: "All stock" },
@@ -118,48 +125,66 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
   };
 
   return (
-    <div className="flex flex-col gap-1 border border-mist rounded-sm p-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={form.label}
-          onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-          placeholder="Size/label, e.g. 30ml"
-          className="border border-mist rounded-sm px-2 py-1 text-sm w-32"
-        />
-        <input
-          value={form.sku}
-          onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-          placeholder="SKU"
-          className="border border-mist rounded-sm px-2 py-1 text-sm w-36"
-        />
-        <input
-          type="number"
-          min="1"
-          step="1"
-          value={form.price_kes}
-          onChange={(e) => setForm((f) => ({ ...f, price_kes: e.target.value }))}
-          placeholder="Price (KES)"
-          className="border border-mist rounded-sm px-2 py-1 text-sm w-28"
-        />
-        <label className="flex items-center gap-1 text-xs">
+    <div
+      className="flex flex-col gap-1 border border-mist rounded-sm p-2"
+      onKeyDown={(e) => {
+        // These inputs sit inside the product <form>: Enter would otherwise
+        // submit the whole product (closing the editor, edit lost).
+        if (e.key === "Enter" && e.target.tagName === "INPUT") {
+          e.preventDefault();
+          if (dirty && !saving) save();
+        }
+      }}
+    >
+      <div className="flex flex-wrap items-end gap-2">
+        <Field label="Size label">
+          <input
+            value={form.label}
+            onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+            placeholder="e.g. 30ml"
+            className="border border-mist rounded-sm px-2 py-1 text-sm w-28 font-normal"
+          />
+        </Field>
+        <Field label="SKU">
+          <input
+            value={form.sku}
+            onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))}
+            placeholder="e.g. AAS-30ML"
+            className="border border-mist rounded-sm px-2 py-1 text-sm w-32 font-mono font-normal"
+          />
+        </Field>
+        <Field label="Price (KES)">
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={form.price_kes}
+            onChange={(e) => setForm((f) => ({ ...f, price_kes: e.target.value }))}
+            placeholder="3200"
+            className="border border-mist rounded-sm px-2 py-1 text-sm w-24 font-normal"
+          />
+        </Field>
+        <label className="flex items-center gap-1 text-xs pb-1.5" title="Untick to stop selling this size without deleting it.">
           <input
             type="checkbox"
             checked={form.is_active}
             onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
           />
-          Active
+          On sale
         </label>
         <Link
           to={`/admin/inventory/${variant.id}`}
-          className="text-xs text-ink/60 underline decoration-dotted"
+          className="text-xs text-ink/60 underline decoration-dotted pb-1.5"
+          title="Receive production batches and adjust stock for this size"
         >
-          Manage stock →
+          Manage stock ({variant.available ?? 0} available) →
         </Link>
         <div className="flex-1" />
         <button
           type="button"
           onClick={save}
           disabled={saving || !dirty}
+          title={dirty ? "Save changes to this size" : "Change something first"}
           className="px-3 py-1 rounded-sm bg-amber text-bone-light text-xs font-semibold disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
@@ -341,7 +366,11 @@ export default function AdminProducts() {
   };
 
   const handleAddVariant = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
+    if (!newVariantForm.label.trim() || !newVariantForm.sku.trim()) {
+      setNewVariantError("Enter a size label and a SKU.");
+      return;
+    }
     const priceCents = parsePriceKes(newVariantForm.price_kes);
     if (priceCents === null) {
       setNewVariantError("Enter a price of at least KES 1, in whole shillings.");
@@ -665,52 +694,72 @@ export default function AdminProducts() {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <NameSlugFields form={form} setForm={setForm} urlPrefix="/shop/" namePlaceholder="Name" />
-            <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
-              Routine step
+            <NameSlugFields
+              form={form}
+              setForm={setForm}
+              urlPrefix="/shop/"
+              namePlaceholder="e.g. Anti Ageing Serum"
+              nameHelp="The product name customers see, e.g. Anti Ageing Serum. Don't include the size -- sizes are added below."
+            />
+            <Field
+              label="Routine step"
+              help="Which step of the routine this product is: cleanser (prep), serum (treat), barrier cream (seal) or SPF (protect). Decides where it appears under Shop by Step."
+            >
               <select
                 value={form.step_type}
                 onChange={(e) => setForm({ ...form, step_type: e.target.value })}
                 className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
               >
                 {STEP_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>{STEP_LABELS[t] || t}</option>
                 ))}
               </select>
-            </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
-              Key actives (shown on the product card)
+            </Field>
+            <Field
+              label="Key actives"
+              help="The headline active ingredients with strengths, shown in small caps on the product card, e.g. 10% Niacinamide · 2% Retinaldehyde."
+            >
               <input
-                placeholder="e.g. 10% Ascorbic Acid"
+                placeholder="e.g. 0.1% Retinaldehyde, Copper Peptides"
                 value={form.key_actives}
                 onChange={(e) => setForm({ ...form, key_actives: e.target.value })}
                 className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
               />
-            </label>
+            </Field>
           </div>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
-            Short description (one line, under the product name)
+          <Field
+            label="Short description"
+            help="One sentence under the product name on its page, e.g. 'Smooths fine lines and firms skin.' Keep it under ~120 characters."
+          >
             <textarea
+              placeholder="e.g. Smooths fine lines and firms skin overnight."
               value={form.short_description}
               onChange={(e) => setForm({ ...form, short_description: e.target.value })}
               className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
               rows={2}
             />
-          </label>
+          </Field>
 
-          <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
-            Full description (shown on the product page)
+          <Field
+            label="Full description"
+            help="The detailed write-up on the product page: what it does, who it's for, how to use it. Line breaks are kept."
+          >
             <textarea
+              placeholder="What it does, who it's for, how and when to apply it…"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
               rows={5}
             />
-          </label>
+          </Field>
 
           <div>
-            <p className="text-xs font-semibold text-ink/70 mb-2">Skin concerns</p>
+            <p className="text-xs font-semibold text-ink/80">Skin concerns</p>
+            <p className="text-[11px] text-ink/55 mb-2">
+              Tap every concern this product helps with -- it will be listed on that concern&apos;s shop page.
+              Manage the list under Admin → Concerns.
+            </p>
             <div className="flex flex-wrap gap-2">
               {concerns.map((c) => (
                 <button
@@ -730,7 +779,11 @@ export default function AdminProducts() {
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-ink/70 mb-2">Ingredients</p>
+            <p className="text-xs font-semibold text-ink/80">Ingredients</p>
+            <p className="text-[11px] text-ink/55 mb-2">
+              Tap the key ingredients it contains, so it shows under Shop by Ingredient. Manage the list under
+              Admin → Ingredients.
+            </p>
             <div className="flex flex-wrap gap-2">
               {ingredients.map((i) => (
                 <button
@@ -750,8 +803,10 @@ export default function AdminProducts() {
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-ink/70 mb-2">
-              Sizes &amp; prices (each is a separately stocked, separately priced variant)
+            <p className="text-xs font-semibold text-ink/80">Sizes &amp; prices</p>
+            <p className="text-[11px] text-ink/55 mb-2">
+              Each size is sold, priced and stocked separately. A product needs at least one active size to
+              appear in the shop. After adding a size, use &quot;Manage stock&quot; to receive a production batch.
             </p>
             {editingId === "new" ? (
               <p className="text-xs text-ink/60">Save the product first, then add sizes.</p>
@@ -772,46 +827,65 @@ export default function AdminProducts() {
                     onDeleted={handleVariantDeleted}
                   />
                 ))}
-                <form onSubmit={handleAddVariant} className="flex flex-wrap items-center gap-2">
-                  <input
-                    required
-                    value={newVariantForm.label}
-                    onChange={(e) => setNewVariantForm((f) => ({ ...f, label: e.target.value }))}
-                    placeholder="Size/label, e.g. 30ml"
-                    className="border border-mist rounded-sm px-2 py-1 text-sm w-32"
-                  />
-                  <input
-                    required
-                    value={newVariantForm.sku}
-                    onChange={(e) => setNewVariantForm((f) => ({ ...f, sku: e.target.value }))}
-                    placeholder="SKU"
-                    className="border border-mist rounded-sm px-2 py-1 text-sm w-36"
-                  />
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={newVariantForm.price_kes}
-                    onChange={(e) => setNewVariantForm((f) => ({ ...f, price_kes: e.target.value }))}
-                    placeholder="Price (KES)"
-                    className="border border-mist rounded-sm px-2 py-1 text-sm w-28"
-                  />
+                {/* Not a <form>: this sits inside the product <form>, and a nested
+                    form is ignored by browsers -- "+ Add size" used to submit the
+                    product form instead (saved + closed the editor, size lost). */}
+                <div
+                  className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_8rem_auto] gap-2 items-start border border-dashed border-mist rounded-sm p-2"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+                      e.preventDefault();
+                      handleAddVariant(e);
+                    }
+                  }}
+                >
+                  <Field label="Size label" help="What the customer picks, e.g. 30ml, 50ml, Travel size.">
+                    <input
+                      value={newVariantForm.label}
+                      onChange={(e) => setNewVariantForm((f) => ({ ...f, label: e.target.value }))}
+                      placeholder="e.g. 30ml"
+                      className="border border-mist rounded-sm px-2 py-1.5 text-sm font-normal"
+                    />
+                  </Field>
+                  <Field label="SKU" help="Your unique stock code for this size, e.g. AAS-30ML. Never reuse one.">
+                    <input
+                      value={newVariantForm.sku}
+                      onChange={(e) => setNewVariantForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. AAS-30ML"
+                      className="border border-mist rounded-sm px-2 py-1.5 text-sm font-mono font-normal"
+                    />
+                  </Field>
+                  <Field label="Price (KES)" help="Whole shillings, e.g. 3200.">
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={newVariantForm.price_kes}
+                      onChange={(e) => setNewVariantForm((f) => ({ ...f, price_kes: e.target.value }))}
+                      placeholder="3200"
+                      className="border border-mist rounded-sm px-2 py-1.5 text-sm font-normal"
+                    />
+                  </Field>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleAddVariant}
                     disabled={addingVariant}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs disabled:opacity-50"
+                    className="sm:mt-5 px-3 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold disabled:opacity-50"
                   >
                     {addingVariant ? "Adding…" : "+ Add size"}
                   </button>
-                </form>
+                </div>
                 {newVariantError && <p className="text-xs text-clay">{newVariantError}</p>}
               </div>
             )}
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-ink/70 mb-2">Images</p>
+            <p className="text-xs font-semibold text-ink/80">Images</p>
+            <p className="text-[11px] text-ink/55 mb-2">
+              Square product photos (you&apos;ll be asked to crop). The &quot;Primary&quot; one is used on shop cards;
+              drag to reorder the gallery. All sizes share these photos.
+            </p>
             {editingId === "new" ? (
               <p className="text-xs text-ink/60">Save the product first, then add images.</p>
             ) : (
@@ -892,13 +966,19 @@ export default function AdminProducts() {
             )}
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-start gap-2 text-sm">
             <input
               type="checkbox"
+              className="mt-1"
               checked={form.is_active}
               onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
             />
-            Active (visible in shop)
+            <span>
+              Active (visible in shop)
+              <span className="block text-[11px] text-ink/55">
+                Untick to hide the product without deleting it -- order history and stock records are kept.
+              </span>
+            </span>
           </label>
 
           {error && <p className="text-sm text-clay">{error}</p>}

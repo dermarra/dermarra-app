@@ -47,6 +47,7 @@ def mark_order_paid(order, receipt_number=None):
         return False
 
     was_cancelled = order.status == "cancelled"
+    order.payment_failure_reason = None
     if receipt_number:
         order.mpesa_receipt_number = receipt_number
     order.status = "paid"
@@ -74,7 +75,7 @@ def mark_order_paid(order, receipt_number=None):
     return True
 
 
-def mark_order_failed(order):
+def mark_order_failed(order, reason=None):
     """Records a failed/cancelled STK attempt. Only applies to an order
     actually awaiting payment -- a stale or forged failure callback can
     never downgrade a paid (or cancelled) order. Releases the stock hold;
@@ -83,18 +84,20 @@ def mark_order_failed(order):
         return False
     inventory_service.release_reservations_for_order(order)
     order.status = "payment_failed"
+    order.payment_failure_reason = (str(reason).strip()[:255] or None) if reason else None
     return True
 
 
-def apply_daraja_result(order, result_code, receipt_number=None):
+def apply_daraja_result(order, result_code, receipt_number=None, result_desc=None):
     """Applies a Daraja ResultCode (int from the callback, str from the
-    query API). Returns "paid", "failed" or None (still pending/unknown)."""
+    query API), recording Safaricom's ResultDesc as the failure reason.
+    Returns "paid", "failed" or None (still pending/unknown)."""
     if result_code is None:
         return None
     if mpesa_service.is_success(result_code):
         mark_order_paid(order, receipt_number)
         return "paid"
-    mark_order_failed(order)
+    mark_order_failed(order, reason=result_desc)
     return "failed"
 
 

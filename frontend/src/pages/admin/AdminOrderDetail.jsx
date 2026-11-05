@@ -158,6 +158,9 @@ export default function AdminOrderDetail() {
         <h3 className="text-sm font-semibold mb-3">Payment</h3>
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
+        {order.status === "payment_failed" && order.payment_failure_reason && (
+          <p className="text-sm text-clay">Last attempt: {order.payment_failure_reason}</p>
+        )}
         <p className="text-sm text-ink/80">Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}</p>
 
         {order.status === "payment_pending" && (
@@ -200,7 +203,11 @@ export default function AdminOrderDetail() {
           <h3 className="text-sm font-semibold mb-3">Advance to {nextStatus}</h3>
           {nextStatus === "delivered" && (
             <div className="mb-3">
-              <p className="text-xs text-ink/60 mb-2">A proof-of-delivery photo is required.</p>
+              <p className="text-xs font-semibold text-ink/80">Proof of delivery (required)</p>
+              <p className="text-[11px] text-ink/55 mb-2">
+                A photo of the package at the customer&apos;s door or in their hands. Upload it, then mark as delivered
+                -- the customer gets an email.
+              </p>
               <ImageUploadField
                 value={proofPublicId}
                 onChange={setProofPublicId}
@@ -210,7 +217,10 @@ export default function AdminOrderDetail() {
           )}
           {nextStatus === "shipped" && (
             <div className="mb-3">
-              <p className="text-xs text-ink/60 mb-2">Tracking number (optional)</p>
+              <p className="text-xs font-semibold text-ink/80">Tracking number (optional)</p>
+              <p className="text-[11px] text-ink/55 mb-2">
+                The courier&apos;s waybill or tracking code. It&apos;s included in the &quot;your order has shipped&quot; email.
+              </p>
               <input
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}

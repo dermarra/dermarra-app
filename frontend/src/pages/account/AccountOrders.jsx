@@ -78,7 +78,13 @@ export default function AccountOrders() {
       }
       if (data.status !== "payment_pending") {
         stopPolling(order.id);
-        setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: data.status } : o)));
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === order.id
+              ? { ...o, status: data.status, payment_failure_reason: data.result_description }
+              : o
+          )
+        );
         if (data.status === "payment_failed" && data.result_description) {
           setPaymentState((s) => ({ ...s, [order.id]: data.result_description }));
         }
@@ -144,6 +150,9 @@ export default function AccountOrders() {
                   {order.status.replace("_", " ")} ·{" "}
                   {new Date(order.created_at).toLocaleDateString()}
                 </p>
+                {order.status === "payment_failed" && order.payment_failure_reason && (
+                  <p className="text-xs text-clay mt-0.5">{order.payment_failure_reason}</p>
+                )}
               </div>
               <span className="text-sm font-semibold text-ink">
                 KES {(order.total_cents / 100).toFixed(0)}

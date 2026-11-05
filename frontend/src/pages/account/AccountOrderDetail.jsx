@@ -86,6 +86,9 @@ export default function AccountOrderDetail() {
         <h3 className="text-sm font-semibold text-ink mb-3">Payment</h3>
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
+        {order.status === "payment_failed" && order.payment_failure_reason && (
+          <p className="text-sm text-clay">Last attempt: {order.payment_failure_reason}</p>
+        )}
         <p className="text-sm text-ink/80">
           Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}
         </p>

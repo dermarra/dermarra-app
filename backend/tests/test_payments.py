@@ -190,12 +190,13 @@ def test_is_success_accepts_int_and_string_codes():
 
 # ---------- Routes ----------
 
-def _callback(client, checkout_id, result_code, receipt="SBX123"):
+def _callback(client, checkout_id, result_code, receipt="SBX123", result_desc=None):
     item = [{"Name": "MpesaReceiptNumber", "Value": receipt}] if result_code == 0 else []
     return client.post("/api/payments/mpesa/callback", json={
         "Body": {"stkCallback": {
             "CheckoutRequestID": checkout_id,
             "ResultCode": result_code,
+            "ResultDesc": result_desc,
             "CallbackMetadata": {"Item": item},
         }}
     })
@@ -271,3 +272,26 @@ def test_status_poll_leaves_pending_payment_alone(app, stocked_order, monkeypatc
         f"/api/payments/mpesa/status/{order.id}", headers={"Authorization": f"Bearer {token}"}
     )
     assert resp.get_json()["status"] == "payment_pending"
+
+
+def test_failure_callback_records_safaricoms_reason(app, stocked_order, test_user):
+    """The reason must reach the customer whichever path learned the result
+    -- it used to be shown only when the status poll itself asked Daraja."""
+    variant, order = stocked_order()
+    _in_flight(order, "__TEST__reason")
+
+    _callback(app.test_client(), "__TEST__reason", 1032, result_desc="Request Cancelled by user.")
+    refreshed = _order(order.id)
+    assert refreshed.status == "payment_failed"
+    assert refreshed.payment_failure_reason == "Request Cancelled by user."
+    assert _inv(variant.id).reserved == 0
+
+    token = create_access_token(identity=test_user.id)
+    resp = app.test_client().get(
+        f"/api/payments/mpesa/status/{order.id}", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert resp.get_json()["result_description"] == "Request Cancelled by user."
+
+    payment_service.mark_order_paid(refreshed)
+    db.session.commit()
+    assert _order(order.id).payment_failure_reason is None, "a later success clears the old reason"

@@ -1,0 +1,14 @@
+# Response headers for the static frontend. Read by Cloudflare Pages (and by
+# Netlify, while both are live), from the build output's root.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Vite fingerprints everything under /assets/ (index-<hash>.js), so these
+# never change in place and can be cached for a year. index.html is not
+# cached this way, so new deploys are picked up immediately.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

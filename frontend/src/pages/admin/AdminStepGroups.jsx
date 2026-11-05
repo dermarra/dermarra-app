@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
+import Field from "../../components/admin/Field.jsx";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
@@ -78,22 +79,37 @@ export default function AdminStepGroups() {
                     <p className="text-xs font-mono uppercase tracking-widest text-sage-dark">
                       {group.key} · maps to step_type &ldquo;{group.step_type}&rdquo;
                     </p>
-                    <input
-                      required
-                      placeholder="Label"
-                      value={form.label}
-                      onChange={(e) => setForm({ ...form, label: e.target.value })}
-                      className="border border-mist rounded-sm px-3 py-2 text-sm"
-                    />
-                    <textarea
-                      placeholder="Description"
-                      value={form.description}
-                      onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      className="border border-mist rounded-sm px-3 py-2 text-sm"
-                      rows={2}
-                    />
+                    <p className="text-[11px] text-ink/55 -mt-2">
+                      These four steps are fixed (they map to each product&apos;s &quot;Routine step&quot;), so they can be
+                      renamed and re-described but not added or removed.
+                    </p>
+                    <Field
+                      label="Label"
+                      help="The step's display name in the homepage 'Shop by Step' section, e.g. Prep, Treat, Seal, Protect."
+                    >
+                      <input
+                        required
+                        placeholder="e.g. Treat"
+                        value={form.label}
+                        onChange={(e) => setForm({ ...form, label: e.target.value })}
+                        className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                      />
+                    </Field>
+                    <Field
+                      label="Description"
+                      help="One line on what this step does, shown under the label. Leave blank to use the default wording."
+                    >
+                      <textarea
+                        placeholder="e.g. Actives dosed at the concentration that actually changes skin."
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                        rows={2}
+                      />
+                    </Field>
                     <div>
-                      <p className="text-xs font-semibold text-ink/70 mb-2">Photo</p>
+                      <p className="text-xs font-semibold text-ink/80">Photo</p>
+                      <p className="text-[11px] text-ink/55 mb-2">Square image for this step&apos;s card and shop-page banner.</p>
                       <ImageUploadField
                         value={form.cloudinary_public_id}
                         onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}

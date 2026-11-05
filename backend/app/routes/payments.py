@@ -76,6 +76,7 @@ def initiate_stk_push():
     order.mpesa_checkout_request_id = result["CheckoutRequestID"]
     order.mpesa_merchant_request_id = result["MerchantRequestID"]
     order.mpesa_receipt_number = None
+    order.payment_failure_reason = None
     order.status = "payment_pending"
     db.session.commit()
 
@@ -98,7 +99,9 @@ def payment_status(order_id):
         result = None
 
     if result is not None:
-        outcome = payment_service.apply_daraja_result(order, result.get("ResultCode"))
+        outcome = payment_service.apply_daraja_result(
+            order, result.get("ResultCode"), result_desc=result.get("ResultDesc")
+        )
         if outcome:
             db.session.commit()
             if outcome == "paid":
@@ -107,7 +110,9 @@ def payment_status(order_id):
     return jsonify({
         "status": order.status,
         "mpesa_receipt_number": order.mpesa_receipt_number,
-        "result_description": (result or {}).get("ResultDesc"),
+        # Stored on the order, so it's there whether the callback or this
+        # poll learned the result (it used to be poll-only, usually empty).
+        "result_description": order.payment_failure_reason,
     }), 200
 
 
@@ -140,7 +145,7 @@ def mpesa_callback():
         return accepted
 
     if not mpesa_service.is_success(result_code):
-        if payment_service.mark_order_failed(order):
+        if payment_service.mark_order_failed(order, reason=stk_callback.get("ResultDesc")):
             db.session.commit()
         return accepted
 

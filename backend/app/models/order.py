@@ -42,6 +42,9 @@ class Order(db.Model):
     mpesa_checkout_request_id = db.Column(db.String(60), index=True)
     mpesa_merchant_request_id = db.Column(db.String(60))
     mpesa_receipt_number = db.Column(db.String(30))
+    # Safaricom's ResultDesc for the latest failed STK attempt (e.g.
+    # "Request Cancelled by user."); cleared on retry and on success.
+    payment_failure_reason = db.Column(db.String(255), nullable=True)
     paid_at = db.Column(db.DateTime)
 
     shipping_name = db.Column(db.String(255))
@@ -71,6 +74,7 @@ class Order(db.Model):
             "currency": self.currency,
             "payment_method": self.payment_method,
             "mpesa_receipt_number": self.mpesa_receipt_number,
+            "payment_failure_reason": self.payment_failure_reason,
             "paid_at": self.paid_at.isoformat() if self.paid_at else None,
             "delivery_proof_public_id": self.delivery_proof_public_id,
             "tracking_number": self.tracking_number,

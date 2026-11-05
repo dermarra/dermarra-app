@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import client from "../../api/client";
+import Field from "../../components/admin/Field.jsx";
 
 const STATUS_LABELS = {
   in_stock: "In stock",
@@ -173,58 +174,69 @@ export default function AdminInventoryDetail() {
               onSubmit={submitReceive}
               className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-4 overflow-hidden"
             >
+              <p className="text-[11px] text-ink/55">
+                Log each finished production run as its own batch. Stock is sold oldest-expiry first, so expiry dates
+                matter.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  required
-                  placeholder="Batch number"
-                  value={receiveForm.batch_number}
-                  onChange={(e) => setReceiveForm({ ...receiveForm, batch_number: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm"
-                />
-                <input
-                  required
-                  type="number"
-                  min="1"
-                  placeholder="Quantity produced"
-                  value={receiveForm.quantity_produced}
-                  onChange={(e) => setReceiveForm({ ...receiveForm, quantity_produced: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Unit production cost (KES, optional)"
-                  value={receiveForm.unit_cost_kes}
-                  onChange={(e) => setReceiveForm({ ...receiveForm, unit_cost_kes: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm"
-                />
-                <label className="flex flex-col gap-1 text-xs text-ink/60">
-                  Expiry date (leave blank if non-expiring)
+                <Field label="Batch number" help="Your lot/batch code printed on the packaging, e.g. AAS-2611-01. Must be unique for this size.">
+                  <input
+                    required
+                    placeholder="e.g. AAS-2611-01"
+                    value={receiveForm.batch_number}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, batch_number: e.target.value })}
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-mono font-normal text-ink"
+                  />
+                </Field>
+                <Field label="Quantity produced" help="How many sellable units of this size the run made (whole number). Added to stock on hand.">
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 50"
+                    value={receiveForm.quantity_produced}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, quantity_produced: e.target.value })}
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  />
+                </Field>
+                <Field label="Unit production cost (KES)" help="Optional. Your internal cost per unit (ingredients + packaging + labour). Never shown to customers.">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 850"
+                    value={receiveForm.unit_cost_kes}
+                    onChange={(e) => setReceiveForm({ ...receiveForm, unit_cost_kes: e.target.value })}
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  />
+                </Field>
+                <Field label="Expiry date" help="The best-before date on this batch. Leave blank only if the product doesn't expire.">
                   <input
                     type="date"
                     value={receiveForm.expiry_date}
                     onChange={(e) => setReceiveForm({ ...receiveForm, expiry_date: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm text-ink"
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
                   />
-                </label>
-                <label className="flex flex-col gap-1 text-xs text-ink/60">
-                  Production date (defaults to now)
+                </Field>
+                <Field label="Production date" help="When the run was made. Leave blank to use today.">
                   <input
                     type="date"
                     value={receiveForm.produced_at}
                     onChange={(e) => setReceiveForm({ ...receiveForm, produced_at: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm text-ink"
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
                   />
-                </label>
+                </Field>
               </div>
-              <textarea
-                placeholder="Notes (optional)"
-                value={receiveForm.notes}
-                onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-                rows={2}
-              />
+              <Field label="Notes" help="Optional, e.g. which formula version or who made it.">
+                <textarea
+                  placeholder="e.g. Formula v2, made by Jane"
+                  value={receiveForm.notes}
+                  onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
+                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  rows={2}
+                />
+              </Field>
               {receiveError && <p className="text-sm text-clay">{receiveError}</p>}
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -295,44 +307,64 @@ export default function AdminInventoryDetail() {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="flex flex-col gap-3 border border-mist rounded-sm p-4 overflow-hidden"
             >
+              <p className="text-[11px] text-ink/55">
+                For stock that leaves (or turns up) outside of normal sales -- damaged, expired, given away, or a count
+                correction. Every adjustment is permanently logged with its reason.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select
-                  value={adjustForm.batch_id}
-                  onChange={(e) => setAdjustForm({ ...adjustForm, batch_id: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm"
+                <Field label="Batch" help="The batch the units came from (check the batch number on the packaging).">
+                  <select
+                    value={adjustForm.batch_id}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, batch_id: e.target.value })}
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  >
+                    <option value="">Select a batch…</option>
+                    {activeBatches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.batch_number} ({b.quantity_remaining} remaining)
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="What happened" help="Pick the closest reason. 'Other correction' is for stocktake differences.">
+                  <select
+                    value={adjustForm.type}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, type: e.target.value })}
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  >
+                    {ADJUSTMENT_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field
+                  label="Quantity"
+                  help={
+                    adjustForm.type === "ADJUSTMENT"
+                      ? "Signed whole number: negative removes units (e.g. -3), positive adds units found in a count (e.g. 5)."
+                      : "How many units to remove (whole number, e.g. 2). Units reserved for unpaid orders can't be removed."
+                  }
                 >
-                  <option value="">Select a batch…</option>
-                  {activeBatches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.batch_number} ({b.quantity_remaining} remaining)
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={adjustForm.type}
-                  onChange={(e) => setAdjustForm({ ...adjustForm, type: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm"
-                >
-                  {ADJUSTMENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  placeholder={adjustForm.type === "ADJUSTMENT" ? "Signed quantity, e.g. -3 or 5" : "Quantity"}
-                  value={adjustForm.quantity}
-                  onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm"
-                />
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder={adjustForm.type === "ADJUSTMENT" ? "e.g. -3 or 5" : "e.g. 2"}
+                    value={adjustForm.quantity}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })}
+                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  />
+                </Field>
               </div>
-              <textarea
-                required
-                placeholder="Reason (required)"
-                value={adjustForm.reason}
-                onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-                rows={2}
-              />
+              <Field label="Reason (required)" help="Explain what happened so the stock history makes sense later, e.g. '2 bottles cracked in transit'.">
+                <textarea
+                  required
+                  placeholder="e.g. 2 bottles cracked in transit"
+                  value={adjustForm.reason}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
+                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                  rows={2}
+                />
+              </Field>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

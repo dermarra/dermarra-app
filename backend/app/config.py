@@ -19,6 +19,21 @@ def _env(name, default=None):
     return value if value else default
 
 
+_REGEX_CHARS = set("\\[]()*+?^$|")
+
+
+def _anchor_origin(origin):
+    """FRONTEND_ORIGIN entries containing regex syntax (e.g. Cloudflare Pages
+    previews: https://[a-z0-9-]+\\.dermarra\\.pages\\.dev) are matched by
+    flask-cors with re.match, which only anchors the *start* -- without a
+    trailing "$", https://x.dermarra.pages.dev.attacker.com would also pass
+    (verified). Anchor them here so a pasted pattern can't open CORS up.
+    Plain origins are compared exactly and left alone."""
+    if any(c in _REGEX_CHARS for c in origin) and not origin.endswith("$"):
+        return origin + "$"
+    return origin
+
+
 # Load environment variables from .env file if it exists
 class Config:
     """Represents a config."""
@@ -65,7 +80,7 @@ class Config:
     FRONTEND_BASE_URL = _env("FRONTEND_BASE_URL", "http://localhost:5173")
 
     FRONTEND_ORIGINS = [
-        origin.strip()
+        _anchor_origin(origin.strip())
         for origin in _env(
             "FRONTEND_ORIGIN",
             "http://localhost:5173,http://localhost:5174,http://localhost:5175,"

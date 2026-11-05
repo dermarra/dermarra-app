@@ -1114,7 +1114,9 @@ def refresh_order_payment_status(order_id):
 
     if result is not None:
         # Same path as the callback: consumes stock, sets paid_at, emails.
-        outcome = payment_service.apply_daraja_result(order, result.get("ResultCode"))
+        outcome = payment_service.apply_daraja_result(
+            order, result.get("ResultCode"), result_desc=result.get("ResultDesc")
+        )
         if outcome:
             db.session.commit()
             if outcome == "paid":

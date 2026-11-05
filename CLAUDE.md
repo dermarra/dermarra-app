@@ -160,7 +160,23 @@
   records had descriptive text typed into the slug box and were corrected
   2026-11-06. Admin Inventory lists products with no sizes as "No sizes"
   (they're hidden from the shop until a size exists).
-- Tests: `backend/tests/test_payments.py` (15) covers all of the above.
+- `Order.payment_failure_reason` (migration `3c8e1f2a9b7d`, applied
+  2026-11-06): Safaricom's ResultDesc for the latest failed attempt, set by
+  `mark_order_failed(reason=...)` from the callback/poll/admin refresh,
+  cleared on retry and on success; shown on checkout and order pages.
+- Admin forms: every field is wrapped in `components/admin/Field.jsx`
+  (label + always-visible one-line hint -- not hover tooltips, which don't
+  work on touch). Keep that for any new admin field. **Never nest a
+  `<form>` inside another** -- the product editor's "+ Add size" row was a
+  nested form, so it submitted the outer product form (saved, closed the
+  editor, dropped the size). Inputs inside the product form also intercept
+  Enter so it doesn't submit the whole product.
+- Frontend hosting is moving Netlify -> Cloudflare Pages (README
+  "Frontend -> Cloudflare Pages"): `frontend/.nvmrc`, `frontend/public/_headers`.
+  `FRONTEND_ORIGIN` accepts regex entries for Pages preview subdomains;
+  `config._anchor_origin` appends `$` because flask-cors uses `re.match`
+  (unanchored, `x.dermarra.pages.dev.attacker.com` passed -- verified).
+- Tests: `backend/tests/test_payments.py` (16) covers all of the above.
 
 ## Admin Dashboard (shipped)
 Committed across `bb3696c`, `7860e21`, `9ce60ec`, `d0a28cb`, `f821d77`. Admins

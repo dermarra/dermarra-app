@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import client from "../../api/client";
+import Field from "../../components/admin/Field.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
 const emptyForm = {
@@ -144,68 +145,93 @@ export default function AdminCoupons() {
           >
             <h3 className="text-sm font-semibold">{editingId === "new" ? "New coupon" : "Edit coupon"}</h3>
             <div className="grid sm:grid-cols-2 gap-3">
-              <input
-                required
-                placeholder="Code, e.g. WELCOME10"
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
-                className={`${inputClass} uppercase`}
-              />
-              <div className="flex gap-2">
-                <select
-                  value={form.discount_type}
-                  onChange={(e) => setForm({ ...form, discount_type: e.target.value })}
-                  className={inputClass}
-                >
-                  <option value="percent">% off</option>
-                  <option value="fixed_cents">KES off</option>
-                </select>
+              <Field label="Code" help="What customers type at checkout. Letters and numbers, saved in capitals, e.g. WELCOME10.">
                 <input
                   required
+                  placeholder="e.g. WELCOME10"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
+                  className={`${inputClass} uppercase font-mono font-normal`}
+                />
+              </Field>
+              <Field
+                label="Discount"
+                help={
+                  form.discount_type === "percent"
+                    ? "Percent off the cart subtotal, 1-100 (e.g. 10 = 10% off)."
+                    : "Fixed shillings off the cart subtotal (e.g. 500 = KES 500 off). Never more than the cart total."
+                }
+              >
+                <div className="flex gap-2">
+                  <select
+                    value={form.discount_type}
+                    onChange={(e) => setForm({ ...form, discount_type: e.target.value })}
+                    aria-label="Discount type"
+                    className={`${inputClass} font-normal`}
+                  >
+                    <option value="percent">% off</option>
+                    <option value="fixed_cents">KES off</option>
+                  </select>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    max={form.discount_type === "percent" ? 100 : undefined}
+                    step="1"
+                    placeholder={form.discount_type === "percent" ? "e.g. 10" : "e.g. 500"}
+                    value={form.value}
+                    onChange={(e) => setForm({ ...form, value: e.target.value })}
+                    aria-label="Discount amount"
+                    className={`${inputClass} flex-1 min-w-0 font-normal`}
+                  />
+                </div>
+              </Field>
+              <Field label="Max uses" help="Total times the code can be used across all customers. Leave blank for unlimited.">
+                <input
                   type="number"
                   min="1"
-                  max={form.discount_type === "percent" ? 100 : undefined}
                   step="1"
-                  placeholder={form.discount_type === "percent" ? "Percent" : "Amount (KES)"}
-                  value={form.value}
-                  onChange={(e) => setForm({ ...form, value: e.target.value })}
-                  className={`${inputClass} flex-1 min-w-0`}
+                  placeholder="Unlimited"
+                  value={form.max_uses}
+                  onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
+                  className={`${inputClass} font-normal`}
                 />
-              </div>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                placeholder="Max uses (blank = unlimited)"
-                value={form.max_uses}
-                onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
-                className={inputClass}
-              />
-              <label className="text-xs text-ink/60 flex flex-col gap-1">
-                Expires on (optional)
+              </Field>
+              <Field label="Expires on" help="Optional. Last day the code works (valid until the end of that day). Blank = never expires.">
                 <input
                   type="date"
                   value={form.expires_on}
                   onChange={(e) => setForm({ ...form, expires_on: e.target.value })}
-                  className={inputClass}
+                  className={`${inputClass} font-normal`}
                 />
-              </label>
+              </Field>
             </div>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-start gap-2 text-sm">
               <input
                 type="checkbox"
+                className="mt-1"
                 checked={form.first_order_only}
                 onChange={(e) => setForm({ ...form, first_order_only: e.target.checked })}
               />
-              First order only
+              <span>
+                First order only
+                <span className="block text-[11px] text-ink/55">
+                  Only customers who have never completed a paid order can use it. The newest active first-order code
+                  is advertised in the homepage &quot;Become a member&quot; section.
+                </span>
+              </span>
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-start gap-2 text-sm">
               <input
                 type="checkbox"
+                className="mt-1"
                 checked={form.is_active}
                 onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
               />
-              Active
+              <span>
+                Active
+                <span className="block text-[11px] text-ink/55">Untick to switch the code off without losing its usage history.</span>
+              </span>
             </label>
             {error && <p className="text-sm text-clay">{error}</p>}
             <div className="flex gap-2">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import client from "../../api/client";
 import NameSlugFields from "../../components/NameSlugFields.jsx";
+import Field from "../../components/admin/Field.jsx";
 import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
@@ -219,54 +220,81 @@ export default function AdminRoutines() {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <NameSlugFields form={form} setForm={setForm} urlPrefix="routine id: " namePlaceholder="Name" />
-            <input
-              placeholder="Tagline"
-              value={form.tagline}
-              onChange={(e) => setForm({ ...form, tagline: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
+            <NameSlugFields
+              form={form}
+              setForm={setForm}
+              urlPrefix="routine id: "
+              namePlaceholder="e.g. Brightening Routine"
+              nameHelp="The bundle's name, e.g. Brightening Routine. Shown on the quiz result and concern pages."
             />
-            <select
-              value={form.primary_concern_id}
-              onChange={(e) => setForm({ ...form, primary_concern_id: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
+            <Field label="Tagline" help="One short line under the name, e.g. 'Fade dark spots in 4 weeks.'">
+              <input
+                placeholder="e.g. Fade dark spots in 4 weeks"
+                value={form.tagline}
+                onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              />
+            </Field>
+            <Field
+              label="Primary concern"
+              help="The skin concern this routine treats. The quiz recommends it to customers who pick this concern."
             >
-              <option value="">No primary concern</option>
-              {concerns.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <select
-              value={form.skin_type}
-              onChange={(e) => setForm({ ...form, skin_type: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
+              <select
+                value={form.primary_concern_id}
+                onChange={(e) => setForm({ ...form, primary_concern_id: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              >
+                <option value="">No primary concern (never recommended by the quiz)</option>
+                {concerns.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field
+              label="Skin type"
+              help="Pick one if this routine is made for a specific skin type; the quiz prefers an exact match. 'Any' suits everyone."
             >
-              <option value="">Any skin type</option>
-              {SKIN_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              placeholder="Bundle discount %"
-              value={form.bundle_discount_percent}
-              onChange={(e) => setForm({ ...form, bundle_discount_percent: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
+              <select
+                value={form.skin_type}
+                onChange={(e) => setForm({ ...form, skin_type: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              >
+                <option value="">Any skin type</option>
+                {SKIN_TYPES.map((t) => (
+                  <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                ))}
+              </select>
+            </Field>
+            <Field
+              label="Bundle discount (%)"
+              help="Whole number 0-100. Taken off the total of the step prices when bought as a full routine, e.g. 10 = 10% off."
+            >
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="e.g. 10"
+                value={form.bundle_discount_percent}
+                onChange={(e) => setForm({ ...form, bundle_discount_percent: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              />
+            </Field>
           </div>
 
-          <textarea
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="border border-mist rounded-sm px-3 py-2 text-sm"
-            rows={2}
-          />
+          <Field label="Description" help="A few sentences on what the routine does and who it's for.">
+            <textarea
+              placeholder="e.g. A four-step system that targets dark spots while protecting your barrier…"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              rows={2}
+            />
+          </Field>
 
           <div>
-            <p className="text-xs font-semibold text-ink/70 mb-2">Image</p>
+            <p className="text-xs font-semibold text-ink/80">Image</p>
+            <p className="text-[11px] text-ink/55 mb-2">A square cover photo for the routine (you&apos;ll be asked to crop).</p>
             <ImageUploadField
               value={form.cloudinary_public_id}
               onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
@@ -281,7 +309,13 @@ export default function AdminRoutines() {
               checked={form.is_active}
               onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
             />
-            Active (visible in shop)
+            <span>
+              Active (visible in shop)
+              <span className="block text-[11px] text-ink/55">
+                Inactive routines are hidden and never recommended by the quiz. A routine also needs at least one
+                step (set with &quot;Steps&quot;) before customers can see it.
+              </span>
+            </span>
           </label>
 
           {error && <p className="text-sm text-clay">{error}</p>}
@@ -308,8 +342,13 @@ export default function AdminRoutines() {
       {stepsRoutineId && (
         <div className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light">
           <h3 className="font-semibold text-sm">Steps</h3>
+          <p className="text-[11px] text-ink/55 -mt-2">
+            List the products in the order they&apos;re applied (use ↑ ↓ to reorder). Each step is one specific
+            size -- the routine&apos;s price is the sum of these sizes&apos; prices minus the bundle discount. &quot;AM&quot;,
+            &quot;PM&quot; or &quot;both&quot; is when the step is used. Only sizes currently on sale can be picked.
+          </p>
 
-          {steps.length === 0 && <p className="text-xs text-ink/60">No steps yet.</p>}
+          {steps.length === 0 && <p className="text-xs text-ink/60">No steps yet -- add the first product below.</p>}
 
           {steps.map((step, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -317,7 +356,9 @@ export default function AdminRoutines() {
               <select
                 value={step.variant_id}
                 onChange={(e) => updateStep(index, "variant_id", e.target.value)}
-                className="border border-mist rounded-sm px-3 py-2 text-sm flex-1"
+                aria-label={`Step ${index + 1} product and size`}
+                title="The exact product size used for this step"
+                className="border border-mist rounded-sm px-3 py-2 text-sm flex-1 min-w-0"
               >
                 {variantOptions
                   .filter((v) => v.onSale || v.id === step.variant_id)
@@ -328,6 +369,8 @@ export default function AdminRoutines() {
               <select
                 value={step.time_of_day}
                 onChange={(e) => updateStep(index, "time_of_day", e.target.value)}
+                aria-label={`Step ${index + 1} time of day`}
+                title="When this step is used: morning (am), evening (pm) or both"
                 className="border border-mist rounded-sm px-3 py-2 text-sm"
               >
                 {TIME_OF_DAY.map((t) => (

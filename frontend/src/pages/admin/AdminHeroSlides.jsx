@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
+import Field from "../../components/admin/Field.jsx";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
@@ -125,65 +126,88 @@ export default function AdminHeroSlides() {
               {editingId === "new" ? "New slide" : "Edit slide"}
             </h3>
 
-            <input
-              placeholder="Eyebrow (e.g. New arrival)"
-              value={form.eyebrow}
-              onChange={(e) => setForm({ ...form, eyebrow: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
-            <input
-              required
-              placeholder="Title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
-            <textarea
-              placeholder="Subtitle"
-              value={form.subtitle}
-              onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-              rows={2}
-            />
+            <p className="text-[11px] text-ink/55 -mt-2">
+              Slides rotate in the full-screen homepage banner and the sign-in page panel.
+            </p>
+            <Field label="Eyebrow" help="Optional small text above the title, e.g. New arrival or Bestseller.">
+              <input
+                placeholder="e.g. New arrival"
+                value={form.eyebrow}
+                onChange={(e) => setForm({ ...form, eyebrow: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              />
+            </Field>
+            <Field label="Title" help="The big headline -- keep it short (about 3-7 words).">
+              <input
+                required
+                placeholder="e.g. Exfoliation is now simpler"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              />
+            </Field>
+            <Field label="Subtitle" help="Optional supporting sentence under the title.">
+              <textarea
+                placeholder="e.g. Slough away dead skin cells for smoother, brighter skin."
+                value={form.subtitle}
+                onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                rows={2}
+              />
+            </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                placeholder="CTA label (e.g. Shop now)"
-                value={form.cta_label}
-                onChange={(e) => setForm({ ...form, cta_label: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              />
-              <input
-                placeholder="CTA link (e.g. /shop/product-slug)"
-                value={form.cta_link}
-                onChange={(e) => setForm({ ...form, cta_link: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              />
+              <Field label="Button text" help="Optional. The button only shows if both button text and link are filled in.">
+                <input
+                  placeholder="e.g. Shop now"
+                  value={form.cta_label}
+                  onChange={(e) => setForm({ ...form, cta_label: e.target.value })}
+                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                />
+              </Field>
+              <Field
+                label="Button link"
+                help="A page on this site, starting with / -- e.g. /shop/anti-ageing-serum, /shop/concern/signs-of-ageing or /quiz."
+              >
+                <input
+                  placeholder="e.g. /shop/anti-ageing-serum"
+                  value={form.cta_link}
+                  onChange={(e) => setForm({ ...form, cta_link: e.target.value })}
+                  className="border border-mist rounded-sm px-3 py-2 text-sm font-mono font-normal text-ink"
+                />
+              </Field>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-              <label className="flex flex-col gap-1 text-xs text-ink/60">
-                Position (lower shows first)
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+              <Field label="Position" help="Order in the carousel: 0 shows first, then 1, 2…">
                 <input
                   type="number"
                   min="0"
+                  step="1"
                   value={form.position}
                   onChange={(e) => setForm({ ...form, position: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm text-ink"
+                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
                 />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-ink mt-4">
+              </Field>
+              <label className="flex items-start gap-2 text-sm text-ink sm:mt-6">
                 <input
                   type="checkbox"
+                  className="mt-1"
                   checked={form.is_active}
                   onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
                 />
-                Active
+                <span>
+                  Active
+                  <span className="block text-[11px] text-ink/55">Untick to hide this slide without deleting it.</span>
+                </span>
               </label>
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-ink/70 mb-2">Background image</p>
+              <p className="text-xs font-semibold text-ink/80">Background image</p>
+              <p className="text-[11px] text-ink/55 mb-2">
+                A wide landscape photo (at least 1600px wide). It&apos;s darkened behind the text, so busy images are fine.
+              </p>
               <ImageUploadField
                 value={form.cloudinary_public_id}
                 onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}

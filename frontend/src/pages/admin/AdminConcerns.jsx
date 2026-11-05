@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
 import NameSlugFields from "../../components/NameSlugFields.jsx";
+import Field from "../../components/admin/Field.jsx";
 import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
@@ -116,19 +117,33 @@ export default function AdminConcerns() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <NameSlugFields form={form} setForm={setForm} urlPrefix="/shop/concern/" namePlaceholder="Name" />
+              <NameSlugFields
+                form={form}
+                setForm={setForm}
+                urlPrefix="/shop/concern/"
+                namePlaceholder="e.g. Hyperpigmentation"
+                nameHelp="The concern's short name, e.g. Hyperpigmentation or Signs of Ageing. Shown as the heading of its shop page."
+              />
             </div>
 
-            <textarea
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-              rows={2}
-            />
+            <Field
+              label="Description (quiz wording)"
+              help="Write it the way a customer would describe their skin -- the routine quiz shows this as the answer card they tap, e.g. 'Dark spots or patches that won't fade.' Also shown on the concern's shop page."
+            >
+              <textarea
+                placeholder="e.g. Fine lines, loss of firmness and dullness"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                rows={2}
+              />
+            </Field>
 
             <div>
-              <p className="text-xs font-semibold text-ink/70 mb-2">Cover photo</p>
+              <p className="text-xs font-semibold text-ink/80">Cover photo</p>
+              <p className="text-[11px] text-ink/55 mb-2">
+                Square image used on the homepage concern slider and as this concern&apos;s shop-page banner.
+              </p>
               <ImageUploadField
                 value={form.cloudinary_public_id}
                 onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
