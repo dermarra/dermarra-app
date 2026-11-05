@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 
 from app.models.routine import Routine
 from app.models.product import SkinConcern
+from app.utils.purchasable import unavailable_reason
 
 routines_bp = Blueprint("routines", __name__)
 
@@ -9,7 +10,7 @@ routines_bp = Blueprint("routines", __name__)
 @routines_bp.get("")
 def list_routines():
     routines = Routine.query.filter_by(is_active=True).order_by(Routine.name).all()
-    return jsonify([r.to_dict() for r in routines]), 200
+    return jsonify([r.to_dict() for r in routines if unavailable_reason(None, r) is None]), 200
 
 
 @routines_bp.post("/quiz")
@@ -32,15 +33,20 @@ def quiz_recommendation():
     if not concern:
         return jsonify({"error": "unknown concern"}), 404
 
-    base_query = Routine.query.filter_by(primary_concern_id=concern.id, is_active=True)
+    # Only routines a customer can actually buy (active, has steps, every
+    # step's size still on sale) are ever recommended.
+    candidates = [
+        r for r in Routine.query.filter_by(primary_concern_id=concern.id, is_active=True).order_by(Routine.name)
+        if unavailable_reason(None, r) is None
+    ]
 
     routine = None
     if skin_type:
-        routine = base_query.filter_by(skin_type=skin_type).first()
+        routine = next((r for r in candidates if r.skin_type == skin_type), None)
     if not routine:
-        routine = base_query.filter_by(skin_type=None).first()
-    if not routine:
-        routine = base_query.first()
+        routine = next((r for r in candidates if r.skin_type is None), None)
+    if not routine and candidates:
+        routine = candidates[0]
 
     if not routine:
         return jsonify({"error": "no routine found for this concern yet"}), 404

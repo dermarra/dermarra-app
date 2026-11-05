@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -7,15 +5,15 @@ from app.extensions import db
 from app.models.cart import Cart
 from app.models.order import Order, OrderItem
 from app.models.user import User
-from app.services import mpesa_service, coupon_service
+from app.services import mpesa_service, coupon_service, payment_service
 from app.services.coupon_service import CouponError
 from app.services.inventory_service import (
     InsufficientStockError,
-    consume_reservations_for_order,
     reserve_stock_for_order,
     release_reservations_for_order,
 )
 from app.utils.cart_totals import cart_item_unit_price_cents
+from app.utils.purchasable import unavailable_reason
 
 orders_bp = Blueprint("orders", __name__)
 
@@ -57,6 +55,14 @@ def checkout():
     if not cart or not cart.items:
         return jsonify({"error": "cart is empty"}), 400
 
+    # Items can be deactivated by an admin after they were added to a cart --
+    # re-check at the point of sale, never trust the cart as-is.
+    unavailable = [reason for reason in (unavailable_reason(i.variant, i.routine) for i in cart.items) if reason]
+    if unavailable:
+        return jsonify({
+            "error": f"some items are no longer available -- remove them from your cart: {'; '.join(unavailable)}"
+        }), 400
+
     subtotal_cents = 0
     order_items = []
     for item in cart.items:
@@ -92,6 +98,10 @@ def checkout():
         except CouponError as e:
             return jsonify({"error": str(e)}), 400
 
+    total_cents = subtotal_cents - discount_cents + SHIPPING_FLAT_CENTS
+    if total_cents < 100:
+        return jsonify({"error": "order total must be at least KES 1 to pay with M-Pesa"}), 400
+
     order = Order(
         user_id=user_id,
         status="pending",
@@ -100,7 +110,7 @@ def checkout():
         discount_cents=discount_cents,
         coupon_id=coupon.id if coupon else None,
         coupon_code_snapshot=coupon.code if coupon else None,
-        total_cents=subtotal_cents - discount_cents + SHIPPING_FLAT_CENTS,
+        total_cents=total_cents,
         shipping_name=shipping["name"],
         shipping_address_line1=shipping["address_line1"],
         shipping_address_line2=shipping.get("address_line2"),
@@ -181,16 +191,12 @@ def cancel_order(order_id):
                          "Wait about a minute for it to time out, then try cancelling again."
             }), 409
 
-        if str(result_code) == "0":
+        if mpesa_service.is_success(result_code):
             # Payment actually succeeded -- the callback just hasn't landed
-            # yet. Never lose track of money that already moved. Consume
-            # the reservation now (same as the callback would) since the
-            # callback, when it does arrive, will see status == "paid"
-            # already and skip its own consume call.
-            order.status = "paid"
-            order.paid_at = datetime.now(timezone.utc)
-            consume_reservations_for_order(order)
-            db.session.commit()
+            # yet. Never lose track of money that already moved.
+            if payment_service.mark_order_paid(order):
+                db.session.commit()
+                payment_service.send_paid_email(order)
             return jsonify({
                 "error": "This order was already paid and cannot be cancelled.",
                 "order": order.to_dict(),

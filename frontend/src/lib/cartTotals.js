@@ -4,6 +4,12 @@
 // whose steps are each pinned to a specific variant too -- see
 // RoutineStep.variant_id).
 
+// Half-up to a whole shilling -- mirrors backend/app/utils/cart_totals.py's
+// round_to_shilling (M-Pesa only charges whole shillings).
+export function roundToShilling(cents) {
+  return Math.round(cents / 100) * 100;
+}
+
 export function routineStepsTotalCents(routine) {
   return routine.steps.reduce((sum, step) => sum + step.variant.price_cents, 0);
 }
@@ -11,7 +17,7 @@ export function routineStepsTotalCents(routine) {
 export function cartItemUnitPriceCents(item) {
   if (item.variant) return item.variant.price_cents;
   const stepsTotal = routineStepsTotalCents(item.routine);
-  return Math.round((stepsTotal * (100 - (item.routine.bundle_discount_percent || 0))) / 100);
+  return roundToShilling((stepsTotal * (100 - (item.routine.bundle_discount_percent || 0))) / 100);
 }
 
 // For the routine strikethrough price -- null for a plain variant line,
@@ -36,7 +42,7 @@ export function cartDiscountCents(cart, subtotalCents) {
   if (!cart.coupon) return 0;
   const raw =
     cart.coupon.discount_type === "percent"
-      ? Math.round((subtotalCents * cart.coupon.discount_value) / 100)
+      ? roundToShilling((subtotalCents * cart.coupon.discount_value) / 100)
       : cart.coupon.discount_value;
   return Math.min(raw, subtotalCents);
 }

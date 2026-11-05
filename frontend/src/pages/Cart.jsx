@@ -18,7 +18,7 @@ export default function Cart() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 text-center">
         <p className="text-ink/70">Sign in to view your cart.</p>
-        <Link to="/login" className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+        <Link to="/login" state={{ from: "/cart" }} className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
           Sign in
         </Link>
       </div>

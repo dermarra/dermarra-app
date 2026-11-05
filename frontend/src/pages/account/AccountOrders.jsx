@@ -45,27 +45,45 @@ export default function AccountOrders() {
       });
       setPaymentState((s) => ({ ...s, [order.id]: "awaiting_pin" }));
 
-      const deadline = Date.now() + POLL_TIMEOUT_MS;
-      pollTimers.current[order.id] = setInterval(async () => {
-        if (Date.now() > deadline) {
-          clearInterval(pollTimers.current[order.id]);
-          setPaymentState((s) => ({ ...s, [order.id]: "Payment timed out. Please try again." }));
-          return;
-        }
-        const { data } = await client.get(`/payments/mpesa/status/${order.id}`);
-        if (data.status === "paid" || data.status === "payment_failed") {
-          stopPolling(order.id);
-          setOrders((prev) =>
-            prev.map((o) => (o.id === order.id ? { ...o, status: data.status } : o))
-          );
-        }
-      }, POLL_INTERVAL_MS);
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "payment_pending" } : o)));
+      pollStatus(order);
     } catch (err) {
       setPaymentState((s) => ({
         ...s,
         [order.id]: err.response?.data?.error || "Payment did not go through.",
       }));
     }
+  };
+
+  // Polls the status endpoint, which also asks Daraja directly -- so an
+  // in-flight payment resolves even if Safaricom's callback never arrives.
+  const pollStatus = (order) => {
+    clearInterval(pollTimers.current[order.id]);
+    setPaymentState((s) => ({ ...s, [order.id]: "awaiting_pin" }));
+    const deadline = Date.now() + POLL_TIMEOUT_MS;
+    pollTimers.current[order.id] = setInterval(async () => {
+      if (Date.now() > deadline) {
+        clearInterval(pollTimers.current[order.id]);
+        setPaymentState((s) => ({
+          ...s,
+          [order.id]: "Still waiting on M-Pesa. Check again in a minute.",
+        }));
+        return;
+      }
+      let data;
+      try {
+        ({ data } = await client.get(`/payments/mpesa/status/${order.id}`));
+      } catch {
+        return;
+      }
+      if (data.status !== "payment_pending") {
+        stopPolling(order.id);
+        setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: data.status } : o)));
+        if (data.status === "payment_failed" && data.result_description) {
+          setPaymentState((s) => ({ ...s, [order.id]: data.result_description }));
+        }
+      }
+    }, POLL_INTERVAL_MS);
   };
 
   const cancelOrder = async (order) => {
@@ -105,6 +123,7 @@ export default function AccountOrders() {
       {orders.map((order) => {
         const state = paymentState[order.id];
         const cancelling = cancelState[order.id];
+        const inFlight = order.status === "payment_pending";
         const canRetry = ["pending", "payment_failed", "payment_pending"].includes(order.status);
         const canCancel = canRetry;
 
@@ -144,17 +163,17 @@ export default function AccountOrders() {
                 {state && state !== "sending" && state !== "awaiting_pin" && (
                   <p className="text-xs text-clay">
                     {state}{" "}
-                    <button onClick={() => payNow(order)} className="underline">
-                      Try again
+                    <button onClick={() => (inFlight ? pollStatus(order) : payNow(order))} className="underline">
+                      {inFlight ? "Check again" : "Try again"}
                     </button>
                   </p>
                 )}
                 {!state && (
                   <button
-                    onClick={() => payNow(order)}
+                    onClick={() => (inFlight ? pollStatus(order) : payNow(order))}
                     className="text-xs px-3 py-1.5 rounded-full bg-amber text-bone-light font-semibold"
                   >
-                    Pay with M-Pesa
+                    {inFlight ? "Check payment status" : "Pay with M-Pesa"}
                   </button>
                 )}
 

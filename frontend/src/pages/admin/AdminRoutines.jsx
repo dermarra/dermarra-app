@@ -107,6 +107,7 @@ export default function AdminRoutines() {
   };
 
   const handleDelete = async (routineId) => {
+    if (!window.confirm("Delete this routine? This can't be undone -- deactivate it instead to just hide it.")) return;
     setRowState((s) => ({ ...s, [routineId]: "deleting" }));
     try {
       await client.delete(`/admin/routines/${routineId}`);
@@ -122,9 +123,16 @@ export default function AdminRoutines() {
   // Flattened "Product — Size" options for the step picker -- a routine
   // step pins to a specific sellable variant, not just the product family,
   // so the bundle's price is deterministic (see backend RoutineStep model).
+  // Inactive sizes/products are kept in the list only so a step already
+  // pinned to one still displays -- flagged and disabled so they can't be
+  // newly picked (the backend also rejects them on save).
   const variantOptions = products.flatMap((p) =>
-    (p.variants || []).map((v) => ({ id: v.id, label: `${p.name} — ${v.label}` }))
+    (p.variants || []).map((v) => {
+      const onSale = p.is_active && v.is_active;
+      return { id: v.id, label: `${p.name} — ${v.label}${onSale ? "" : " (inactive)"}`, onSale };
+    })
   );
+  const sellableOptions = variantOptions.filter((v) => v.onSale);
 
   const openSteps = (routine) => {
     setStepsError(null);
@@ -138,8 +146,8 @@ export default function AdminRoutines() {
   };
 
   const addStep = () => {
-    if (variantOptions.length === 0) return;
-    setSteps((s) => [...s, { variant_id: variantOptions[0].id, time_of_day: "both" }]);
+    if (sellableOptions.length === 0) return;
+    setSteps((s) => [...s, { variant_id: sellableOptions[0].id, time_of_day: "both" }]);
   };
 
   const removeStep = (index) => {
@@ -322,9 +330,11 @@ export default function AdminRoutines() {
                 onChange={(e) => updateStep(index, "variant_id", e.target.value)}
                 className="border border-mist rounded-sm px-3 py-2 text-sm flex-1"
               >
-                {variantOptions.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label}</option>
-                ))}
+                {variantOptions
+                  .filter((v) => v.onSale || v.id === step.variant_id)
+                  .map((v) => (
+                    <option key={v.id} value={v.id} disabled={!v.onSale}>{v.label}</option>
+                  ))}
               </select>
               <select
                 value={step.time_of_day}

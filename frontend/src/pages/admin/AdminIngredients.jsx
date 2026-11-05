@@ -62,6 +62,7 @@ export default function AdminIngredients() {
   };
 
   const handleDelete = async (ingredientId) => {
+    if (!window.confirm("Delete this ingredient? It will be removed from every product tagged with it.")) return;
     setRowState((s) => ({ ...s, [ingredientId]: "deleting" }));
     try {
       await client.delete(`/admin/ingredients/${ingredientId}`);

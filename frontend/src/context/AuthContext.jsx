@@ -23,6 +23,12 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const onExpired = () => setUser(null);
+    window.addEventListener("auth:session-expired", onExpired);
+    return () => window.removeEventListener("auth:session-expired", onExpired);
+  }, []);
+
   const _persistSession = ({ user, access_token, refresh_token }) => {
     localStorage.setItem("access_token", access_token);
     localStorage.setItem("refresh_token", refresh_token);

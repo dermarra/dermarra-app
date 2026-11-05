@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
+import OrderTotals from "../../components/OrderTotals.jsx";
 
 const NEXT_STEP = { paid: "processing", processing: "shipped", shipped: "delivered" };
 const CANCELLABLE = new Set(["paid", "processing", "shipped"]);
@@ -25,6 +26,7 @@ export default function AdminOrderDetail() {
     client
       .get(`/admin/orders/${orderId}`)
       .then(({ data }) => setOrder(data))
+      .catch(() => setOrder(null))
       .finally(() => setLoading(false));
   };
 
@@ -76,6 +78,9 @@ export default function AdminOrderDetail() {
   };
 
   const cancelOrder = async () => {
+    if (!window.confirm(
+      "Cancel this paid order? Stock is returned to inventory, but the M-Pesa refund must be done manually."
+    )) return;
     setError(null);
     setBusy(true);
     try {
@@ -115,6 +120,13 @@ export default function AdminOrderDetail() {
         </span>
       </div>
 
+      {order.stock_allocated === false && (
+        <p className="text-sm text-clay border border-clay/40 rounded-sm p-3">
+          This order is paid, but no stock was deducted for it -- the payment confirmed after its items had
+          sold out. Check you can fulfil it (or cancel and refund) before shipping.
+        </p>
+      )}
+
       <section className="border border-mist rounded-sm p-4">
         <h3 className="text-sm font-semibold mb-3">Items</h3>
         <div className="flex flex-col gap-2">
@@ -125,10 +137,7 @@ export default function AdminOrderDetail() {
             </div>
           ))}
         </div>
-        <div className="flex justify-between text-sm font-semibold mt-3 pt-3 border-t border-mist">
-          <span>Total</span>
-          <span>{order.currency} {(order.total_cents / 100).toFixed(0)}</span>
-        </div>
+        <OrderTotals order={order} />
       </section>
 
       <section className="border border-mist rounded-sm p-4">

@@ -30,6 +30,9 @@ client.interceptors.response.use(
         } catch {
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
+          // Tell AuthContext the session is gone -- otherwise the UI kept
+          // showing the user as signed in while every request 401'd.
+          window.dispatchEvent(new Event("auth:session-expired"));
         }
       }
     }

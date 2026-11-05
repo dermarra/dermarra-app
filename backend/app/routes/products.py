@@ -22,6 +22,9 @@ def list_products():
         query = query.join(Product.ingredients).filter(Ingredient.slug == ingredient_slug)
 
     products = query.order_by(Product.created_at.desc()).all()
+    # A product with no active size has nothing to sell (and no price to
+    # show -- it used to render "From KES 0"), so it's left off listings.
+    products = [p for p in products if any(v.is_active for v in p.variants)]
     # Card/list views only need price_from_cents/in_stock (already flat on
     # to_dict()) -- skip nesting the full variants array for every card.
     return jsonify([p.to_dict(include_variants=False) for p in products]), 200

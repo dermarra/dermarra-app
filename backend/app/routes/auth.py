@@ -92,9 +92,13 @@ def update_me():
     user = User.query.get_or_404(user_id)
     data = request.get_json(silent=True) or {}
 
+    if "full_name" in data and not (data["full_name"] or "").strip():
+        return jsonify({"error": "full_name can't be empty"}), 400
+
     for field in _PATCHABLE_FIELDS:
         if field in data:
-            setattr(user, field, data[field])
+            value = data[field]
+            setattr(user, field, value.strip() if isinstance(value, str) else value)
 
     db.session.commit()
     return jsonify(user.to_dict()), 200

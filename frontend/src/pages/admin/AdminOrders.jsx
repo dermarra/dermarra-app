@@ -121,6 +121,13 @@ export default function AdminOrders() {
       return;
     }
 
+    if (over.id === "delivered") {
+      // Delivery requires a proof-of-delivery photo, which can't be given
+      // by dragging -- this used to always fail against the API.
+      setError("To mark an order delivered, open it and upload the proof-of-delivery photo.");
+      return;
+    }
+
     setError(null);
     const newStatus = over.id;
     setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: newStatus } : o)));

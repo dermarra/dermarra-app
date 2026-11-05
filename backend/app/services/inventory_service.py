@@ -14,7 +14,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from app.extensions import db
 from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction, InventoryReservation
-from app.models.product import ProductVariant
+from app.models.product import Product, ProductVariant
 from app.utils.order_lines import order_stock_lines
 
 RESERVATION_TTL_MINUTES = 20
@@ -46,8 +46,15 @@ class InventoryError(ValueError):
 def _get_or_create_inventory(variant_id):
     """Locks (or creates + locks) a variant's Inventory row. Always call
     this -- never query Inventory directly -- when you're about to change
-    on_hand/reserved, so the row-level lock is actually held."""
-    inv = Inventory.query.filter_by(variant_id=variant_id).with_for_update().first()
+    on_hand/reserved, so the row-level lock is actually held.
+
+    populate_existing() matters: the row is often already in this session
+    (ProductVariant joined-loads its Inventory), and without it SQLAlchemy
+    keeps that pre-lock copy instead of the values read under the lock --
+    so a second checkout that waited on the lock still saw the last unit
+    as free and double-booked it. Every with_for_update() in this module
+    and coupon_service.py uses it for the same reason."""
+    inv = Inventory.query.filter_by(variant_id=variant_id).with_for_update().populate_existing().first()
     if inv:
         return inv
     inv = Inventory(variant_id=variant_id, on_hand=0, reserved=0, reorder_level=10)
@@ -84,6 +91,55 @@ def expire_stale_reservations():
     return len(stale)
 
 
+def _allocatable_by_variant(variant_ids):
+    """Units FEFO could actually allocate per variant: active, non-expired
+    batches only (see consume_reservations_for_order's batch filter)."""
+    variant_ids = list(variant_ids)
+    if not variant_ids:
+        return {}
+    rows = (
+        db.session.query(InventoryBatch.variant_id, db.func.coalesce(db.func.sum(InventoryBatch.quantity_remaining), 0))
+        .filter(
+            InventoryBatch.variant_id.in_(variant_ids),
+            InventoryBatch.status == "active",
+            InventoryBatch.quantity_remaining > 0,
+            db.or_(InventoryBatch.expiry_date.is_(None), InventoryBatch.expiry_date >= date.today()),
+        )
+        .group_by(InventoryBatch.variant_id)
+        .all()
+    )
+    return {vid: int(total) for vid, total in rows}
+
+
+def has_sale_transactions(order):
+    """True once stock has actually been consumed for this order."""
+    item_ids = [item.id for item in order.items]
+    if not item_ids:
+        return False
+    return InventoryTransaction.query.filter(
+        InventoryTransaction.type == "SALE",
+        InventoryTransaction.reference_type == "order_item",
+        InventoryTransaction.reference_id.in_(item_ids),
+    ).first() is not None
+
+
+def ensure_reservations_for_order(order):
+    """Makes sure an unpaid order holds its stock right now -- called before
+    (re)sending an STK push and when a payment confirms. If the order still
+    has ACTIVE reservations their expiry is pushed out (so they can't lapse
+    while the customer is entering their PIN); if they were released
+    (payment failed) or expired (slow payer), stock is reserved again.
+    Raises InsufficientStockError if it's no longer available."""
+    expire_stale_reservations()
+    active = InventoryReservation.query.filter_by(order_id=order.id, status="active").all()
+    if active:
+        new_expiry = datetime.now(timezone.utc) + timedelta(minutes=RESERVATION_TTL_MINUTES)
+        for reservation in active:
+            reservation.expires_at = new_expiry
+        return active
+    return reserve_stock_for_order(order)
+
+
 def _apply_release(reservation, new_status):
     inv = _get_or_create_inventory(reservation.variant_id)
     inv.reserved = max(0, inv.reserved - reservation.quantity)
@@ -111,11 +167,21 @@ def reserve_stock_for_order(order):
         needed_by_variant[variant_row.id] = needed_by_variant.get(variant_row.id, 0) + qty
 
     inventories = _lock_inventories_for(needed_by_variant.keys())
+    allocatable = _allocatable_by_variant(needed_by_variant.keys())
 
+    # Reservable = the smaller of the ledger view (on_hand - reserved) and
+    # what FEFO could actually hand out right now. on_hand still counts
+    # units in an expired-but-not-yet-written-off batch, which consumption
+    # will never draw from -- reserving against them used to let a paid
+    # order fail at consumption time, after the customer's money moved.
+    reservable = {
+        vid: min(inventories[vid].available, allocatable.get(vid, 0) - inventories[vid].reserved)
+        for vid in needed_by_variant
+    }
     shortages = {
-        vid: inventories[vid].available
+        vid: max(0, reservable[vid])
         for vid, needed in needed_by_variant.items()
-        if inventories[vid].available < needed
+        if reservable[vid] < needed
     }
     if shortages:
         variants = {v.id: v for v in ProductVariant.query.filter(ProductVariant.id.in_(shortages)).all()}
@@ -186,7 +252,7 @@ def consume_reservations_for_order(order, created_by=None):
                 db.or_(InventoryBatch.expiry_date.is_(None), InventoryBatch.expiry_date >= today),
             )
             .order_by(InventoryBatch.expiry_date.asc())
-            .with_for_update()
+            .with_for_update().populate_existing()
             .all()
         )
 
@@ -256,7 +322,10 @@ def restock_order(order, created_by=None):
     batch_ids = sorted({t.batch_id for t in sale_txns})
     batches = {
         b.id: b
-        for b in InventoryBatch.query.filter(InventoryBatch.id.in_(batch_ids)).with_for_update().all()
+        for b in (
+            InventoryBatch.query.filter(InventoryBatch.id.in_(batch_ids))
+            .with_for_update().populate_existing().all()
+        )
     }
 
     transactions = []
@@ -347,7 +416,7 @@ def adjust_stock(variant_id, *, batch_id, transaction_type, quantity, reason, cr
     batch = (
         InventoryBatch.query
         .filter_by(id=batch_id, variant_id=variant_id)
-        .with_for_update()
+        .with_for_update().populate_existing()
         .first()
     )
     if not batch:
@@ -363,6 +432,11 @@ def adjust_stock(variant_id, *, batch_id, transaction_type, quantity, reason, cr
     new_on_hand = inv.on_hand + signed_qty
     if new_on_hand < 0:
         raise InventoryError("this adjustment would take on-hand stock below zero")
+    if signed_qty < 0 and new_on_hand < inv.reserved:
+        raise InventoryError(
+            f"{inv.reserved} unit(s) are reserved for unpaid orders -- this adjustment would leave "
+            f"only {new_on_hand} on hand. Wait for those orders to be paid or released first."
+        )
 
     batch.quantity_remaining = new_remaining
     if batch.quantity_remaining == 0 and batch.status == "active":
@@ -394,7 +468,7 @@ def inventory_summary():
     product/variant's stock isn't actionable the same way."""
     active_variant_ids = [
         v.id for v in ProductVariant.query.join(ProductVariant.product)
-        .filter(ProductVariant.is_active.is_(True))
+        .filter(ProductVariant.is_active.is_(True), Product.is_active.is_(True))
         .with_entities(ProductVariant.id).all()
     ]
     total_products = len(active_variant_ids)

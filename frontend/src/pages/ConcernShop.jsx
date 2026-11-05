@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../api/client";
 import { useCart } from "../context/CartContext";
@@ -39,10 +39,14 @@ export default function ConcernShop() {
   const [sort, setSort] = useState("featured");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [addedRoutineId, setAddedRoutineId] = useState(null);
+  const [routineAddError, setRoutineAddError] = useState({});
+  const [loadError, setLoadError] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
+    setLoadError(null);
     setVisibleCount(PAGE_SIZE);
     Promise.all([
       client.get("/products/concerns"),
@@ -59,6 +63,7 @@ export default function ConcernShop() {
         setProducts(productsRes.data);
         setRoutines(routinesRes.data.filter((r) => r.primary_concern?.slug === slug));
       })
+      .catch(() => setLoadError("Couldn't load this page -- check your connection and try again."))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -75,17 +80,34 @@ export default function ConcernShop() {
 
   const addRoutineToCart = async (routineId) => {
     if (!user) return;
+    setRoutineAddError((e) => ({ ...e, [routineId]: null }));
     try {
       await addItem({ routineId });
       setAddedRoutineId(routineId);
       setTimeout(() => setAddedRoutineId(null), 1800);
-    } catch {
-      // swallowed -- the routine's own detail flow isn't built yet, this
-      // is a lightweight shortcut matching ProductCard's own error handling
+    } catch (err) {
+      setRoutineAddError((e) => ({
+        ...e,
+        [routineId]: err.response?.data?.error || "Couldn't add this routine -- please try again.",
+      }));
     }
   };
 
   if (loading) return <p className="p-4 text-sm text-ink/60">Loading…</p>;
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+        <p className="text-ink/70">{loadError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (notFound) {
     return (
@@ -167,12 +189,16 @@ export default function ConcernShop() {
                       ) : (
                         <Link
                           to="/login"
+                          state={{ from: location.pathname }}
                           className="shrink-0 px-4 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold hover:bg-amber-dark transition-colors whitespace-nowrap"
                         >
                           Sign in to add
                         </Link>
                       )}
                     </div>
+                    {routineAddError[routine.id] && (
+                      <p className="text-xs text-clay mb-3">{routineAddError[routine.id]}</p>
+                    )}
                     <RoutineStepRail steps={routine.steps} />
                   </div>
                 );

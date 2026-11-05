@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
 import BottomNav from "./components/BottomNav.jsx";
 import Footer from "./components/Footer.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
@@ -39,12 +40,15 @@ import AdminConcerns from "./pages/admin/AdminConcerns.jsx";
 import AdminIngredients from "./pages/admin/AdminIngredients.jsx";
 import AdminStepGroups from "./pages/admin/AdminStepGroups.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
+import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
 
 export default function App() {
+  const location = useLocation();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 pb-safe-nav sm:pb-0">
+        <ErrorBoundary key={location.pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -91,8 +95,10 @@ export default function App() {
             <Route path="ingredients" element={<AdminIngredients />} />
             <Route path="step-groups" element={<AdminStepGroups />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="coupons" element={<AdminCoupons />} />
           </Route>
         </Routes>
+        </ErrorBoundary>
         <Footer />
       </main>
       <BottomNav />

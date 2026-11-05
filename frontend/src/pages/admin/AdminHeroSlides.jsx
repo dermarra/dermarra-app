@@ -76,6 +76,7 @@ export default function AdminHeroSlides() {
   };
 
   const handleDelete = async (slideId) => {
+    if (!window.confirm("Delete this hero slide and its image? This can't be undone.")) return;
     setRowState((s) => ({ ...s, [slideId]: "deleting" }));
     try {
       await client.delete(`/admin/hero-slides/${slideId}`);

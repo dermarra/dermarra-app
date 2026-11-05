@@ -25,12 +25,22 @@
    falls back to a new port if 5173 is busy, and the browser treats
    `localhost` and `127.0.0.1` as different origins even though they're the
    same machine.
-3. **M-Pesa sandbox testing**: ALWAYS use the official sandbox test phone
-   number `0708374149` (or `254708374149`) — never a real personal number.
-   Sandbox doesn't fully simulate the network layer for real MSISDNs and can
-   trigger a genuine balance check against a real account.
+3. **M-Pesa sandbox testing**: the official sandbox test number
+   `254708374149` is **virtual -- no phone ever rings**; Safaricom just
+   simulates a result (typically `1032` "cancelled by user"). To see a
+   real prompt, push to a real Safaricom number on the sandbox shortcode
+   `174379` -- verified 2026-11-06 with the owner's own line: the prompt
+   arrives, and entering the real PIN returned `ResultCode 0`. Only use a
+   number whose owner has agreed to receive the test prompt. Daraja's
+   sandbox *query* API rate-limits hard (HTTP 429 after a few calls a
+   minute) -- `payment_service` throttles status checks to one per 15s per
+   order for this reason.
 4. **ngrok URL changes on every restart** (free tier) — `MPESA_CALLBACK_URL`
    in `.env` must be updated and Flask restarted every time ngrok restarts.
+   A dead callback URL no longer strands orders (the status poll asks
+   Daraja directly, see "Payments" below), but callbacks are still the
+   fast path. On Render it must be
+   `https://dermarra-backend.onrender.com/api/payments/mpesa/callback`.
 5. Special characters in `DATABASE_URL`'s password (like `@`) must be
    percent-encoded (`@` → `%40`) or the connection string parser misreads
    where the host begins.
@@ -95,6 +105,52 @@
   delivery-proof photos), `Icons.jsx` (small inline feather-style icon set),
   `Reveal.jsx` (`framer-motion` scroll-triggered stagger reveal wrapper,
   `containerReveal`/`itemReveal` variants, used across the storefront).
+
+## Payments & coupons (2026-11-06)
+- **One payment-outcome path**: `backend/app/services/payment_service.py`.
+  `mark_order_paid()` / `mark_order_failed()` are the only code that may
+  change an order to `paid`/`payment_failed` -- used by the callback, the
+  customer status poll, customer cancel and admin "refresh payment status".
+  `mark_order_paid` is idempotent, re-reserves stock if the hold was
+  released (failed attempt then retry) or expired (slow payer) before
+  consuming it, and never refuses (money already moved): if stock is gone
+  it still records `paid`, logs an error, and the admin order detail shows
+  `stock_allocated: false`. `mark_order_failed` only applies to
+  `pending`/`payment_pending`, so a late or forged failure can't downgrade
+  a paid order.
+- **The callback is unauthenticated, so a success claim is verified** with
+  Daraja's query API before marking paid. If Daraja can't confirm yet, the
+  order stays `payment_pending` and the status poll resolves it.
+- **`GET /api/payments/mpesa/status/<id>` asks Daraja directly** (throttled)
+  while a push is in flight, so payments complete even when the callback
+  never arrives. `query_stk_status` returns Daraja's "still processing"
+  answer (`errorCode 500.001.1001`) as a dict without `ResultCode`, not as
+  an exception.
+- STK push (`initiate_stk_push`) calls
+  `inventory_service.ensure_reservations_for_order` first: it extends an
+  active hold, or re-reserves (409 if sold out) before asking for money.
+- Reservations only count stock FEFO could actually allocate (expired
+  batches excluded), and manual adjustments can't take `on_hand` below
+  `reserved`.
+- All amounts are whole shillings: variant prices and fixed coupons must be
+  multiples of 100 cents, and bundle prices/percent discounts round half-up
+  to a shilling (`utils/cart_totals.round_to_shilling`, mirrored in
+  `frontend/src/lib/cartTotals.js`) -- M-Pesa can't charge cents.
+- **Coupons** (`f43b918`): `Coupon` model, `coupon_service.py` (two-phase
+  `used_count`: applied at checkout, released on cancel, reclaimed if a
+  cancelled order is paid late), `/api/cart/apply-coupon`,
+  `GET /api/coupons/featured` (homepage "Become a member" copy), admin CRUD
+  at `/api/admin/coupons` + `AdminCoupons.jsx`. Orders snapshot
+  `coupon_code_snapshot`/`discount_cents`; order pages, the confirmation
+  email and the invoice all show the discount line.
+- What can be sold is decided in one place, `utils/purchasable.py`: cart
+  add and checkout both reject inactive variants/products and routines that
+  are inactive, empty, or contain an inactive size. Public listings hide
+  inactive sizes, products with no active size, and unsellable routines.
+- Admin deletes refuse (400, with a reason) when the row is still
+  referenced (routine using a concern/size, past orders, reservations);
+  Cloudinary images are deleted only after the DB delete commits.
+- Tests: `backend/tests/test_payments.py` (15) covers all of the above.
 
 ## Admin Dashboard (shipped)
 Committed across `bb3696c`, `7860e21`, `9ce60ec`, `d0a28cb`, `f821d77`. Admins
@@ -600,13 +656,12 @@ real M-Pesa payments** — see "Not production-ready yet" below before flipping
 ### Not production-ready yet (found by the 2026-09-18 audit)
 
 **Security — the most urgent gaps:**
-- **`POST /api/payments/mpesa/callback` (`backend/app/routes/payments.py:75-123`)
-  has zero request verification** — no signature, no shared secret, no IP
-  allowlist. Anyone who obtains a valid `CheckoutRequestID` (trivially — start
-  a real STK push for your own order, then skip paying) can POST a forged
-  `ResultCode: 0` directly and get any order marked `paid` for free. Must fix
-  before `MPESA_ENV` ever goes to `production` — see the "Path to Real
-  Production" plan (Phase 1.1).
+- ~~M-Pesa callback has zero request verification~~ -- **mitigated
+  2026-11-06**: a success callback is now confirmed against Daraja's query
+  API before an order is marked paid, so a forged `ResultCode: 0` no longer
+  works (see "Payments & coupons" above). Still worth adding a shared
+  secret in the callback URL or a Safaricom IP allowlist as defence in
+  depth before `MPESA_ENV=production`.
 - **No rate limiting anywhere** — login, signup, forgot-password,
   change-password, and STK-push initiation are all unthrottled (brute-force
   and STK-push-spam risk).

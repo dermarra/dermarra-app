@@ -114,7 +114,14 @@ export default function AdminInventoryDetail() {
   if (!detail) return null;
 
   const { variant, batches, transactions } = detail;
-  const activeBatches = batches.filter((b) => b.status === "active" && b.quantity_remaining > 0);
+  // A stocktake correction ("ADJUSTMENT") can add units back to a batch
+  // that's already depleted, so those are offered too; write-off types
+  // only make sense against a batch that still has stock.
+  const activeBatches = batches.filter((b) =>
+    adjustForm.type === "ADJUSTMENT"
+      ? b.status === "active" || b.status === "depleted"
+      : b.status === "active" && b.quantity_remaining > 0
+  );
   const selectedBatch = batches.find((b) => b.id === adjustForm.batch_id);
 
   return (
@@ -272,7 +279,7 @@ export default function AdminInventoryDetail() {
               setAdjustOpen((v) => !v);
               setReviewing(false);
             }}
-            disabled={activeBatches.length === 0}
+            disabled={!batches.some((b) => b.status === "active" || b.status === "depleted")}
             className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs disabled:opacity-50"
           >
             {adjustOpen ? "Cancel" : "+ Manual adjustment"}

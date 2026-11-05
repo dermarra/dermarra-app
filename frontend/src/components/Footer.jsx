@@ -10,11 +10,14 @@ const QUICK_LINKS = [
   { to: "/account", label: "My account" },
 ];
 
+// Real profile URLs come from the build env (VITE_INSTAGRAM_URL etc. --
+// set them on Netlify). Unset ones are hidden, rather than linking to the
+// generic instagram.com/facebook.com/tiktok.com homepages as before.
 const SOCIAL_LINKS = [
-  { href: "https://instagram.com", label: "Instagram", Icon: InstagramIcon },
-  { href: "https://facebook.com", label: "Facebook", Icon: FacebookIcon },
-  { href: "https://tiktok.com", label: "TikTok", Icon: TiktokIcon },
-];
+  { href: import.meta.env.VITE_INSTAGRAM_URL, label: "Instagram", Icon: InstagramIcon },
+  { href: import.meta.env.VITE_FACEBOOK_URL, label: "Facebook", Icon: FacebookIcon },
+  { href: import.meta.env.VITE_TIKTOK_URL, label: "TikTok", Icon: TiktokIcon },
+].filter((link) => link.href);
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -45,7 +48,7 @@ export default function Footer() {
           <p className="text-sm text-ink/60 mt-3 max-w-xs">
             Skin health, engineered as a system -- cleanse, treat, repair, protect.
           </p>
-          <div className="flex gap-3 mt-4">
+          {SOCIAL_LINKS.length > 0 && <div className="flex gap-3 mt-4">
             {SOCIAL_LINKS.map(({ href, label, Icon }) => (
               <a
                 key={label}
@@ -58,7 +61,7 @@ export default function Footer() {
                 <Icon className="w-4 h-4" />
               </a>
             ))}
-          </div>
+          </div>}
         </div>
 
         <div>

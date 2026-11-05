@@ -14,6 +14,8 @@ export default function AccountRoutines() {
   const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addedId, setAddedId] = useState(null);
+  const [error, setError] = useState(null);
+  const [reorderError, setReorderError] = useState({});
 
   useEffect(() => {
     Promise.all([client.get("/orders"), client.get("/routines")]).then(
@@ -26,18 +28,28 @@ export default function AccountRoutines() {
           });
         });
         setRoutines(routinesRes.data.filter((r) => purchasedIds.has(r.id)));
-        setLoading(false);
       }
-    );
+    )
+      .catch(() => setError("Couldn't load your routines -- please refresh to try again."))
+      .finally(() => setLoading(false));
   }, []);
 
   const reorder = async (routine) => {
-    await addItem({ routineId: routine.id });
-    setAddedId(routine.id);
-    setTimeout(() => setAddedId(null), 2000);
+    setReorderError((e) => ({ ...e, [routine.id]: null }));
+    try {
+      await addItem({ routineId: routine.id });
+      setAddedId(routine.id);
+      setTimeout(() => setAddedId(null), 2000);
+    } catch (err) {
+      setReorderError((e) => ({
+        ...e,
+        [routine.id]: err.response?.data?.error || "Couldn't add this routine to your cart.",
+      }));
+    }
   };
 
   if (loading) return <p className="text-sm text-ink/60">Loading your routines…</p>;
+  if (error) return <p className="text-sm text-clay">{error}</p>;
 
   if (routines.length === 0) {
     return (
@@ -80,6 +92,7 @@ export default function AccountRoutines() {
               {addedId === routine.id ? "Added ✓" : "Reorder"}
             </motion.button>
           </div>
+          {reorderError[routine.id] && <p className="text-xs text-clay mb-3">{reorderError[routine.id]}</p>}
           <RoutineStepRail steps={routine.steps} />
         </motion.div>
         );

@@ -8,12 +8,15 @@ from sqlalchemy.exc import IntegrityError
 from app.extensions import db
 from app.models.hero_slide import HeroSlide
 from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction
-from app.models.order import Order
+from app.models.order import Order, OrderItem
+from app.models.cart import CartItem
+from app.models.wishlist import WishlistItem
+from app.models.inventory import InventoryReservation
 from app.models.coupon import Coupon
 from app.models.product import Product, ProductVariant, ProductImage, SkinConcern, Ingredient, StepGroup
 from app.models.routine import Routine, RoutineStep
 from app.models.user import User
-from app.services import mpesa_service, brevo_service, coupon_service
+from app.services import brevo_service, coupon_service, payment_service
 from app.services.cloudinary_service import upload_image, delete_image
 from app.services import inventory_service
 from app.services.inventory_service import InventoryError, restock_order
@@ -25,6 +28,50 @@ from app.utils.order_transitions import can_advance, can_cancel
 _UNPAID_STATUSES = ("pending", "payment_pending", "payment_failed", "cancelled")
 
 admin_bp = Blueprint("admin", __name__)
+
+
+def _commit_or_conflict(message):
+    """Commits, turning a unique-constraint clash (duplicate slug/code/SKU)
+    into a clear 400 instead of a generic 500. Returns an error response
+    tuple, or None on success."""
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": message}), 400
+    return None
+
+
+def _delete_image_quietly(public_id):
+    """Cloudinary cleanup runs only *after* the DB delete committed (it used
+    to run first, so a failed delete still lost the image). A Cloudinary
+    hiccup here just leaves an orphaned file, never a broken row."""
+    if not public_id:
+        return
+    try:
+        delete_image(public_id)
+    except Exception:
+        pass
+
+
+def _int_field(data, field, *, minimum=None, maximum=None, multiple_of=None, required=False, label=None):
+    """Validates an optional/required integer body field. Returns (value, error)."""
+    label = label or field
+    if field not in data or data[field] is None or data[field] == "":
+        return (None, f"{label} is required") if required else (None, None)
+    value = data[field]
+    if isinstance(value, bool) or not isinstance(value, int):
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        else:
+            return None, f"{label} must be a whole number"
+    if minimum is not None and value < minimum:
+        return None, f"{label} must be at least {minimum}"
+    if maximum is not None and value > maximum:
+        return None, f"{label} must be at most {maximum}"
+    if multiple_of and value % multiple_of:
+        return None, f"{label} must be a whole number of shillings"
+    return value, None
 
 
 # ---------- Skin concerns ----------
@@ -49,7 +96,9 @@ def create_concern():
         cloudinary_public_id=data.get("cloudinary_public_id"),
     )
     db.session.add(concern)
-    db.session.commit()
+    error = _commit_or_conflict("a concern with this name or slug already exists")
+    if error:
+        return error
     return jsonify(concern.to_dict()), 201
 
 
@@ -61,7 +110,9 @@ def update_concern(concern_id):
     for field in ("name", "slug", "description", "cloudinary_public_id"):
         if field in data:
             setattr(concern, field, data[field])
-    db.session.commit()
+    error = _commit_or_conflict("a concern with this name or slug already exists")
+    if error:
+        return error
     return jsonify(concern.to_dict()), 200
 
 
@@ -69,10 +120,16 @@ def update_concern(concern_id):
 @admin_required
 def delete_concern(concern_id):
     concern = SkinConcern.query.get_or_404(concern_id)
-    if concern.cloudinary_public_id:
-        delete_image(concern.cloudinary_public_id)
-    db.session.delete(concern)
+    routines = Routine.query.filter_by(primary_concern_id=concern.id).all()
+    if routines:
+        names = ", ".join(r.name for r in routines)
+        return jsonify({
+            "error": f"this concern is the primary concern of: {names} -- reassign those routines first"
+        }), 400
+    image_id = concern.cloudinary_public_id
+    db.session.delete(concern)  # product tag links (product_concerns) are removed with it
     db.session.commit()
+    _delete_image_quietly(image_id)
     return "", 204
 
 
@@ -98,7 +155,9 @@ def create_ingredient():
         cloudinary_public_id=data.get("cloudinary_public_id"),
     )
     db.session.add(ingredient)
-    db.session.commit()
+    error = _commit_or_conflict("an ingredient with this name or slug already exists")
+    if error:
+        return error
     return jsonify(ingredient.to_dict()), 201
 
 
@@ -110,7 +169,9 @@ def update_ingredient(ingredient_id):
     for field in ("name", "slug", "description", "cloudinary_public_id"):
         if field in data:
             setattr(ingredient, field, data[field])
-    db.session.commit()
+    error = _commit_or_conflict("an ingredient with this name or slug already exists")
+    if error:
+        return error
     return jsonify(ingredient.to_dict()), 200
 
 
@@ -118,14 +179,33 @@ def update_ingredient(ingredient_id):
 @admin_required
 def delete_ingredient(ingredient_id):
     ingredient = Ingredient.query.get_or_404(ingredient_id)
-    if ingredient.cloudinary_public_id:
-        delete_image(ingredient.cloudinary_public_id)
-    db.session.delete(ingredient)
+    image_id = ingredient.cloudinary_public_id
+    db.session.delete(ingredient)  # product tag links (product_ingredients) are removed with it
     db.session.commit()
+    _delete_image_quietly(image_id)
     return "", 204
 
 
 # ---------- Coupons ----------
+
+def _validate_coupon_values(data, discount_type):
+    """Returns an error string or None. percent: 1-100; fixed_cents: a
+    positive whole-shilling amount. max_uses: positive or null."""
+    if "discount_value" in data:
+        if discount_type == "percent":
+            _, error = _int_field(data, "discount_value", minimum=1, maximum=100, required=True,
+                                  label="percent discount")
+        else:
+            _, error = _int_field(data, "discount_value", minimum=100, multiple_of=100, required=True,
+                                  label="fixed discount (cents)")
+        if error:
+            return error
+    if "max_uses" in data:
+        _, error = _int_field(data, "max_uses", minimum=1)
+        if error:
+            return error
+    return None
+
 
 @admin_bp.get("/coupons")
 @admin_required
@@ -144,6 +224,11 @@ def create_coupon():
         return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
     if data["discount_type"] not in Coupon.DISCOUNT_TYPES:
         return jsonify({"error": f"discount_type must be one of {Coupon.DISCOUNT_TYPES}"}), 400
+    error = _validate_coupon_values(data, data["discount_type"])
+    if error:
+        return jsonify({"error": error}), 400
+    if not str(data["code"]).strip():
+        return jsonify({"error": "code is required"}), 400
 
     try:
         expires_at = _parse_datetime(data.get("expires_at"))
@@ -176,6 +261,12 @@ def update_coupon(coupon_id):
 
     if "discount_type" in data and data["discount_type"] not in Coupon.DISCOUNT_TYPES:
         return jsonify({"error": f"discount_type must be one of {Coupon.DISCOUNT_TYPES}"}), 400
+    new_type = data.get("discount_type", coupon.discount_type)
+    if "discount_type" in data and "discount_value" not in data:
+        data["discount_value"] = coupon.discount_value  # re-check the old value under the new type
+    error = _validate_coupon_values(data, new_type)
+    if error:
+        return jsonify({"error": error}), 400
 
     if "code" in data:
         coupon.code = data["code"].strip().upper()
@@ -279,10 +370,10 @@ def update_hero_slide(slide_id):
 @admin_required
 def delete_hero_slide(slide_id):
     slide = HeroSlide.query.get_or_404(slide_id)
-    if slide.cloudinary_public_id:
-        delete_image(slide.cloudinary_public_id)
+    image_id = slide.cloudinary_public_id
     db.session.delete(slide)
     db.session.commit()
+    _delete_image_quietly(image_id)
     return "", 204
 
 
@@ -488,6 +579,8 @@ def create_product():
         return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
     if data["step_type"] not in Product.STEP_TYPES:
         return jsonify({"error": f"step_type must be one of {Product.STEP_TYPES}"}), 400
+    if not str(data["name"]).strip() or not str(data["slug"]).strip():
+        return jsonify({"error": "name and slug can't be empty"}), 400
 
     product = Product(
         name=data["name"],
@@ -509,7 +602,9 @@ def create_product():
         product.ingredients = Ingredient.query.filter(Ingredient.id.in_(ingredient_ids)).all()
 
     db.session.add(product)
-    db.session.commit()
+    error = _commit_or_conflict("a product with this slug already exists")
+    if error:
+        return error
     return jsonify(product.to_dict(include_admin_fields=True)), 201
 
 
@@ -518,6 +613,8 @@ def create_product():
 def update_product(product_id):
     product = Product.query.get_or_404(product_id)
     data = request.get_json(silent=True) or {}
+    if "step_type" in data and data["step_type"] not in Product.STEP_TYPES:
+        return jsonify({"error": f"step_type must be one of {Product.STEP_TYPES}"}), 400
 
     for field in [
         "name", "slug", "step_type", "short_description", "description",
@@ -536,7 +633,9 @@ def update_product(product_id):
             Ingredient.id.in_(data["ingredient_ids"])
         ).all()
 
-    db.session.commit()
+    error = _commit_or_conflict("a product with this slug already exists")
+    if error:
+        return error
     return jsonify(product.to_dict(include_admin_fields=True)), 200
 
 
@@ -554,12 +653,40 @@ def delete_product(product_id):
         return jsonify({
             "error": "this product has inventory history and can't be deleted -- set is_active to false instead"
         }), 400
+    blocker = _variant_delete_blocker(variant_ids) or (
+        "this product appears in past orders -- deactivate it instead"
+        if OrderItem.query.filter_by(product_id=product.id).first() else None
+    )
+    if blocker:
+        return jsonify({"error": blocker}), 400
 
+    image_ids = [img.cloudinary_public_id for img in product.images]
     if variant_ids:
+        CartItem.query.filter(CartItem.variant_id.in_(variant_ids)).delete(synchronize_session=False)
         Inventory.query.filter(Inventory.variant_id.in_(variant_ids)).delete(synchronize_session=False)
-    db.session.delete(product)  # cascades to ProductVariant rows (see Product.variants relationship)
+    WishlistItem.query.filter_by(product_id=product.id).delete(synchronize_session=False)
+    db.session.delete(product)  # cascades to ProductVariant/ProductImage rows
     db.session.commit()
+    for image_id in image_ids:
+        _delete_image_quietly(image_id)
     return "", 204
+
+
+def _variant_delete_blocker(variant_ids):
+    """Why these variants can't be hard-deleted (still referenced by a
+    routine, an order or a stock hold), or None. Carts are fine -- those
+    lines are simply dropped."""
+    if not variant_ids:
+        return None
+    steps = RoutineStep.query.filter(RoutineStep.variant_id.in_(variant_ids)).all()
+    if steps:
+        names = ", ".join(sorted({s.routine.name for s in steps}))
+        return f"used in routine(s): {names} -- change those routine steps first, or deactivate instead"
+    if OrderItem.query.filter(OrderItem.variant_id.in_(variant_ids)).first():
+        return "appears in past orders -- deactivate it instead"
+    if InventoryReservation.query.filter(InventoryReservation.variant_id.in_(variant_ids)).first():
+        return "has stock reservations from orders -- deactivate it instead"
+    return None
 
 
 # ---------- Product variants ----------
@@ -570,9 +697,14 @@ def create_product_variant(product_id):
     product = Product.query.get_or_404(product_id)
     data = request.get_json(silent=True) or {}
     required = ["label", "sku", "price_cents"]
-    missing = [f for f in required if data.get(f) is None]
+    missing = [f for f in required if not data.get(f) and data.get(f) != 0]
     if missing:
         return jsonify({"error": f"missing fields: {', '.join(missing)}"}), 400
+    _, error = _int_field(
+            data, "price_cents", minimum=100, multiple_of=100, required=True, label="price_cents (KES 1 = 100)"
+        )
+    if error:
+        return jsonify({"error": error}), 400
 
     variant = ProductVariant(
         product_id=product.id,
@@ -604,6 +736,15 @@ def create_product_variant(product_id):
 def update_product_variant(product_id, variant_id):
     variant = ProductVariant.query.filter_by(id=variant_id, product_id=product_id).first_or_404()
     data = request.get_json(silent=True) or {}
+    if "price_cents" in data:
+        _, error = _int_field(
+            data, "price_cents", minimum=100, multiple_of=100, required=True, label="price_cents (KES 1 = 100)"
+        )
+        if error:
+            return jsonify({"error": error}), 400
+    for field in ("label", "sku"):
+        if field in data and not str(data[field] or "").strip():
+            return jsonify({"error": f"{field} can't be empty"}), 400
 
     for field in ["label", "sku", "price_cents", "currency", "is_active", "position"]:
         if field in data:
@@ -632,7 +773,11 @@ def delete_product_variant(product_id, variant_id):
         return jsonify({
             "error": "this variant has inventory history and can't be deleted -- set is_active to false instead"
         }), 400
+    blocker = _variant_delete_blocker([variant.id])
+    if blocker:
+        return jsonify({"error": f"this size is {blocker}"}), 400
 
+    CartItem.query.filter_by(variant_id=variant.id).delete()
     Inventory.query.filter_by(variant_id=variant.id).delete()
     db.session.delete(variant)
     db.session.commit()
@@ -717,6 +862,17 @@ def delete_product_image(product_id, image_id):
 
 # ---------- Routines ----------
 
+def _validate_routine_fields(data):
+    _, error = _int_field(data, "bundle_discount_percent", minimum=0, maximum=100, label="bundle discount")
+    if error:
+        return error
+    if data.get("skin_type") and data["skin_type"] not in Routine.SKIN_TYPES:
+        return f"skin_type must be one of {Routine.SKIN_TYPES}"
+    if data.get("primary_concern_id") and not SkinConcern.query.get(data["primary_concern_id"]):
+        return "primary concern not found"
+    return None
+
+
 @admin_bp.get("/routines")
 @admin_required
 def list_routines():
@@ -730,20 +886,25 @@ def create_routine():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
         return jsonify({"error": "name and slug are required"}), 400
+    error = _validate_routine_fields(data)
+    if error:
+        return jsonify({"error": error}), 400
 
     routine = Routine(
         name=data["name"],
         slug=data["slug"],
         tagline=data.get("tagline"),
         description=data.get("description"),
-        primary_concern_id=data.get("primary_concern_id"),
-        skin_type=data.get("skin_type"),
+        primary_concern_id=data.get("primary_concern_id") or None,
+        skin_type=data.get("skin_type") or None,
         cloudinary_public_id=data.get("cloudinary_public_id"),
-        bundle_discount_percent=data.get("bundle_discount_percent", 0),
+        bundle_discount_percent=data.get("bundle_discount_percent") or 0,
         is_active=data.get("is_active", True),
     )
     db.session.add(routine)
-    db.session.commit()
+    error = _commit_or_conflict("a routine with this slug already exists")
+    if error:
+        return error
     return jsonify(routine.to_dict()), 201
 
 
@@ -752,15 +913,25 @@ def create_routine():
 def update_routine(routine_id):
     routine = Routine.query.get_or_404(routine_id)
     data = request.get_json(silent=True) or {}
+    error = _validate_routine_fields(data)
+    if error:
+        return jsonify({"error": error}), 400
 
     for field in [
         "name", "slug", "tagline", "description", "primary_concern_id",
         "skin_type", "cloudinary_public_id", "bundle_discount_percent", "is_active",
     ]:
         if field in data:
-            setattr(routine, field, data[field])
+            value = data[field]
+            if field in ("primary_concern_id", "skin_type") and not value:
+                value = None
+            if field == "bundle_discount_percent" and value in (None, ""):
+                value = 0
+            setattr(routine, field, value)
 
-    db.session.commit()
+    error = _commit_or_conflict("a routine with this slug already exists")
+    if error:
+        return error
     return jsonify(routine.to_dict()), 200
 
 
@@ -768,8 +939,13 @@ def update_routine(routine_id):
 @admin_required
 def delete_routine(routine_id):
     routine = Routine.query.get_or_404(routine_id)
-    db.session.delete(routine)
+    if OrderItem.query.filter_by(routine_id=routine.id).first():
+        return jsonify({"error": "this routine appears in past orders -- deactivate it instead"}), 400
+    image_id = routine.cloudinary_public_id
+    CartItem.query.filter_by(routine_id=routine.id).delete(synchronize_session=False)
+    db.session.delete(routine)  # steps cascade
     db.session.commit()
+    _delete_image_quietly(image_id)
     return "", 204
 
 
@@ -786,17 +962,32 @@ def set_routine_steps(routine_id):
     if not isinstance(steps_data, list) or not steps_data:
         return jsonify({"error": "steps must be a non-empty list"}), 400
 
+    for index, step in enumerate(steps_data, start=1):
+        if not isinstance(step, dict) or not step.get("variant_id"):
+            return jsonify({"error": f"step {index} needs a variant_id"}), 400
+        variant = ProductVariant.query.get(step["variant_id"])
+        if not variant:
+            return jsonify({"error": f"step {index}: product size not found"}), 400
+        if not variant.is_active or not variant.product.is_active:
+            return jsonify({
+                "error": f"step {index}: {variant.product.name} ({variant.label}) is inactive -- "
+                         "pick a size that's on sale"
+            }), 400
+        if step.get("time_of_day", "both") not in ("am", "pm", "both"):
+            return jsonify({"error": f"step {index}: time_of_day must be am, pm or both"}), 400
+
     RoutineStep.query.filter_by(routine_id=routine.id).delete()
-    for step in steps_data:
+    for index, step in enumerate(steps_data, start=1):
         db.session.add(
             RoutineStep(
                 routine_id=routine.id,
                 variant_id=step["variant_id"],
-                order_index=step["order_index"],
+                order_index=step.get("order_index") or index,
                 time_of_day=step.get("time_of_day", "both"),
             )
         )
     db.session.commit()
+    db.session.refresh(routine)
     return jsonify(routine.to_dict()), 200
 
 
@@ -841,7 +1032,19 @@ def list_all_orders():
 @admin_required
 def get_admin_order(order_id):
     order = Order.query.get_or_404(order_id)
-    return jsonify(order.to_dict(include_admin_fields=True)), 200
+    return jsonify(_admin_order_detail(order)), 200
+
+
+def _admin_order_detail(order):
+    """Admin order shape plus `stock_allocated`: for a paid-or-later order,
+    whether stock was actually deducted. False flags a payment that
+    confirmed after its stock had sold out -- needs manual review."""
+    data = order.to_dict(include_admin_fields=True)
+    data["stock_allocated"] = (
+        inventory_service.has_sale_transactions(order)
+        if order.status in payment_service.PAID_OR_LATER else None
+    )
+    return data
 
 
 @admin_bp.post("/orders/<order_id>/refresh-payment-status")
@@ -852,25 +1055,22 @@ def refresh_order_payment_status(order_id):
     in orders.py."""
     order = Order.query.get_or_404(order_id)
 
-    if order.status != "payment_pending" or not order.mpesa_checkout_request_id:
-        return jsonify(order.to_dict(include_admin_fields=True)), 200
-
     try:
-        result = mpesa_service.query_stk_status(order.mpesa_checkout_request_id)
+        result = payment_service.check_with_daraja(order, throttle=False)
     except Exception:
         return jsonify({
             "error": "Couldn't confirm payment status with M-Pesa right now -- please try again in a moment."
         }), 502
 
-    result_code = result.get("ResultCode")
-    if result_code == "0":
-        order.status = "paid"
-        db.session.commit()
-    elif result_code is not None:
-        order.status = "payment_failed"
-        db.session.commit()
+    if result is not None:
+        # Same path as the callback: consumes stock, sets paid_at, emails.
+        outcome = payment_service.apply_daraja_result(order, result.get("ResultCode"))
+        if outcome:
+            db.session.commit()
+            if outcome == "paid":
+                payment_service.send_paid_email(order)
 
-    return jsonify(order.to_dict(include_admin_fields=True)), 200
+    return jsonify(_admin_order_detail(order)), 200
 
 
 @admin_bp.post("/orders/<order_id>/advance")
@@ -910,7 +1110,7 @@ def advance_order(order_id):
         except Exception:
             pass
 
-    return jsonify(order.to_dict(include_admin_fields=True)), 200
+    return jsonify(_admin_order_detail(order)), 200
 
 
 @admin_bp.post("/orders/<order_id>/send-invoice")
@@ -944,7 +1144,7 @@ def cancel_order_admin(order_id):
     coupon_service.release_usage(order)
     order.status = "cancelled"
     db.session.commit()
-    return jsonify(order.to_dict(include_admin_fields=True)), 200
+    return jsonify(_admin_order_detail(order)), 200
 
 
 # ---------- Users ----------

@@ -82,13 +82,37 @@ def stk_push(*, phone, amount_kes, account_reference, transaction_desc):
             response.status_code,
             response.text,
         )
-    response.raise_for_status()
+        raise DarajaError(_error_message(response) or f"M-Pesa rejected the request (HTTP {response.status_code})")
     return response.json()
 
 
+class DarajaError(Exception):
+    """Daraja answered, but refused the request -- carries Safaricom's own
+    message (e.g. "Invalid CallBackURL") so it can be shown/logged instead
+    of a generic "could not reach M-Pesa"."""
+
+
+def _json_or_none(response):
+    try:
+        return response.json()
+    except ValueError:
+        return None
+
+
+def _error_message(response):
+    data = _json_or_none(response) or {}
+    return data.get("errorMessage") or data.get("ResponseDescription")
+
+
 def query_stk_status(checkout_request_id):
-    """Optional active poll against Daraja as a fallback if the callback
-    is delayed or missed (e.g. local dev without a stable ngrok tunnel)."""
+    """Active poll against Daraja -- the fallback when the callback is
+    delayed or never arrives (dead ngrok tunnel, wrong MPESA_CALLBACK_URL).
+
+    Returns Daraja's JSON. While the customer hasn't answered the prompt
+    yet, Daraja replies HTTP 500 with errorCode 500.001.1001 ("the
+    transaction is being processed") -- that's a normal "still pending"
+    answer, returned here as a dict with no ResultCode rather than raised.
+    Only genuine failures (network, auth, malformed) raise."""
     access_token = get_access_token()
     password, timestamp = _password_and_timestamp()
     shortcode = current_app.config["MPESA_SHORTCODE"]
@@ -105,5 +129,18 @@ def query_stk_status(checkout_request_id):
         headers={"Authorization": f"Bearer {access_token}"},
         timeout=15,
     )
-    response.raise_for_status()
-    return response.json()
+    data = _json_or_none(response)
+    if not response.ok and data and data.get("errorCode") == PENDING_ERROR_CODE:
+        return data
+    if not response.ok:
+        current_app.logger.error("Daraja STK query %s: %s", response.status_code, response.text)
+        raise DarajaError(_error_message(response) or f"M-Pesa status query failed (HTTP {response.status_code})")
+    return data
+
+
+PENDING_ERROR_CODE = "500.001.1001"
+
+
+def is_success(result_code):
+    """Callback sends ResultCode as an int, the query endpoint as a string."""
+    return result_code is not None and str(result_code) == "0"

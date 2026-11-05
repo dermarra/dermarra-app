@@ -23,24 +23,29 @@ export default function StepShop() {
   const [notFound, setNotFound] = useState(false);
   const [sort, setSort] = useState("featured");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
+    setLoadError(null);
     setVisibleCount(PAGE_SIZE);
-    client.get("/products/step-groups").then(({ data }) => {
-      const match = data.find((g) => g.key === key);
-      if (!match) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
-      setGroup(match);
-      client
-        .get("/products", { params: { step_type: match.step_type } })
-        .then(({ data: productsData }) => setProducts(productsData))
-        .finally(() => setLoading(false));
-    });
+    // Previously a failed request here left the page on "Loading…" forever.
+    client
+      .get("/products/step-groups")
+      .then(({ data }) => {
+        const match = data.find((g) => g.key === key);
+        if (!match) {
+          setNotFound(true);
+          return null;
+        }
+        setGroup(match);
+        return client
+          .get("/products", { params: { step_type: match.step_type } })
+          .then(({ data: productsData }) => setProducts(productsData));
+      })
+      .catch(() => setLoadError("Couldn't load this page -- check your connection and try again."))
+      .finally(() => setLoading(false));
   }, [key]);
 
   const visibleProducts = useMemo(() => {
@@ -65,6 +70,20 @@ export default function StepShop() {
   }
 
   if (loading) return <p className="p-4 text-sm text-ink/60">Loading…</p>;
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+        <p className="text-ink/70">{loadError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   const heroImageUrl = cloudinaryUrl(group.cloudinary_public_id, { width: 1200 });
 

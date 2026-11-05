@@ -16,14 +16,17 @@ export default function Shop() {
   const [products, setProducts] = useState([]);
   const [stepType, setStepType] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setLoadError(null);
     const params = {};
     if (stepType) params.step_type = stepType;
     client
       .get("/products", { params })
       .then(({ data }) => setProducts(data))
+      .catch(() => setLoadError("Couldn't load products -- check your connection and try again."))
       .finally(() => setLoading(false));
   }, [stepType]);
 
@@ -59,6 +62,8 @@ export default function Shop() {
 
       {loading ? (
         <p className="text-ink/60 text-sm">Loading products…</p>
+      ) : loadError ? (
+        <p className="text-clay text-sm">{loadError}</p>
       ) : products.length === 0 ? (
         <p className="text-ink/60 text-sm">No products yet for this filter.</p>
       ) : (

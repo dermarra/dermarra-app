@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
+import OrderTotals from "../../components/OrderTotals.jsx";
 
 export default function AccountOrderDetail() {
   const { orderId } = useParams();
@@ -14,6 +15,7 @@ export default function AccountOrderDetail() {
     client
       .get(`/orders/${orderId}`)
       .then(({ data }) => setOrder(data))
+      .catch(() => setOrder(null))
       .finally(() => setLoading(false));
   }, [orderId]);
 
@@ -59,12 +61,7 @@ export default function AccountOrderDetail() {
             </div>
           ))}
         </div>
-        <div className="flex justify-between text-sm font-semibold text-ink mt-3 pt-3 border-t border-mist">
-          <span>Total</span>
-          <span>
-            {order.currency} {(order.total_cents / 100).toFixed(0)}
-          </span>
-        </div>
+        <OrderTotals order={order} />
       </section>
 
       <section className="border border-mist rounded-sm bg-bone-light p-4">

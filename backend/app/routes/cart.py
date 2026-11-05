@@ -9,6 +9,19 @@ from app.models.user import User
 from app.services import coupon_service
 from app.services.coupon_service import CouponError
 from app.utils.cart_totals import cart_subtotal_cents
+from app.utils.purchasable import unavailable_reason
+
+
+def _parse_quantity(raw, default=None):
+    """int >= 1, or None if missing/invalid -- int("abc") used to 500."""
+    if raw is None:
+        raw = default
+    try:
+        quantity = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return quantity if 1 <= quantity <= 100 else None
+
 
 cart_bp = Blueprint("cart", __name__)
 
@@ -35,19 +48,24 @@ def add_item():
     data = request.get_json(silent=True) or {}
     variant_id = data.get("variant_id")
     routine_id = data.get("routine_id")
-    quantity = int(data.get("quantity", 1))
+    quantity = _parse_quantity(data.get("quantity"), default=1)
 
     if not variant_id and not routine_id:
         return jsonify({"error": "either variant_id or routine_id is required"}), 400
     if variant_id and routine_id:
         return jsonify({"error": "provide only one of variant_id or routine_id"}), 400
-    if quantity < 1:
-        return jsonify({"error": "quantity must be at least 1"}), 400
+    if quantity is None:
+        return jsonify({"error": "quantity must be a whole number from 1 to 100"}), 400
 
-    if variant_id and not ProductVariant.query.get(variant_id):
+    variant = ProductVariant.query.get(variant_id) if variant_id else None
+    routine = Routine.query.get(routine_id) if routine_id else None
+    if variant_id and not variant:
         return jsonify({"error": "product variant not found"}), 404
-    if routine_id and not Routine.query.get(routine_id):
+    if routine_id and not routine:
         return jsonify({"error": "routine not found"}), 404
+    reason = unavailable_reason(variant, routine)
+    if reason:
+        return jsonify({"error": reason}), 400
 
     cart = _get_or_create_cart(get_jwt_identity())
 
@@ -72,16 +90,16 @@ def add_item():
 @jwt_required()
 def update_item(item_id):
     data = request.get_json(silent=True) or {}
-    quantity = data.get("quantity")
-    if quantity is None or int(quantity) < 1:
-        return jsonify({"error": "quantity must be at least 1"}), 400
+    quantity = _parse_quantity(data.get("quantity"))
+    if quantity is None:
+        return jsonify({"error": "quantity must be a whole number from 1 to 100"}), 400
 
     cart = _get_or_create_cart(get_jwt_identity())
     item = next((i for i in cart.items if i.id == item_id), None)
     if not item:
         return jsonify({"error": "cart item not found"}), 404
 
-    item.quantity = int(quantity)
+    item.quantity = quantity
     db.session.commit()
     return jsonify(cart.to_dict()), 200
 

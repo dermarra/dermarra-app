@@ -90,6 +90,26 @@ def send_password_reset_email(user, reset_url):
     _send(email, failure_label="password reset email")
 
 
+def _discount_label(order):
+    return f"Discount ({_e(order.coupon_code_snapshot)})" if order.coupon_code_snapshot else "Discount"
+
+
+def _discount_line_html(order):
+    """Without this, a coupon order's items didn't add up to its total."""
+    if not order.discount_cents:
+        return ""
+    return f"<p>{_discount_label(order)}: -KES {order.discount_cents / 100:.0f}</p>"
+
+
+def _discount_row_html(order):
+    if not order.discount_cents:
+        return ""
+    return (
+        f'<tr><td colspan="3" style="padding:8px;text-align:right;">{_discount_label(order)}</td>'
+        f'<td style="padding:8px;text-align:right;">-KES {order.discount_cents / 100:.0f}</td></tr>'
+    )
+
+
 def send_order_confirmation_email(user, order):
     items_html = "".join(
         f"<li>{_e(item.name_snapshot)} x{item.quantity} — "
@@ -103,6 +123,7 @@ def send_order_confirmation_email(user, order):
         html_content=_email_shell(
             f"<p>Hi {_e(user.full_name)}, thanks for your order.</p>"
             f"<ul>{items_html}</ul>"
+            f"{_discount_line_html(order)}"
             f"<p>Total: KES {order.total_cents / 100:.0f}</p>"
             f"<p>M-Pesa receipt: {_e(order.mpesa_receipt_number)}</p>"
         ),
@@ -196,6 +217,7 @@ def send_order_invoice_email(user, order):
             "<tfoot>"
             f'<tr><td colspan="3" style="padding:8px;text-align:right;">Subtotal</td>'
             f'<td style="padding:8px;text-align:right;">KES {order.subtotal_cents / 100:.0f}</td></tr>'
+            f"{_discount_row_html(order)}"
             f'<tr><td colspan="3" style="padding:8px;text-align:right;">Shipping</td>'
             f'<td style="padding:8px;text-align:right;">KES {order.shipping_cents / 100:.0f}</td></tr>'
             f'<tr style="font-weight:bold;color:#F47A53;">'

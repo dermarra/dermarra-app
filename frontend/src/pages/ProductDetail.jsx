@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../api/client";
 import { useCart } from "../context/CartContext";
@@ -24,20 +24,40 @@ export default function ProductDetail() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [addError, setAddError] = useState(null);
+  const [loadError, setLoadError] = useState(null);
   const { addItem } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setSelectedIndex(0);
-    client.get(`/products/${slug}`).then(({ data }) => {
-      setProduct(data);
-      setSelectedVariantId(data.default_variant_id || data.variants?.[0]?.id || null);
-      client
-        .get("/products", { params: { step_type: data.step_type } })
-        .then(({ data: relatedData }) => setRelated(relatedData.filter((p) => p.id !== data.id).slice(0, 4)));
-    });
+    setProduct(null);
+    setLoadError(null);
+    client
+      .get(`/products/${slug}`)
+      .then(({ data }) => {
+        setProduct(data);
+        setSelectedVariantId(data.default_variant_id || data.variants?.[0]?.id || null);
+        client
+          .get("/products", { params: { step_type: data.step_type } })
+          .then(({ data: relatedData }) => setRelated(relatedData.filter((p) => p.id !== data.id).slice(0, 4)))
+          .catch(() => setRelated([]));
+      })
+      .catch((err) =>
+        setLoadError(err.response?.status === 404 ? "We couldn't find that product." : "Couldn't load this product.")
+      );
   }, [slug]);
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+        <p className="text-ink/70">{loadError}</p>
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+          Shop all products
+        </Link>
+      </div>
+    );
+  }
 
   if (!product) return <p className="p-4 text-sm text-ink/60">Loading…</p>;
 
@@ -55,7 +75,7 @@ export default function ProductDetail() {
 
   const handleAdd = async () => {
     if (!user) {
-      navigate("/login");
+      navigate("/login", { state: { from: `/shop/${slug}` } });
       return;
     }
     if (!selectedVariant) return;

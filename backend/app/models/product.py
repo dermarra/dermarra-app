@@ -148,7 +148,9 @@ class Product(db.Model):
             "images": [image.to_dict() for image in self.images],
         }
         if include_variants:
-            data["variants"] = [v.to_dict(include_admin_fields=include_admin_fields) for v in self.variants]
+            # Customers only ever see sizes that are on sale; admins see all.
+            shown = self.variants if include_admin_fields else active_variants
+            data["variants"] = [v.to_dict(include_admin_fields=include_admin_fields) for v in shown]
         if include_concerns:
             data["skin_concerns"] = [c.to_dict() for c in self.skin_concerns]
             data["ingredients"] = [i.to_dict() for i in self.ingredients]

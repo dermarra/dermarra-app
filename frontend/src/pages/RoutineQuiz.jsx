@@ -262,6 +262,7 @@ export default function RoutineQuiz() {
                   ) : (
                     <Link
                       to="/login"
+                      state={{ from: "/quiz" }}
                       className="px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold hover:bg-amber-dark transition-colors"
                     >
                       Sign in to add this routine to your cart

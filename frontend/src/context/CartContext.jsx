@@ -15,6 +15,8 @@ export function CartProvider({ children }) {
     try {
       const { data } = await client.get("/cart");
       setCart(data);
+    } catch {
+      // keep showing the last known cart rather than an unhandled rejection
     } finally {
       setLoading(false);
     }

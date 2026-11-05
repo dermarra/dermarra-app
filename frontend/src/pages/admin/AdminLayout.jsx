@@ -11,6 +11,7 @@ const TABS = [
   { to: "concerns", label: "Concerns" },
   { to: "ingredients", label: "Ingredients" },
   { to: "step-groups", label: "Shop by Step" },
+  { to: "coupons", label: "Coupons" },
   { to: "users", label: "Users" },
 ];
 

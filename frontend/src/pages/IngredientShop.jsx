@@ -32,10 +32,12 @@ export default function IngredientShop() {
   const [stepType, setStepType] = useState("");
   const [sort, setSort] = useState("featured");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
+    setLoadError(null);
     setVisibleCount(PAGE_SIZE);
     Promise.all([client.get("/products/ingredients"), client.get("/products", { params: { ingredient: slug } })])
       .then(([ingredientsRes, productsRes]) => {
@@ -47,6 +49,7 @@ export default function IngredientShop() {
         }
         setProducts(productsRes.data);
       })
+      .catch(() => setLoadError("Couldn't load this page -- check your connection and try again."))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -62,6 +65,20 @@ export default function IngredientShop() {
   }, [products, stepType, sort]);
 
   if (loading) return <p className="p-4 text-sm text-ink/60">Loading…</p>;
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+        <p className="text-ink/70">{loadError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (notFound) {
     return (

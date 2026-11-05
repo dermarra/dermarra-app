@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
 import client from "../api/client";
 import { useAuth } from "./AuthContext";
 
@@ -10,8 +10,12 @@ export function WishlistProvider({ children }) {
 
   const refreshWishlist = useCallback(async () => {
     if (!user) return;
-    const { data } = await client.get("/wishlist");
-    setWishlist(data);
+    try {
+      const { data } = await client.get("/wishlist");
+      setWishlist(data);
+    } catch {
+      // non-critical -- hearts just show as unsaved until the next refresh
+    }
   }, [user]);
 
   useEffect(() => {
@@ -29,8 +33,8 @@ export function WishlistProvider({ children }) {
     setWishlist(data);
   }, []);
 
-  const productIds = new Set(wishlist.items.map((item) => item.product?.id));
-  const isWishlisted = useCallback((productId) => productIds.has(productId), [wishlist]);
+  const productIds = useMemo(() => new Set(wishlist.items.map((item) => item.product?.id)), [wishlist]);
+  const isWishlisted = useCallback((productId) => productIds.has(productId), [productIds]);
 
   return (
     <WishlistContext.Provider

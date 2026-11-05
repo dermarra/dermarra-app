@@ -38,6 +38,7 @@ const emptyForm = {
   slug: "",
   step_type: STEP_TYPES[0],
   short_description: "",
+  description: "",
   key_actives: "",
   is_active: true,
   skin_concern_ids: [],
@@ -52,6 +53,14 @@ function StockBadge({ product }) {
       {product.in_stock ? "In stock" : "Out of stock"}
     </span>
   );
+}
+
+// M-Pesa only charges whole shillings, and a blank field must never save as
+// KES 0 (Number("") === 0) -- returns cents, or null if invalid.
+function parsePriceKes(value) {
+  const kes = Number(value);
+  if (String(value).trim() === "" || !Number.isInteger(kes) || kes < 1) return null;
+  return kes * 100;
 }
 
 function VariantRow({ productId, variant, onSaved, onDeleted }) {
@@ -71,13 +80,18 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
     form.is_active !== variant.is_active;
 
   const save = async () => {
+    const priceCents = parsePriceKes(form.price_kes);
+    if (priceCents === null) {
+      setError("Enter a price of at least KES 1, in whole shillings.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const { data } = await client.patch(`/admin/products/${productId}/variants/${variant.id}`, {
         label: form.label,
         sku: form.sku,
-        price_cents: Math.round(Number(form.price_kes) * 100),
+        price_cents: priceCents,
         is_active: form.is_active,
       });
       onSaved(data);
@@ -89,6 +103,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
   };
 
   const remove = async () => {
+    if (!window.confirm(`Delete the ${variant.label} size? This can't be undone.`)) return;
     setSaving(true);
     setError(null);
     try {
@@ -117,7 +132,8 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
         />
         <input
           type="number"
-          min="0"
+          min="1"
+          step="1"
           value={form.price_kes}
           onChange={(e) => setForm((f) => ({ ...f, price_kes: e.target.value }))}
           placeholder="Price (KES)"
@@ -272,6 +288,7 @@ export default function AdminProducts() {
       slug: product.slug,
       step_type: product.step_type,
       short_description: product.short_description || "",
+      description: product.description || "",
       key_actives: product.key_actives || "",
       is_active: product.is_active,
       skin_concern_ids: product.skin_concerns?.map((c) => c.id) || [],
@@ -291,6 +308,10 @@ export default function AdminProducts() {
   // sync directly so the table's price/stock columns don't go stale.
   const syncProductVariants = (variants) => {
     setProducts((prev) => prev.map((p) => (p.id === editingId ? { ...p, variants } : p)));
+    // price_from_cents / in_stock are computed server-side from the
+    // variants -- refetch so the table's price and stock columns don't go
+    // stale (only patching `variants` locally left them out of date).
+    reloadProducts().catch(() => {});
   };
 
   const currentProduct = () => products.find((p) => p.id === editingId);
@@ -307,13 +328,18 @@ export default function AdminProducts() {
 
   const handleAddVariant = async (e) => {
     e.preventDefault();
+    const priceCents = parsePriceKes(newVariantForm.price_kes);
+    if (priceCents === null) {
+      setNewVariantError("Enter a price of at least KES 1, in whole shillings.");
+      return;
+    }
     setAddingVariant(true);
     setNewVariantError(null);
     try {
       const { data } = await client.post(`/admin/products/${editingId}/variants`, {
         label: newVariantForm.label,
         sku: newVariantForm.sku,
-        price_cents: Math.round(Number(newVariantForm.price_kes) * 100),
+        price_cents: priceCents,
       });
       syncProductVariants([...(currentProduct()?.variants || []), data]);
       setNewVariantForm({ label: "", sku: "", price_kes: "" });
@@ -352,6 +378,7 @@ export default function AdminProducts() {
         slug: form.slug,
         step_type: form.step_type,
         short_description: form.short_description,
+        description: form.description,
         key_actives: form.key_actives,
         is_active: form.is_active,
         skin_concern_ids: form.skin_concern_ids,
@@ -372,6 +399,7 @@ export default function AdminProducts() {
   };
 
   const handleDelete = async (productId) => {
+    if (!window.confirm("Delete this product and all its sizes and photos? This can't be undone -- deactivate it instead to just hide it.")) return;
     setRowState((s) => ({ ...s, [productId]: "deleting" }));
     try {
       await client.delete(`/admin/products/${productId}`);
@@ -453,6 +481,7 @@ export default function AdminProducts() {
   };
 
   const handleDeleteImage = async (imageId) => {
+    if (!window.confirm("Delete this photo?")) return;
     setImageBusy(true);
     setImageError(null);
     try {
@@ -650,6 +679,14 @@ export default function AdminProducts() {
             rows={2}
           />
 
+          <textarea
+            placeholder="Full description (shown on the product page)"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="border border-mist rounded-sm px-3 py-2 text-sm"
+            rows={5}
+          />
+
           <div>
             <p className="text-xs font-semibold text-ink/70 mb-2">Skin concerns</p>
             <div className="flex flex-wrap gap-2">
@@ -725,7 +762,8 @@ export default function AdminProducts() {
                   <input
                     required
                     type="number"
-                    min="0"
+                    min="1"
+                    step="1"
                     value={newVariantForm.price_kes}
                     onChange={(e) => setNewVariantForm((f) => ({ ...f, price_kes: e.target.value }))}
                     placeholder="Price (KES)"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import AuthPromoPanel from "../components/AuthPromoPanel.jsx";
@@ -8,6 +8,10 @@ import { MailIcon, LockIcon, UserIcon, PhoneIcon, EyeIcon, EyeOffIcon } from "..
 export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Return the shopper to where they were (e.g. the product they tried to
+  // add) instead of always dumping them on /account.
+  const returnTo = location.state?.from || "/account";
   const [form, setForm] = useState({ fullName: "", email: "", password: "", phone: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
@@ -21,7 +25,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       await signup(form);
-      navigate("/account");
+      navigate(returnTo, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong.");
     } finally {
@@ -119,7 +123,7 @@ export default function Signup() {
 
           <p className="text-sm text-ink/60 mt-6">
             Already have an account?{" "}
-            <Link to="/login" className="text-amber font-medium hover:text-amber-dark">
+            <Link to="/login" state={location.state} className="text-amber font-medium hover:text-amber-dark">
               Sign in
             </Link>
           </p>

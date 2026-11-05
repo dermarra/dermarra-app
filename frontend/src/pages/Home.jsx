@@ -99,11 +99,14 @@ export default function Home() {
   const [featuredCoupon, setFeaturedCoupon] = useState(null);
 
   useEffect(() => {
-    client.get("/hero-slides").then(({ data }) => setHeroSlides(data));
-    client.get("/products/concerns").then(({ data }) => setConcerns(data));
-    client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6)));
-    client.get("/products/step-groups").then(({ data }) => setStepGroups(data));
-    client.get("/coupons/featured").then(({ data }) => setFeaturedCoupon(data));
+    // Each section just stays hidden/empty if its request fails -- the
+    // .catch keeps that from surfacing as an unhandled rejection.
+    const ignore = () => {};
+    client.get("/hero-slides").then(({ data }) => setHeroSlides(data)).catch(ignore);
+    client.get("/products/concerns").then(({ data }) => setConcerns(data)).catch(ignore);
+    client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6))).catch(ignore);
+    client.get("/products/step-groups").then(({ data }) => setStepGroups(data)).catch(ignore);
+    client.get("/coupons/featured").then(({ data }) => setFeaturedCoupon(data)).catch(ignore);
   }, []);
 
   return (

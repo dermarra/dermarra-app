@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import client from "../api/client";
 import { useCart } from "../context/CartContext";
@@ -45,6 +45,9 @@ export default function Checkout() {
   const [step, setStep] = useState("form");
   const [error, setError] = useState(null);
   const [order, setOrder] = useState(null);
+  const [failureReason, setFailureReason] = useState(null);
+  const [retryPhone, setRetryPhone] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const pollTimer = useRef(null);
   const pollDeadline = useRef(null);
 
@@ -57,23 +60,55 @@ export default function Checkout() {
   const total = subtotal - discount;
 
   const startPolling = (orderId) => {
+    clearInterval(pollTimer.current);
     pollDeadline.current = Date.now() + POLL_TIMEOUT_MS;
     pollTimer.current = setInterval(async () => {
       if (Date.now() > pollDeadline.current) {
         clearInterval(pollTimer.current);
-        setError("We didn't hear back in time. Check your phone -- if you already paid, your order will update shortly.");
+        setError("We didn't hear back in time. If you already paid, your order will update shortly in your orders.");
         return;
       }
-      const { data } = await client.get(`/payments/mpesa/status/${orderId}`);
+      let data;
+      try {
+        ({ data } = await client.get(`/payments/mpesa/status/${orderId}`));
+      } catch {
+        return; // transient -- keep polling until the deadline
+      }
       if (data.status === "paid") {
         clearInterval(pollTimer.current);
+        setOrder((o) => ({ ...o, mpesa_receipt_number: data.mpesa_receipt_number }));
         setStep("paid");
         refreshCart();
       } else if (data.status === "payment_failed") {
         clearInterval(pollTimer.current);
+        setFailureReason(data.result_description || null);
         setStep("failed");
       }
     }, POLL_INTERVAL_MS);
+  };
+
+  const sendStkPush = async (orderId, phone) => {
+    const { data } = await client.post("/payments/mpesa/stk-push", { order_id: orderId, phone });
+    setOrder(data.order);
+    setError(null);
+    setStep("awaiting_pin");
+    startPolling(orderId);
+  };
+
+  // Retries payment for the order that was already created -- the cart was
+  // emptied when it was, so "try again" must not go back to the form (it
+  // used to, and showed "Your cart is empty").
+  const retryPayment = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setRetrying(true);
+    try {
+      await sendStkPush(order.id, retryPhone || shipping.phone);
+    } catch (err) {
+      setError(err.response?.data?.error || "Couldn't send the M-Pesa prompt. Please try again.");
+    } finally {
+      setRetrying(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -100,13 +135,15 @@ export default function Checkout() {
           .catch(() => {}); // Non-critical -- don't block checkout on this
       }
 
-      const { data } = await client.post("/payments/mpesa/stk-push", {
-        order_id: createdOrder.id,
-        phone: shipping.phone,
-      });
-      setOrder(data.order);
-      setStep("awaiting_pin");
-      startPolling(createdOrder.id);
+      try {
+        await sendStkPush(createdOrder.id, shipping.phone);
+      } catch (err) {
+        // The order exists (and the cart is empty) -- offer a retry for
+        // this order rather than dropping back to the form.
+        setFailureReason(err.response?.data?.error || "We couldn't send the M-Pesa prompt.");
+        setRetryPhone(shipping.phone);
+        setStep("failed");
+      }
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong. Please try again.");
       setStep("form");
@@ -144,7 +181,7 @@ export default function Checkout() {
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/account")}
+          onClick={() => navigate(`/account/orders/${order.id}`)}
           className="mt-6 px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold"
         >
           View order
@@ -169,7 +206,12 @@ export default function Checkout() {
         <div className="mt-6 flex justify-center">
           <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin" />
         </div>
-        {error && <p className="text-sm text-clay mt-4">{error}</p>}
+        {error && (
+          <p className="text-sm text-clay mt-4">
+            {error}{" "}
+            <Link to="/account/orders" className="underline">View my orders</Link>
+          </p>
+        )}
       </motion.div>
     );
   }
@@ -183,15 +225,35 @@ export default function Checkout() {
         className="mx-auto max-w-lg px-4 py-10 text-center"
       >
         <h1 className="font-display text-2xl text-ink mb-2">Payment didn&apos;t go through</h1>
-        <p className="text-ink/70">The M-Pesa transaction was cancelled or failed.</p>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setStep("form")}
-          className="mt-6 px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold"
-        >
-          Try again
-        </motion.button>
+        <p className="text-ink/70">
+          {failureReason || "The M-Pesa transaction was cancelled or failed."} Your order is saved -- you can
+          retry the payment now.
+        </p>
+        <form onSubmit={retryPayment} className="mt-6 flex flex-col gap-3 max-w-xs mx-auto">
+          <label className="text-left text-xs text-ink/60">
+            M-Pesa phone number
+            <input
+              required
+              type="tel"
+              value={retryPhone || shipping.phone}
+              onChange={(e) => setRetryPhone(e.target.value)}
+              className={`${plainInputClass} w-full mt-1`}
+            />
+          </label>
+          {error && <p className="text-sm text-clay">{error}</p>}
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            type="submit"
+            disabled={retrying}
+            className="px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold disabled:opacity-50"
+          >
+            {retrying ? "Sending prompt…" : `Retry payment · KES ${((order?.total_cents ?? 0) / 100).toFixed(0)}`}
+          </motion.button>
+          <Link to="/account/orders" className="text-xs text-ink/60 underline">
+            Pay later from my orders
+          </Link>
+        </form>
       </motion.div>
     );
   }

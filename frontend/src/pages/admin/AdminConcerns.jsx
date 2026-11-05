@@ -68,6 +68,7 @@ export default function AdminConcerns() {
   };
 
   const handleDelete = async (concernId) => {
+    if (!window.confirm("Delete this concern? It will be removed from every product tagged with it.")) return;
     setRowState((s) => ({ ...s, [concernId]: "deleting" }));
     try {
       await client.delete(`/admin/concerns/${concernId}`);

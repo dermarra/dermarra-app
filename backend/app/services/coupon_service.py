@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from app.models.coupon import Coupon
 from app.models.order import Order
+from app.utils.cart_totals import round_to_shilling
 
 _PAID_STATUSES = ("paid", "processing", "shipped", "delivered")
 
@@ -49,7 +50,7 @@ def validate_and_price(code, user, subtotal_cents):
             raise CouponError("this code is only valid on your first order")
 
     if coupon.discount_type == "percent":
-        discount_cents = round(subtotal_cents * coupon.discount_value / 100)
+        discount_cents = round_to_shilling(subtotal_cents * coupon.discount_value / 100)
     else:
         discount_cents = coupon.discount_value
     discount_cents = min(discount_cents, subtotal_cents)
@@ -63,11 +64,22 @@ def apply_usage(coupon):
     time. Re-checks max_uses under the lock so two concurrent checkouts
     racing for the last use of a nearly-exhausted coupon can't both
     succeed."""
-    locked = Coupon.query.filter_by(id=coupon.id).with_for_update().first()
+    locked = Coupon.query.filter_by(id=coupon.id).with_for_update().populate_existing().first()
     if locked.max_uses is not None and locked.used_count >= locked.max_uses:
         raise CouponError("this code has already been used the maximum number of times")
     locked.used_count += 1
     return locked
+
+
+def reclaim_usage(order):
+    """Re-counts a use that release_usage gave back, for the rare order
+    that's paid after being cancelled (payment confirmed late). Never
+    refuses -- the sale already happened, even if max_uses is now hit."""
+    if not order.coupon_id:
+        return
+    locked = Coupon.query.filter_by(id=order.coupon_id).with_for_update().populate_existing().first()
+    if locked:
+        locked.used_count += 1
 
 
 def release_usage(order):
@@ -77,6 +89,6 @@ def release_usage(order):
     symmetry). No-op if the order never actually used a coupon."""
     if not order.coupon_id:
         return
-    locked = Coupon.query.filter_by(id=order.coupon_id).with_for_update().first()
+    locked = Coupon.query.filter_by(id=order.coupon_id).with_for_update().populate_existing().first()
     if locked:
         locked.used_count = max(0, locked.used_count - 1)
