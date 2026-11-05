@@ -9,17 +9,20 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState(null); // success message once sent
+  const [noAccount, setNoAccount] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setNoAccount(false);
     setSubmitting(true);
     try {
-      await client.post("/auth/forgot-password", { email });
-      setSent(true);
+      const { data } = await client.post("/auth/forgot-password", { email });
+      setSent(data.message || "We've sent you a password reset link.");
     } catch (err) {
-      setError(err.response?.data?.error || "Something went wrong.");
+      if (err.response?.data?.code === "no_account") setNoAccount(true);
+      else setError(err.response?.data?.error || "Something went wrong.");
     } finally {
       setSubmitting(false);
     }
@@ -47,10 +50,7 @@ export default function ForgotPassword() {
           </p>
 
           {sent ? (
-            <p className="text-sm text-sage-dark">
-              If an account exists for that email, we&apos;ve sent a password reset link -- it expires
-              in 30 minutes.
-            </p>
+            <p className="text-sm text-sage-dark">{sent}</p>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <label className="relative block">
@@ -66,6 +66,14 @@ export default function ForgotPassword() {
               </label>
 
               {error && <p className="text-sm text-clay">{error}</p>}
+              {noAccount && (
+                <p className="text-sm text-clay">
+                  There&apos;s no account with that email.{" "}
+                  <Link to="/signup" state={{ email }} className="text-amber font-medium underline">
+                    Create an account
+                  </Link>
+                </p>
+              )}
 
               <motion.button
                 whileHover={{ scale: 1.02 }}

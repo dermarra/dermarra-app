@@ -154,6 +154,12 @@
 - Admin deletes refuse (400, with a reason) when the row is still
   referenced (routine using a concern/size, past orders, reservations);
   Cloudinary images are deleted only after the DB delete commits.
+- Slugs (products, routines, concerns, ingredients) must match
+  `^[a-z0-9]+(-[a-z0-9]+)*$` -- they're page URLs. Admin forms use the shared
+  `NameSlugFields.jsx` (labelled, auto-generated from the name). Four
+  records had descriptive text typed into the slug box and were corrected
+  2026-11-06. Admin Inventory lists products with no sizes as "No sizes"
+  (they're hidden from the shop until a size exists).
 - Tests: `backend/tests/test_payments.py` (15) covers all of the above.
 
 ## Admin Dashboard (shipped)
@@ -397,9 +403,13 @@ never the raw hash — the serializer signs, it doesn't encrypt, so the
 payload is base64-readable by whoever holds the link) in the token
 payload: once the password actually changes, that fingerprint no longer
 matches and the same token stops verifying, with no server-side
-revocation table needed. `POST /api/auth/forgot-password` always returns
-the same response whether or not the email is registered (no account
-enumeration). New `FRONTEND_BASE_URL` config value builds the link
+revocation table needed. `POST /api/auth/forgot-password` **now says whether
+the email is registered** (404 `code: no_account` → the page links to
+sign-up) -- a product decision by the owner on 2026-11-06, reversing the
+original no-enumeration design. Accepted tradeoff: it reveals which emails
+have accounts, so rate limiting (still missing) matters more before launch.
+It also returns 502 if the reset email fails to send, instead of claiming
+success. New `FRONTEND_BASE_URL` config value builds the link
 inside the email — distinct from `FRONTEND_ORIGINS`, which is the CORS
 allowlist.
 

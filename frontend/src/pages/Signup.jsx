@@ -14,7 +14,8 @@ export default function Signup() {
   const from = location.state?.from;
   const returnTo =
     from && !["/login", "/signup", "/forgot-password", "/reset-password"].includes(from) ? from : "/account";
-  const [form, setForm] = useState({ fullName: "", email: "", password: "", phone: "" });
+  const prefillEmail = useLocation().state?.email || "";
+  const [form, setForm] = useState({ fullName: "", email: prefillEmail, password: "", phone: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);

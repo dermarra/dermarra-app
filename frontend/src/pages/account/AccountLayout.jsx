@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 
@@ -10,7 +10,8 @@ const TABS = [
 ];
 
 export default function AccountLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) return <p className="p-4 text-sm text-ink/60">Loading…</p>;
 
@@ -47,6 +48,16 @@ export default function AccountLayout() {
         </p>
         <h1 className="relative font-display text-2xl text-ink">{user.full_name}</h1>
         <p className="relative text-sm text-ink/60 mt-1">{user.email}</p>
+        {/* The only sign-out on mobile -- BottomNav has no account menu. */}
+        <button
+          onClick={() => {
+            logout();
+            navigate("/", { replace: true });
+          }}
+          className="relative mt-4 px-4 py-2 rounded-sm border border-mist text-ink/70 text-xs font-semibold hover:border-ink/40"
+        >
+          Sign out
+        </button>
       </motion.div>
 
       <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 mb-2">

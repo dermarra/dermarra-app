@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -32,6 +32,13 @@ const AUTH_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password"];
 export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  // Leave whatever signed-in page you were on (checkout, account, admin) --
+  // it used to stay put showing that page's stale signed-in state.
+  const signOut = () => {
+    logout();
+    navigate("/", { replace: true });
+  };
   // Signing in from any page returns you to that page (it always went to
   // /account before). Auth pages themselves are never a return target.
   const returnTo = AUTH_PATHS.includes(location.pathname)
@@ -58,7 +65,7 @@ export default function Navbar() {
                 <UserIcon className="w-4 h-4" />
                 {user.full_name}
               </Link>
-              <button onClick={logout} className="hover:text-ink transition-colors">Sign out</button>
+              <button onClick={signOut} className="hover:text-ink transition-colors">Sign out</button>
             </>
           ) : (
             <Link to="/login" state={returnTo ? { from: returnTo } : undefined} className="hover:text-ink transition-colors">

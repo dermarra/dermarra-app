@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, request, jsonify
@@ -39,6 +40,24 @@ def _commit_or_conflict(message):
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": message}), 400
+    return None
+
+
+_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def _slug_error(data):
+    """Slugs become URLs (/shop/<slug>, /shop/concern/<slug>...). Admins were
+    typing descriptive text into the slug box ("wrinkles, ageing, ") which
+    produced broken links -- only lowercase words joined by hyphens pass."""
+    if "slug" not in data:
+        return None
+    slug = data.get("slug") or ""
+    if not _SLUG_RE.match(slug):
+        return (
+            f"slug {slug!r} isn't valid -- use lowercase letters and numbers joined by hyphens, "
+            "e.g. anti-ageing-serum (it becomes the page URL)"
+        )
     return None
 
 
@@ -89,6 +108,8 @@ def create_concern():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
         return jsonify({"error": "name and slug are required"}), 400
+    if _slug_error(data):
+        return jsonify({"error": _slug_error(data)}), 400
     concern = SkinConcern(
         name=data["name"],
         slug=data["slug"],
@@ -107,6 +128,8 @@ def create_concern():
 def update_concern(concern_id):
     concern = SkinConcern.query.get_or_404(concern_id)
     data = request.get_json(silent=True) or {}
+    if _slug_error(data):
+        return jsonify({"error": _slug_error(data)}), 400
     for field in ("name", "slug", "description", "cloudinary_public_id"):
         if field in data:
             setattr(concern, field, data[field])
@@ -148,6 +171,8 @@ def create_ingredient():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
         return jsonify({"error": "name and slug are required"}), 400
+    if _slug_error(data):
+        return jsonify({"error": _slug_error(data)}), 400
     ingredient = Ingredient(
         name=data["name"],
         slug=data["slug"],
@@ -166,6 +191,8 @@ def create_ingredient():
 def update_ingredient(ingredient_id):
     ingredient = Ingredient.query.get_or_404(ingredient_id)
     data = request.get_json(silent=True) or {}
+    if _slug_error(data):
+        return jsonify({"error": _slug_error(data)}), 400
     for field in ("name", "slug", "description", "cloudinary_public_id"):
         if field in data:
             setattr(ingredient, field, data[field])
@@ -412,12 +439,29 @@ def _variant_admin_dict(variant):
 @admin_bp.get("/inventory")
 @admin_required
 def list_inventory():
-    """Optional ?status=in_stock|low_stock|out_of_stock filter."""
+    """Optional ?status=in_stock|low_stock|out_of_stock filter.
+
+    Rows are per size (variant). A product with no sizes at all has nothing
+    to stock and can't be sold, so it's listed too, as stock_status
+    "no_sizes" (included under out_of_stock) -- otherwise it was invisible
+    here and admins couldn't tell why it never showed in the shop."""
     status_filter = request.args.get("status")
     variants = ProductVariant.query.join(ProductVariant.product).order_by(Product.name, ProductVariant.position).all()
     rows = [_variant_admin_dict(v) for v in variants]
+    rows += [
+        {
+            "id": None,
+            "product_id": p.id,
+            "product_name": p.name,
+            "label": None,
+            "is_active": p.is_active,
+            "stock_status": "no_sizes",
+        }
+        for p in Product.query.filter(~Product.variants.any()).order_by(Product.name).all()
+    ]
     if status_filter:
-        rows = [r for r in rows if r["stock_status"] == status_filter]
+        wanted = {status_filter, "no_sizes"} if status_filter == "out_of_stock" else {status_filter}
+        rows = [r for r in rows if r["stock_status"] in wanted]
     return jsonify(rows), 200
 
 
@@ -581,6 +625,8 @@ def create_product():
         return jsonify({"error": f"step_type must be one of {Product.STEP_TYPES}"}), 400
     if not str(data["name"]).strip() or not str(data["slug"]).strip():
         return jsonify({"error": "name and slug can't be empty"}), 400
+    if _slug_error(data):
+        return jsonify({"error": _slug_error(data)}), 400
 
     product = Product(
         name=data["name"],
@@ -615,6 +661,8 @@ def update_product(product_id):
     data = request.get_json(silent=True) or {}
     if "step_type" in data and data["step_type"] not in Product.STEP_TYPES:
         return jsonify({"error": f"step_type must be one of {Product.STEP_TYPES}"}), 400
+    if _slug_error(data):
+        return jsonify({"error": _slug_error(data)}), 400
 
     for field in [
         "name", "slug", "step_type", "short_description", "description",
@@ -863,6 +911,8 @@ def delete_product_image(product_id, image_id):
 # ---------- Routines ----------
 
 def _validate_routine_fields(data):
+    if _slug_error(data):
+        return _slug_error(data)
     _, error = _int_field(data, "bundle_discount_percent", minimum=0, maximum=100, label="bundle discount")
     if error:
         return error

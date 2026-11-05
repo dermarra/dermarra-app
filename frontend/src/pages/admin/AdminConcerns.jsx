@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
+import NameSlugFields from "../../components/NameSlugFields.jsx";
+import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
@@ -49,7 +51,7 @@ export default function AdminConcerns() {
     try {
       const payload = {
         name: form.name,
-        slug: form.slug,
+        slug: finalizeSlug(form.slug),
         description: form.description,
         cloudinary_public_id: form.cloudinary_public_id,
       };
@@ -114,20 +116,7 @@ export default function AdminConcerns() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                required
-                placeholder="Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              />
-              <input
-                required
-                placeholder="Slug"
-                value={form.slug}
-                onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              />
+              <NameSlugFields form={form} setForm={setForm} urlPrefix="/shop/concern/" namePlaceholder="Name" />
             </div>
 
             <textarea

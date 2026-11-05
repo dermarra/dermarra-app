@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import client from "../../api/client";
+import NameSlugFields from "../../components/NameSlugFields.jsx";
+import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
@@ -83,7 +85,7 @@ export default function AdminRoutines() {
     try {
       const payload = {
         name: form.name,
-        slug: form.slug,
+        slug: finalizeSlug(form.slug),
         tagline: form.tagline,
         description: form.description,
         primary_concern_id: form.primary_concern_id || null,
@@ -217,20 +219,7 @@ export default function AdminRoutines() {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              required
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
-            <input
-              required
-              placeholder="Slug"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
+            <NameSlugFields form={form} setForm={setForm} urlPrefix="routine id: " namePlaceholder="Name" />
             <input
               placeholder="Tagline"
               value={form.tagline}

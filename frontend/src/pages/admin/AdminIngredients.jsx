@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
+import NameSlugFields from "../../components/NameSlugFields.jsx";
+import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
@@ -48,9 +50,9 @@ export default function AdminIngredients() {
     setSubmitting(true);
     try {
       if (editingId === "new") {
-        await client.post("/admin/ingredients", form);
+        await client.post("/admin/ingredients", { ...form, slug: finalizeSlug(form.slug) });
       } else {
-        await client.patch(`/admin/ingredients/${editingId}`, form);
+        await client.patch(`/admin/ingredients/${editingId}`, { ...form, slug: finalizeSlug(form.slug) });
       }
       setEditingId(null);
       load();
@@ -108,20 +110,7 @@ export default function AdminIngredients() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                required
-                placeholder="Name (e.g. Vitamin C)"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              />
-              <input
-                required
-                placeholder="Slug (e.g. vitamin-c)"
-                value={form.slug}
-                onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              />
+              <NameSlugFields form={form} setForm={setForm} urlPrefix="/shop/ingredient/" namePlaceholder="e.g. Vitamin C" />
             </div>
 
             <textarea

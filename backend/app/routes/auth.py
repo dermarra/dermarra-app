@@ -130,20 +130,27 @@ def forgot_password():
     if not email:
         return jsonify({"error": "email is required"}), 400
 
+    # Product decision (2026-11-06): tell the visitor plainly whether an
+    # account exists, so someone who never signed up is sent to sign-up
+    # instead of waiting for an email that will never come. Tradeoff
+    # accepted: this reveals whether an email is registered -- pair it with
+    # rate limiting before launch (see CLAUDE.md).
     user = User.query.filter_by(email=email).first()
-    if user:
-        token = generate_password_reset_token(user)
-        reset_url = f"{current_app.config['FRONTEND_BASE_URL']}/reset-password?token={token}"
-        try:
-            send_password_reset_email(user, reset_url)
-        except Exception:
-            pass
+    if not user:
+        return jsonify({
+            "error": "There's no account with that email. Create one to get started.",
+            "code": "no_account",
+        }), 404
 
-    # Same response whether or not the email exists -- never let this
-    # endpoint be used to enumerate registered accounts.
-    return jsonify({
-        "message": "If an account exists for that email, we've sent a password reset link."
-    }), 200
+    token = generate_password_reset_token(user)
+    reset_url = f"{current_app.config['FRONTEND_BASE_URL']}/reset-password?token={token}"
+    try:
+        send_password_reset_email(user, reset_url)
+    except Exception:
+        # Used to be swallowed, telling the user a link was sent when it wasn't.
+        return jsonify({"error": "We couldn't send the reset email right now -- please try again shortly."}), 502
+
+    return jsonify({"message": f"We've sent a password reset link to {email}. It expires in 30 minutes."}), 200
 
 
 @auth_bp.post("/reset-password")

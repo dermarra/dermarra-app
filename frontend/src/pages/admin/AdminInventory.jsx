@@ -8,12 +8,14 @@ const STATUS_LABELS = {
   in_stock: "In stock",
   low_stock: "Low stock",
   out_of_stock: "Out of stock",
+  no_sizes: "No sizes",
 };
 
 const STATUS_STYLES = {
   in_stock: "border-sage text-sage-dark",
   low_stock: "border-amber text-amber-dark",
   out_of_stock: "border-clay text-clay",
+  no_sizes: "border-clay text-clay",
 };
 
 const FILTERS = [
@@ -47,7 +49,10 @@ export default function AdminInventory() {
   const setStatusFilter = (value) => setSearchParams(value ? { status: value } : {});
 
   useEffect(() => {
-    client.get("/admin/inventory/expiring-soon", { params: { days: 30 } }).then(({ data }) => setExpiringSoon(data));
+    client
+      .get("/admin/inventory/expiring-soon", { params: { days: 30 } })
+      .then(({ data }) => setExpiringSoon(data))
+      .catch(() => {});
   }, []);
 
   return (
@@ -97,19 +102,26 @@ export default function AdminInventory() {
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
           {rows.map((row) => (
-            <motion.div key={row.id} variants={itemReveal}>
+            <motion.div key={row.id || `product-${row.product_id}`} variants={itemReveal}>
               <Link
-                to={`/admin/inventory/${row.id}`}
+                to={row.id ? `/admin/inventory/${row.id}` : `/admin/products?edit=${row.product_id}`}
                 className="flex items-center justify-between border border-mist rounded-sm px-4 py-3 hover:border-ink/40 transition-colors"
               >
                 <div>
                   <p className="text-sm font-semibold text-ink">
-                    {row.product_name} — {row.label}
+                    {row.product_name}
+                    {row.label ? ` — ${row.label}` : ""}
                   </p>
-                  <p className="text-xs text-ink/60 font-mono">
-                    on hand {row.on_hand} · reserved {row.reserved} · available {row.available} · reorder at{" "}
-                    {row.reorder_level}
-                  </p>
+                  {row.id ? (
+                    <p className="text-xs text-ink/60 font-mono">
+                      on hand {row.on_hand} · reserved {row.reserved} · available {row.available} · reorder at{" "}
+                      {row.reorder_level}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-clay">
+                      Hidden from the shop -- add a size (label, SKU, price) to sell and stock it →
+                    </p>
+                  )}
                 </div>
                 <span
                   className={`shrink-0 text-xs font-semibold uppercase tracking-wide border rounded-full px-3 py-1 ${STATUS_STYLES[row.stock_status]}`}

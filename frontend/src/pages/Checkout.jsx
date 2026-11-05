@@ -53,6 +53,11 @@ export default function Checkout() {
 
   useEffect(() => () => clearInterval(pollTimer.current), []);
 
+  // Stop polling the payment status if the user signs out mid-payment.
+  useEffect(() => {
+    if (!user) clearInterval(pollTimer.current);
+  }, [user]);
+
   const handleChange = (field) => (e) => setShipping({ ...shipping, [field]: e.target.value });
 
   const subtotal = cartSubtotalCents(cart.items);
@@ -149,6 +154,24 @@ export default function Checkout() {
       setStep("form");
     }
   };
+
+  // Signed out (or session expired) mid-checkout: the order, if one was
+  // created, is safe in the account's orders -- don't keep showing a
+  // payment screen that can no longer act.
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-10 text-center">
+        <p className="text-ink/70">Sign in to check out.</p>
+        <Link
+          to="/login"
+          state={{ from: "/cart" }}
+          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   if (cart.items.length === 0 && step === "form") {
     return (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -17,6 +17,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import Cropper from "react-easy-crop";
 import client, { cloudinaryUrl } from "../../api/client";
+import NameSlugFields from "../../components/NameSlugFields.jsx";
+import { finalizeSlug } from "../../lib/slug.js";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 import { getCroppedBlob } from "../../lib/imageCrop.js";
 
@@ -227,6 +229,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
 }
 
 export default function AdminProducts() {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [concerns, setConcerns] = useState([]);
   const [ingredients, setIngredients] = useState([]);
@@ -254,6 +257,7 @@ export default function AdminProducts() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [imageBusy, setImageBusy] = useState(false);
+  const [savedNotice, setSavedNotice] = useState(null);
   const [imageError, setImageError] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -273,7 +277,17 @@ export default function AdminProducts() {
 
   useEffect(() => {
     setLoading(true);
-    reloadProducts().finally(() => setLoading(false));
+    reloadProducts()
+      .then((loaded) => {
+        // /admin/products?edit=<id> (linked from Inventory's "No sizes"
+        // rows) opens that product's editor straight away.
+        const editId = searchParams.get("edit");
+        const target = editId && loaded.find((p) => p.id === editId);
+        if (target) openEdit(target);
+      })
+      .catch(() => setError("Couldn't load products."))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openCreate = () => {
@@ -375,7 +389,7 @@ export default function AdminProducts() {
     try {
       const payload = {
         name: form.name,
-        slug: form.slug,
+        slug: finalizeSlug(form.slug),
         step_type: form.step_type,
         short_description: form.short_description,
         description: form.description,
@@ -385,12 +399,19 @@ export default function AdminProducts() {
         ingredient_ids: form.ingredient_ids,
       };
       if (editingId === "new") {
-        await client.post("/admin/products", payload);
+        const { data } = await client.post("/admin/products", payload);
+        await reloadProducts();
+        // Keep the form open on the new product so sizes can be added next
+        // (they can't be added until the product exists).
+        openEdit(data);
+        setSavedNotice(`Saved "${data.name}". Now add its sizes below.`);
       } else {
         await client.patch(`/admin/products/${editingId}`, payload);
+        setEditingId(null);
+        await reloadProducts();
+        setSavedNotice(`Saved "${payload.name}".`);
       }
-      setEditingId(null);
-      reloadProducts();
+      setTimeout(() => setSavedNotice(null), 5000);
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong.");
     } finally {
@@ -625,6 +646,10 @@ export default function AdminProducts() {
         </motion.button>
       </div>
 
+      {savedNotice && (
+        <p className="mb-4 text-sm text-sage-dark border border-sage/40 rounded-sm px-3 py-2">{savedNotice}</p>
+      )}
+
       <AnimatePresence>
       {editingId && (
         <motion.form
@@ -640,52 +665,49 @@ export default function AdminProducts() {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              required
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
-            <input
-              required
-              placeholder="Slug"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
-            <select
-              value={form.step_type}
-              onChange={(e) => setForm({ ...form, step_type: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            >
-              {STEP_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            <input
-              placeholder="Key actives (e.g. 10% Ascorbic Acid)"
-              value={form.key_actives}
-              onChange={(e) => setForm({ ...form, key_actives: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm"
-            />
+            <NameSlugFields form={form} setForm={setForm} urlPrefix="/shop/" namePlaceholder="Name" />
+            <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
+              Routine step
+              <select
+                value={form.step_type}
+                onChange={(e) => setForm({ ...form, step_type: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              >
+                {STEP_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
+              Key actives (shown on the product card)
+              <input
+                placeholder="e.g. 10% Ascorbic Acid"
+                value={form.key_actives}
+                onChange={(e) => setForm({ ...form, key_actives: e.target.value })}
+                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              />
+            </label>
           </div>
 
-          <textarea
-            placeholder="Short description"
-            value={form.short_description}
-            onChange={(e) => setForm({ ...form, short_description: e.target.value })}
-            className="border border-mist rounded-sm px-3 py-2 text-sm"
-            rows={2}
-          />
+          <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
+            Short description (one line, under the product name)
+            <textarea
+              value={form.short_description}
+              onChange={(e) => setForm({ ...form, short_description: e.target.value })}
+              className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              rows={2}
+            />
+          </label>
 
-          <textarea
-            placeholder="Full description (shown on the product page)"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="border border-mist rounded-sm px-3 py-2 text-sm"
-            rows={5}
-          />
+          <label className="flex flex-col gap-1 text-xs font-semibold text-ink/70">
+            Full description (shown on the product page)
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              rows={5}
+            />
+          </label>
 
           <div>
             <p className="text-xs font-semibold text-ink/70 mb-2">Skin concerns</p>
@@ -735,6 +757,12 @@ export default function AdminProducts() {
               <p className="text-xs text-ink/60">Save the product first, then add sizes.</p>
             ) : (
               <div className="flex flex-col gap-2">
+                {(currentProduct()?.variants || []).length === 0 && (
+                  <p className="text-xs text-clay border border-clay/40 rounded-sm px-3 py-2">
+                    This product has no sizes yet, so customers can&apos;t see or buy it. Add at least one size
+                    (label, SKU and price) below, then receive stock for it under Inventory.
+                  </p>
+                )}
                 {(currentProduct()?.variants || []).map((v) => (
                   <VariantRow
                     key={v.id}
