@@ -6,12 +6,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _env(name, default=None):
+    """os.environ.get with surrounding whitespace stripped. Values pasted into
+    a hosting dashboard (Render's env editor is a multi-line textarea) can
+    pick up a trailing newline -- Daraja then rejects the callback URL with
+    "400.002.02 Invalid CallBackURL", and a stray space in a key/secret
+    fails auth just as confusingly."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    value = value.strip()
+    return value if value else default
+
+
 # Load environment variables from .env file if it exists
 class Config:
     """Represents a config."""
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev")
+    SECRET_KEY = _env("SECRET_KEY", "dev")
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = _env("DATABASE_URL")
     # Disables SQLAlchemy's modification-tracking feature — extra memory overhead, not needed here.
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -21,39 +34,39 @@ class Config:
         "pool_recycle": 300,
     }
 
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-jwt")
+    JWT_SECRET_KEY = _env("JWT_SECRET_KEY", "dev-jwt")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(
-        minutes=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", 60))
+        minutes=int(_env("JWT_ACCESS_TOKEN_EXPIRES_MINUTES", 60))
     )
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(
-        days=int(os.environ.get("JWT_REFRESH_TOKEN_EXPIRES_DAYS", 30))
+        days=int(_env("JWT_REFRESH_TOKEN_EXPIRES_DAYS", 30))
     )
 
-    CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME")
-    CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY")
-    CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET")
+    CLOUDINARY_CLOUD_NAME = _env("CLOUDINARY_CLOUD_NAME")
+    CLOUDINARY_API_KEY = _env("CLOUDINARY_API_KEY")
+    CLOUDINARY_API_SECRET = _env("CLOUDINARY_API_SECRET")
 
-    BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
-    BREVO_SENDER_EMAIL = os.environ.get("BREVO_SENDER_EMAIL")
-    BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME", "Dermarra Skincare")
-    BREVO_NEWSLETTER_LIST_ID = int(os.environ.get("BREVO_NEWSLETTER_LIST_ID", 0)) or None
+    BREVO_API_KEY = _env("BREVO_API_KEY")
+    BREVO_SENDER_EMAIL = _env("BREVO_SENDER_EMAIL")
+    BREVO_SENDER_NAME = _env("BREVO_SENDER_NAME", "Dermarra Skincare")
+    BREVO_NEWSLETTER_LIST_ID = int(_env("BREVO_NEWSLETTER_LIST_ID", 0)) or None
 
     # M-Pesa Daraja (Safaricom) -- Lipa Na M-Pesa Online (STK Push)
-    MPESA_ENV = os.environ.get("MPESA_ENV", "sandbox")
-    MPESA_CONSUMER_KEY = os.environ.get("MPESA_CONSUMER_KEY")
-    MPESA_CONSUMER_SECRET = os.environ.get("MPESA_CONSUMER_SECRET")
-    MPESA_SHORTCODE = os.environ.get("MPESA_SHORTCODE")
-    MPESA_PASSKEY = os.environ.get("MPESA_PASSKEY")
-    MPESA_CALLBACK_URL = os.environ.get("MPESA_CALLBACK_URL")
+    MPESA_ENV = _env("MPESA_ENV", "sandbox")
+    MPESA_CONSUMER_KEY = _env("MPESA_CONSUMER_KEY")
+    MPESA_CONSUMER_SECRET = _env("MPESA_CONSUMER_SECRET")
+    MPESA_SHORTCODE = _env("MPESA_SHORTCODE")
+    MPESA_PASSKEY = _env("MPESA_PASSKEY")
+    MPESA_CALLBACK_URL = _env("MPESA_CALLBACK_URL")
 
     # The single canonical frontend URL used to build links inside emails
     # (password reset, etc.) -- distinct from FRONTEND_ORIGINS below, which
     # is the full comma-separated CORS allowlist (multiple dev ports).
-    FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "http://localhost:5173")
+    FRONTEND_BASE_URL = _env("FRONTEND_BASE_URL", "http://localhost:5173")
 
     FRONTEND_ORIGINS = [
         origin.strip()
-        for origin in os.environ.get(
+        for origin in _env(
             "FRONTEND_ORIGIN",
             "http://localhost:5173,http://localhost:5174,http://localhost:5175,"
             "http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175",

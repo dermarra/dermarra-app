@@ -41,6 +41,10 @@
    Daraja directly, see "Payments" below), but callbacks are still the
    fast path. On Render it must be
    `https://dermarra-backend.onrender.com/api/payments/mpesa/callback`.
+   A **trailing newline** in that value (easy to add in Render's multi-line
+   env editor) makes Daraja reject every push with `400.002.02 Invalid
+   CallBackURL` -- confirmed 2026-11-06. `app/config.py`'s `_env()` now
+   strips whitespace from every env value, so this can't recur.
 5. Special characters in `DATABASE_URL`'s password (like `@`) must be
    percent-encoded (`@` → `%40`) or the connection string parser misreads
    where the host begins.

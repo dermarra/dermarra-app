@@ -11,7 +11,9 @@ export default function Signup() {
   const location = useLocation();
   // Return the shopper to where they were (e.g. the product they tried to
   // add) instead of always dumping them on /account.
-  const returnTo = location.state?.from || "/account";
+  const from = location.state?.from;
+  const returnTo =
+    from && !["/login", "/signup", "/forgot-password", "/reset-password"].includes(from) ? from : "/account";
   const [form, setForm] = useState({ fullName: "", email: "", password: "", phone: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);

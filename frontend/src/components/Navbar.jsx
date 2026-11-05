@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -27,8 +27,16 @@ function CartLink({ className }) {
   );
 }
 
+const AUTH_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password"];
+
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  // Signing in from any page returns you to that page (it always went to
+  // /account before). Auth pages themselves are never a return target.
+  const returnTo = AUTH_PATHS.includes(location.pathname)
+    ? location.state?.from
+    : `${location.pathname}${location.search}`;
 
   return (
     <header className="sticky top-0 z-30 bg-bone-light/95 backdrop-blur border-b border-mist">
@@ -53,7 +61,9 @@ export default function Navbar() {
               <button onClick={logout} className="hover:text-ink transition-colors">Sign out</button>
             </>
           ) : (
-            <Link to="/login" className="hover:text-ink transition-colors">Sign in</Link>
+            <Link to="/login" state={returnTo ? { from: returnTo } : undefined} className="hover:text-ink transition-colors">
+              Sign in
+            </Link>
           )}
         </nav>
 
