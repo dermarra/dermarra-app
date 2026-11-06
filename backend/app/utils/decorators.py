@@ -11,6 +11,9 @@ def _current_admin():
     user = User.query.get(get_jwt_identity())
     if not user or not user.is_admin or not user.admin_role:
         return None
+    from app.services.analytics_service import touch_staff
+
+    touch_staff(user)
     return user
 
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
@@ -7,6 +7,8 @@ import Footer from "./components/Footer.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ButterflyCursor from "./components/ButterflyCursor.jsx";
+import { ping } from "./lib/visitTracker.js";
+import { useAuth } from "./context/AuthContext";
 
 import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
@@ -56,6 +58,20 @@ export default function App() {
   // The admin area is its own app shell (sidebar + top bar, see
   // AdminLayout.jsx) -- the storefront navbar/footer/bottom-nav don't show.
   const isAdmin = location.pathname.startsWith("/admin");
+
+  // Anonymous visit counting on shop pages only; staff aren't counted.
+  const { user, loading: authLoading } = useAuth();
+  const countVisit = !isAdmin && !authLoading && !user?.is_admin;
+  useEffect(() => {
+    if (countVisit) ping(location.pathname, true);
+  }, [location.pathname, countVisit]);
+  useEffect(() => {
+    if (!countVisit) return undefined;
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") ping(window.location.pathname, false);
+    }, 60000);
+    return () => clearInterval(id);
+  }, [countVisit]);
   return (
     <div className="min-h-screen flex flex-col">
       {!isAdmin && <Navbar />}

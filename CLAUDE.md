@@ -371,6 +371,27 @@
   via `subscribe_quietly` so a Brevo failure never blocks the main action.
   No double opt-in yet (needs a Brevo DOI template). Tests: `tests/test_blog.py`.
 
+## Shop visits + staff presence (2026-11-06)
+- **Visits are anonymous**: `lib/visitTracker.js` keeps a random visitor id in
+  the browser's localStorage (`dermarra.vid`; no name/IP/cookie) and
+  `App.jsx` pings `POST /api/analytics/ping` on each shop page view and once
+  a minute while the tab is visible -- never on `/admin`, never for signed-in
+  staff. `app/services/analytics_service.py` turns pings into `site_visits`
+  rows (a visit ends after 30 min idle), ignores bots by user agent, records
+  landing path, referrer host and device type.
+- `GET /api/admin/analytics/visits` (dashboard.view): visits / unique
+  visitors / page views for today, this week (Mon-Sun), this month, this
+  year and all time in Kenyan time, "active now" (seen in 5 min), visits per
+  day (30 days), top sources and devices this month. Shown in the dashboard's
+  "Shop visits" card (`components/admin/Traffic.jsx`, refreshes each minute).
+- **Staff presence**: `users.last_seen_at`, refreshed by
+  `decorators._current_admin` on admin requests (at most once a minute);
+  `GET /api/admin/presence` (dashboard.view) -> dashboard "Team" card
+  (Active now / last seen). Customers' activity is deliberately not tracked
+  per person. Migration `b2e8c4a1d5f7` (applied 2026-11-06). Mention visit
+  counting in the privacy policy when it's written. Tests:
+  `tests/test_analytics.py`.
+
 ## Admin Dashboard (shipped)
 Committed across `bb3696c`, `7860e21`, `9ce60ec`, `d0a28cb`, `f821d77`. Admins
 run orders through a delivery pipeline (`paid → processing → shipped →

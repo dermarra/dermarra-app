@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import client from "../../api/client";
 import { PageHeader, FilterTabs } from "../../components/admin/Kit.jsx";
+import { TeamCard, VisitorsCard } from "../../components/admin/Traffic.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 import { AlertIcon, BoxIcon, ReceiptIcon, TrendIcon, UsersIcon } from "../../components/Icons.jsx";
 
@@ -445,6 +446,11 @@ export default function AdminDashboard() {
           value={data.todo.low_stock_sizes + data.todo.out_of_stock_sizes}
           hint={`${data.todo.out_of_stock_sizes} out · ${data.todo.low_stock_sizes} low`}
         />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <VisitorsCard className="lg:col-span-2" />
+        <TeamCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

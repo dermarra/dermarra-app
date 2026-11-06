@@ -20,6 +20,9 @@ class User(db.Model):
     # counts -- keep working unchanged.
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     admin_role_id = db.Column(db.String(36), db.ForeignKey("admin_roles.id"), nullable=True, index=True)
+    # Staff presence ("active now" in the admin): refreshed on admin requests,
+    # at most once a minute (app/services/analytics_service.touch_staff).
+    last_seen_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     default_shipping_name = db.Column(db.String(255))
