@@ -46,8 +46,8 @@ function OrderCard({ order }) {
       }`}
     >
       <Link to={`/admin/orders/${order.id}`} className="block">
-        <p className="text-xs font-mono font-semibold text-ink">{order.id.slice(0, 8)}</p>
-        <p className="text-xs text-ink/60 truncate">{order.user_email}</p>
+        <p className="text-sm font-mono font-semibold text-ink">{order.id.slice(0, 8)}</p>
+        <p className="text-sm text-ink/60 truncate">{order.user_email}</p>
         <p className="text-sm text-ink mt-1">
           {order.currency} {(order.total_cents / 100).toFixed(0)}
         </p>
@@ -66,7 +66,7 @@ function Column({ status, orders }) {
         isOver ? "border-blue-600 bg-blue-50" : "border-mist"
       }`}
     >
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-ink/70 mb-3">
+      <h3 className="text-xl font-semibold uppercase tracking-wide text-ink/70 mb-3">
         {BOARD_LABELS[status]} · {orders.length}
       </h3>
       {orders.map((order) => (
@@ -146,7 +146,7 @@ export default function AdminOrders() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <h2 className="font-display text-xl text-ink mb-4">Orders</h2>
+      <h2 className="font-display text-3xl text-ink mb-4">Orders</h2>
 
       <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         {OTHER_FILTERS.map((f) => (
@@ -180,7 +180,7 @@ export default function AdminOrders() {
               >
                 <div>
                   <p className="text-sm font-semibold text-ink font-mono">{order.id.slice(0, 8)}</p>
-                  <p className="text-xs text-ink/60">
+                  <p className="text-sm text-ink/60">
                     {order.user_email} · {new Date(order.created_at).toLocaleString()}
                   </p>
                 </div>
@@ -188,7 +188,7 @@ export default function AdminOrders() {
                   <p className="text-sm text-ink">
                     {order.currency} {(order.total_cents / 100).toFixed(0)}
                   </p>
-                  <p className="text-xs font-mono uppercase text-ink/60">{order.status}</p>
+                  <p className="text-sm font-mono uppercase text-ink/60">{order.status}</p>
                 </div>
               </Link>
             ))}

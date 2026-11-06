@@ -126,13 +126,13 @@ export default function Home() {
           <motion.div initial="hidden" animate="show" variants={containerReveal} className="relative">
             <motion.p
               variants={itemReveal}
-              className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-3"
+              className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-3"
             >
               Barrier-first · Clinically precise
             </motion.p>
             <motion.h1
               variants={itemReveal}
-              className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-[1.05] leading-tight text-ink max-w-2xl"
+              className="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] leading-tight text-ink max-w-2xl"
             >
               Skin health, engineered as a system — not a shelf of standalone products.
             </motion.h1>
@@ -144,7 +144,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/quiz"
-                  className="block px-7 py-3.5 rounded-full bg-orange text-ink text-base font-extrabold hover:bg-orange-400 transition-colors"
+                  className="block px-7 py-3.5 rounded-full bg-orange text-ink text-base font-semibold hover:bg-orange-400 transition-colors"
                 >
                   Find your routine
                 </Link>
@@ -152,7 +152,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/shop"
-                  className="block px-7 py-3.5 rounded-full border-2 border-ink text-base font-extrabold text-ink hover:bg-ink hover:text-white transition-colors"
+                  className="block px-7 py-3.5 rounded-full border-2 border-ink text-base font-semibold text-ink hover:bg-ink hover:text-white transition-colors"
                 >
                   Shop all products
                 </Link>
@@ -165,10 +165,10 @@ export default function Home() {
       {/* ---------- The Dermarra story ---------- */}
       <Reveal as={motion.section} className="px-4 py-16 sm:py-20 mx-auto max-w-6xl">
         <div className="max-w-2xl">
-          <motion.p variants={itemReveal} className="text-sm font-extrabold tracking-[0.18em] text-blue-700 uppercase mb-3">
+          <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] text-blue-700 uppercase mb-3">
             Why Dermarra
           </motion.p>
-          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-4">
+          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-4">
             Skincare engineered around your skin&apos;s biology, not market trends.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-ink/70 leading-relaxed">
@@ -187,8 +187,8 @@ export default function Home() {
               variants={itemReveal}
               className={`rounded-2xl p-6 text-ink ${PRINCIPLE_FILLS[index % PRINCIPLE_FILLS.length]}`}
             >
-              <span className="font-display font-black text-4xl leading-none">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="text-2xl font-extrabold mt-4 mb-2">{p.label}</h3>
+              <span className="font-display font-semibold text-4xl leading-none">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="text-2xl font-semibold mt-4 mb-2">{p.label}</h3>
               <p className="text-base font-medium leading-relaxed">{p.copy}</p>
             </motion.div>
           ))}
@@ -198,7 +198,7 @@ export default function Home() {
       {/* ---------- Shop by concern ---------- */}
       {concerns.length > 0 && (
         <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-2 max-w-xl">
+          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2 max-w-xl">
             Shop by concern.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
@@ -211,7 +211,7 @@ export default function Home() {
       {/* ---------- Shop by step ---------- */}
       {stepGroups.length > 0 && (
         <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-2 max-w-xl">
+          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2 max-w-xl">
             Shop by step.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
@@ -234,13 +234,13 @@ export default function Home() {
                     )}
                   </div>
                   <div className="px-1">
-                    <h3 className="text-xl font-extrabold">{group.label}</h3>
+                    <h3 className="text-xl font-semibold">{group.label}</h3>
                     <p className="text-sm mt-1 leading-relaxed">
                       {group.description || STEP_COPY[group.step_type]}
                     </p>
                     <Link
                       to={`/shop/step/${group.key}`}
-                      className="inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4 mt-2"
+                      className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4 mt-2"
                     >
                       View all <span aria-hidden="true">→</span>
                     </Link>
@@ -255,13 +255,13 @@ export default function Home() {
       {/* ---------- Shop by ingredient ---------- */}
       {ingredients.length > 0 && (
         <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-2 max-w-xl">
+          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2 max-w-xl">
             Shop by active ingredient.
           </motion.h2>
           <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
             Look for products by what&apos;s actually doing the work.
           </motion.p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {ingredients.map((ingredient) => {
               const imageUrl = cloudinaryUrl(ingredient.cloudinary_public_id, { width: 300 });
               return (
@@ -292,10 +292,10 @@ export default function Home() {
       {!user && (
         <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
           <div className="rounded-2xl bg-lime px-6 py-12 sm:py-14 text-center text-ink">
-          <motion.p variants={itemReveal} className="text-sm font-extrabold tracking-[0.18em] uppercase mb-3">
+          <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] uppercase mb-3">
             Join the family
           </motion.p>
-          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-3xl sm:text-5xl text-ink">
+          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink">
             Your skin&apos;s story is just getting started. Let&apos;s write it together.
           </motion.h2>
           <motion.p variants={itemReveal} className="mt-3 max-w-md mx-auto">
@@ -303,7 +303,7 @@ export default function Home() {
             orders, and pick up your routine right where you left off.
           </motion.p>
           {featuredCoupon && (
-            <motion.p variants={itemReveal} className="mt-4 mx-auto w-fit rounded-full bg-white px-4 py-1.5 text-sm font-bold">
+            <motion.p variants={itemReveal} className="mt-4 mx-auto w-fit rounded-full bg-white px-4 py-1.5 text-sm font-semibold">
               Join now and use {featuredCoupon.code} for {featuredCoupon.discount_type === "percent"
                 ? `${featuredCoupon.discount_value}% off your first order.`
                 : `KES ${(featuredCoupon.discount_value / 100).toFixed(0)} off your first order.`}
@@ -317,7 +317,7 @@ export default function Home() {
           >
             <Link
               to="/signup"
-              className="inline-block px-8 py-4 rounded-full bg-ink text-white text-base font-extrabold hover:bg-ink-soft transition-colors"
+              className="inline-block px-8 py-4 rounded-full bg-ink text-white text-base font-semibold hover:bg-ink-soft transition-colors"
             >
               Join Dermarra
             </Link>
@@ -336,7 +336,7 @@ export default function Home() {
           className="relative overflow-hidden rounded-2xl bg-ink px-6 pt-14 pb-12 sm:pb-16 text-center"
         >
           <BrandStripe className="absolute inset-x-0 top-0 h-2" />
-          <h2 className="relative text-2xl sm:text-3xl text-white max-w-xl mx-auto">
+          <h2 className="relative text-3xl sm:text-3xl text-white max-w-xl mx-auto">
             Not sure where to start? Answer three questions.
           </h2>
           <motion.div
@@ -346,7 +346,7 @@ export default function Home() {
           >
             <Link
               to="/quiz"
-              className="inline-block px-8 py-4 rounded-full bg-orange text-ink text-base font-extrabold hover:bg-orange-400 transition-colors"
+              className="inline-block px-8 py-4 rounded-full bg-orange text-ink text-base font-semibold hover:bg-orange-400 transition-colors"
             >
               Find your routine
             </Link>

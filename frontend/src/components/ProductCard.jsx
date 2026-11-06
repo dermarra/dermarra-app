@@ -97,7 +97,7 @@ export default function ProductCard({ product }) {
             />
           )}
           {!product.in_stock && (
-            <span className="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide bg-bone-light/90 text-ink/60 px-2 py-1 rounded-sm">
+            <span className="absolute top-2 left-2 text-xs font-semibold uppercase tracking-wide bg-bone-light/90 text-ink/60 px-2 py-1 rounded-sm">
               Out of stock
             </span>
           )}
@@ -108,8 +108,8 @@ export default function ProductCard({ product }) {
               {product.key_actives}
             </span>
           )}
-          <h3 className="text-lg font-extrabold text-ink leading-snug">{product.name}</h3>
-          <span className="text-base font-bold text-ink">{price ? `From KES ${price}` : "Currently unavailable"}</span>
+          <h3 className="text-xl font-semibold text-ink leading-snug">{product.name}</h3>
+          <span className="text-base font-semibold text-ink">{price ? `From KES ${price}` : "Currently unavailable"}</span>
         </div>
       </Link>
 
@@ -117,7 +117,7 @@ export default function ProductCard({ product }) {
         type="button"
         onClick={handleAdd}
         disabled={!product.in_stock || !product.default_variant_id || status === "adding"}
-        className={`w-full py-3.5 text-sm font-extrabold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
+        className={`w-full py-3.5 text-sm font-semibold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
           status === "added"
             ? "bg-lime text-ink border-lime"
             : status === "error"

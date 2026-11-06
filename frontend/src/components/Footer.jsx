@@ -68,7 +68,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <p className="text-xs font-bold tracking-widest text-lime uppercase mb-3">Quick links</p>
+          <p className="text-xs font-semibold tracking-widest text-lime uppercase mb-3">Quick links</p>
           <ul className="flex flex-col gap-2">
             {QUICK_LINKS.map((link) => (
               <li key={link.to}>
@@ -81,7 +81,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <p className="text-xs font-bold tracking-widest text-gold uppercase mb-3">Company</p>
+          <p className="text-xs font-semibold tracking-widest text-gold uppercase mb-3">Company</p>
           <ul className="flex flex-col gap-2">
             <li><Link to="/terms" className="text-sm text-white/80 hover:text-white transition-colors">Terms &amp; conditions</Link></li>
             <li><Link to="/privacy" className="text-sm text-white/80 hover:text-white transition-colors">Privacy policy</Link></li>
@@ -89,7 +89,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <p className="text-xs font-bold tracking-widest text-blue uppercase mb-3">Get in touch</p>
+          <p className="text-xs font-semibold tracking-widest text-blue uppercase mb-3">Get in touch</p>
           <p className="text-sm text-white/80 mb-3">Skincare tips and new-routine drops, occasionally.</p>
           <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
             <input
@@ -104,17 +104,17 @@ export default function Footer() {
             <button
               type="submit"
               disabled={status === "sending"}
-              className="px-4 py-2.5 rounded-md bg-orange text-ink font-bold text-sm hover:bg-orange-400 disabled:opacity-50 transition-colors"
+              className="px-4 py-2.5 rounded-md bg-orange text-ink font-semibold text-sm hover:bg-orange-400 disabled:opacity-50 transition-colors"
             >
               {status === "sending" ? "Signing up…" : status === "sent" ? "Subscribed ✓" : "Subscribe"}
             </button>
-            {error && <p className="text-xs text-orange-300">{error}</p>}
+            {error && <p className="text-sm text-orange-300">{error}</p>}
           </form>
         </div>
       </div>
 
       <div className="border-t border-white/15">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/70">
+        <div className="mx-auto max-w-6xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-white/70">
           <p>© {new Date().getFullYear()} Dermarra Skincare. All rights reserved.</p>
           <div className="flex gap-4">
             <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>

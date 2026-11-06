@@ -50,9 +50,9 @@ export default function ProductDetail() {
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">{loadError}</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
           Shop all products
         </Link>
       </div>
@@ -105,7 +105,7 @@ export default function ProductDetail() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="mx-auto max-w-4xl px-4 py-6 pb-28 sm:pb-6"
+      className="mx-auto max-w-4xl px-4 pt-12 sm:pt-16 pb-10 pb-28 sm:pb-6"
     >
       <div className="grid sm:grid-cols-2 gap-6">
         <div>
@@ -148,11 +148,11 @@ export default function ProductDetail() {
               {product.key_actives}
             </span>
           )}
-          <h1 className="font-display font-extrabold text-3xl mt-1 text-ink">{product.name}</h1>
+          <h1 className="font-display font-semibold text-3xl mt-1 text-ink">{product.name}</h1>
           <p className="text-ink/70 mt-2">{product.short_description}</p>
           <p className="text-xl font-semibold mt-4 text-ink">KES {price}</p>
           {selectedVariant?.stock_status === "low_stock" && (
-            <p className="text-xs font-semibold text-orange-700 mt-2">Only a few left in stock</p>
+            <p className="text-sm font-semibold text-orange-700 mt-2">Only a few left in stock</p>
           )}
 
           {product.variants?.length > 1 && (
@@ -182,7 +182,7 @@ export default function ProductDetail() {
               {product.skin_concerns.map((c) => (
                 <span
                   key={c.id}
-                  className="text-[11px] px-2 py-1 rounded-full bg-orange-700/10 text-orange-700 font-medium"
+                  className="text-xs px-2 py-1 rounded-full bg-orange-700/10 text-orange-700 font-medium"
                 >
                   {c.name}
                 </span>
@@ -234,7 +234,7 @@ export default function ProductDetail() {
           variants={containerReveal}
           className="mt-16 pt-10 border-t border-mist"
         >
-          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-2xl text-ink mb-6">
+          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl text-ink mb-6">
             You may also like
           </motion.h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

@@ -97,11 +97,11 @@ export default function ConcernShop() {
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">{loadError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold"
         >
           Try again
         </button>
@@ -111,9 +111,9 @@ export default function ConcernShop() {
 
   if (notFound) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">We couldn&apos;t find that concern.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
           Shop all products
         </Link>
       </div>
@@ -134,10 +134,10 @@ export default function ConcernShop() {
           <Breadcrumbs
             items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: concern.name }]}
           />
-          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+          <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Shop by concern
           </p>
-          <h1 className="font-display font-black text-4xl sm:text-6xl text-ink max-w-lg">{concern.name}</h1>
+          <h1 className="font-display font-semibold text-4xl sm:text-5xl text-ink max-w-lg">{concern.name}</h1>
           {concern.description && (
             <p className="text-ink/70 mt-3 max-w-md">{concern.description}</p>
           )}
@@ -151,10 +151,10 @@ export default function ConcernShop() {
         )}
       </motion.div>
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-10">
         {routines.length > 0 && (
           <div className="mb-10">
-            <h2 className="font-display font-extrabold text-2xl text-ink mb-4">Routines for {concern.name.toLowerCase()}</h2>
+            <h2 className="font-display font-semibold text-3xl text-ink mb-4">Routines for {concern.name.toLowerCase()}</h2>
             <div className="flex flex-col gap-4">
               {routines.map((routine) => {
                 const routineImageUrl = cloudinaryUrl(routine.cloudinary_public_id, { width: 160 });
@@ -171,7 +171,7 @@ export default function ConcernShop() {
                           )}
                         </div>
                         <div>
-                          <h3 className="font-display text-lg text-ink">{routine.name}</h3>
+                          <h3 className="font-display text-xl text-ink">{routine.name}</h3>
                           {routine.tagline && <p className="text-sm text-ink/70 mt-1">{routine.tagline}</p>}
                         </div>
                       </div>
@@ -180,7 +180,7 @@ export default function ConcernShop() {
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}
                           onClick={() => addRoutineToCart(routine.id)}
-                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-bold hover:bg-orange-400 transition-colors whitespace-nowrap"
+                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-semibold hover:bg-orange-400 transition-colors whitespace-nowrap"
                         >
                           {addedRoutineId === routine.id
                             ? "Added to cart"
@@ -190,14 +190,14 @@ export default function ConcernShop() {
                         <Link
                           to="/login"
                           state={{ from: location.pathname }}
-                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-bold hover:bg-orange-400 transition-colors whitespace-nowrap"
+                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-semibold hover:bg-orange-400 transition-colors whitespace-nowrap"
                         >
                           Sign in to add
                         </Link>
                       )}
                     </div>
                     {routineAddError[routine.id] && (
-                      <p className="text-xs text-orange-700 mb-3">{routineAddError[routine.id]}</p>
+                      <p className="text-sm text-orange-700 mb-3">{routineAddError[routine.id]}</p>
                     )}
                     <RoutineStepRail steps={routine.steps} />
                   </div>
@@ -207,7 +207,7 @@ export default function ConcernShop() {
           </div>
         )}
 
-        <h2 className="font-display font-extrabold text-2xl text-ink mb-4">Products</h2>
+        <h2 className="font-display font-semibold text-3xl text-ink mb-4">Products</h2>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -247,7 +247,7 @@ export default function ConcernShop() {
               initial="hidden"
               animate="show"
               variants={containerReveal}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
+              className="grid grid-cols-1 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
               {visibleProducts.slice(0, visibleCount).map((product) => (
                 <motion.div key={product.id} variants={itemReveal}>

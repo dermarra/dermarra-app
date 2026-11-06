@@ -160,12 +160,12 @@ export default function Checkout() {
   // payment screen that can no longer act.
   if (!user) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-10 text-center">
+      <div className="mx-auto max-w-lg px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">Sign in to check out.</p>
         <Link
           to="/login"
           state={{ from: "/cart" }}
-          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold"
         >
           Sign in
         </Link>
@@ -175,7 +175,7 @@ export default function Checkout() {
 
   if (cart.items.length === 0 && step === "form") {
     return (
-      <div className="mx-auto max-w-lg px-4 py-10 text-center">
+      <div className="mx-auto max-w-lg px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">Your cart is empty.</p>
       </div>
     );
@@ -187,7 +187,7 @@ export default function Checkout() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="mx-auto max-w-lg px-4 py-10 text-center"
+        className="mx-auto max-w-lg px-4 pt-14 sm:pt-20 pb-12 text-center"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -197,7 +197,7 @@ export default function Checkout() {
         >
           <CheckIcon className="w-7 h-7 text-bone-light" />
         </motion.div>
-        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Payment received</h1>
+        <h1 className="font-display font-semibold text-3xl text-ink mb-2">Payment received</h1>
         <p className="text-ink/70">
           M-Pesa receipt: <span className="font-mono">{order?.mpesa_receipt_number}</span>
         </p>
@@ -205,7 +205,7 @@ export default function Checkout() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => navigate(`/account/orders/${order.id}`)}
-          className="mt-6 px-6 py-3 rounded-full bg-orange text-ink font-bold"
+          className="mt-6 px-6 py-3 rounded-full bg-orange text-ink font-semibold"
         >
           View order
         </motion.button>
@@ -219,9 +219,9 @@ export default function Checkout() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="mx-auto max-w-lg px-4 py-10 text-center"
+        className="mx-auto max-w-lg px-4 pt-14 sm:pt-20 pb-12 text-center"
       >
-        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Check your phone</h1>
+        <h1 className="font-display font-semibold text-3xl text-ink mb-2">Check your phone</h1>
         <p className="text-ink/70">
           We sent an M-Pesa prompt to <span className="font-mono">{shipping.phone}</span>. Enter your
           PIN to complete the payment of <span className="font-semibold">KES {((order?.total_cents ?? total) / 100).toFixed(0)}</span>.
@@ -245,15 +245,15 @@ export default function Checkout() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="mx-auto max-w-lg px-4 py-10 text-center"
+        className="mx-auto max-w-lg px-4 pt-14 sm:pt-20 pb-12 text-center"
       >
-        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Payment didn&apos;t go through</h1>
+        <h1 className="font-display font-semibold text-3xl text-ink mb-2">Payment didn&apos;t go through</h1>
         <p className="text-ink/70">
           {failureReason || "The M-Pesa transaction was cancelled or failed."} Your order is saved -- you can
           retry the payment now.
         </p>
         <form onSubmit={retryPayment} className="mt-6 flex flex-col gap-3 max-w-xs mx-auto">
-          <label className="text-left text-xs text-ink/60">
+          <label className="text-left text-sm text-ink/60">
             M-Pesa phone number
             <input
               required
@@ -269,11 +269,11 @@ export default function Checkout() {
             whileTap={{ scale: 0.97 }}
             type="submit"
             disabled={retrying}
-            className="px-6 py-3 rounded-full bg-orange text-ink font-bold disabled:opacity-50"
+            className="px-6 py-3 rounded-full bg-orange text-ink font-semibold disabled:opacity-50"
           >
             {retrying ? "Sending prompt…" : `Retry payment · KES ${((order?.total_cents ?? 0) / 100).toFixed(0)}`}
           </motion.button>
-          <Link to="/account/orders" className="text-xs text-ink/60 underline">
+          <Link to="/account/orders" className="text-sm text-ink/60 underline">
             Pay later from my orders
           </Link>
         </form>
@@ -286,12 +286,12 @@ export default function Checkout() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="mx-auto max-w-lg px-4 py-6 pb-32 sm:pb-6"
+      className="mx-auto max-w-lg px-4 pt-12 sm:pt-16 pb-10 pb-32 sm:pb-6"
     >
-      <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+      <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
         Almost there
       </p>
-      <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-4">Checkout</h1>
+      <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-4">Checkout</h1>
 
       <div className="rounded-sm border border-mist bg-bone-light p-4 mb-6 text-sm">
         <div className="flex justify-between text-ink/70"><span>Subtotal ({cart.items.length} item{cart.items.length !== 1 ? "s" : ""})</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>
@@ -358,7 +358,7 @@ export default function Checkout() {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={step === "creating_order"}
-          className="mt-2 py-3 rounded-full bg-orange text-ink font-bold disabled:opacity-50"
+          className="mt-2 py-3 rounded-full bg-orange text-ink font-semibold disabled:opacity-50"
         >
           {step === "creating_order" ? "Preparing order…" : `Pay with M-Pesa · KES ${(total / 100).toFixed(0)}`}
         </motion.button>

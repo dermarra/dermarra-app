@@ -68,11 +68,11 @@ export default function IngredientShop() {
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">{loadError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold"
         >
           Try again
         </button>
@@ -82,9 +82,9 @@ export default function IngredientShop() {
 
   if (notFound) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">We couldn&apos;t find that ingredient.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
           Shop all products
         </Link>
       </div>
@@ -105,10 +105,10 @@ export default function IngredientShop() {
           <Breadcrumbs
             items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: ingredient.name }]}
           />
-          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+          <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Shop by ingredient
           </p>
-          <h1 className="font-display font-black text-4xl sm:text-6xl text-ink max-w-lg">{ingredient.name}</h1>
+          <h1 className="font-display font-semibold text-4xl sm:text-5xl text-ink max-w-lg">{ingredient.name}</h1>
           {ingredient.description && (
             <p className="text-ink/70 mt-3 max-w-md">{ingredient.description}</p>
           )}
@@ -122,7 +122,7 @@ export default function IngredientShop() {
         )}
       </motion.div>
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             {STEP_FILTERS.map((f) => (
@@ -161,7 +161,7 @@ export default function IngredientShop() {
               initial="hidden"
               animate="show"
               variants={containerReveal}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
+              className="grid grid-cols-1 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
               {visibleProducts.slice(0, visibleCount).map((product) => (
                 <motion.div key={product.id} variants={itemReveal}>

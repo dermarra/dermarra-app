@@ -5,7 +5,7 @@ import { ChevronRightIcon } from "./Icons.jsx";
  * page (rendered plain, no link) even if it has a `to`. */
 export default function Breadcrumbs({ items }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1 text-xs text-ink/60 mb-4">
+    <nav aria-label="Breadcrumb" className="flex items-center flex-wrap gap-1 text-sm text-ink/60 mb-4">
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         return (

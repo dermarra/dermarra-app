@@ -41,10 +41,10 @@ export default function ForgotPassword() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+          <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Reset password
           </p>
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-3">Forgot your password?</h1>
+          <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-3">Forgot your password?</h1>
           <p className="text-sm text-ink/60 mb-8">
             Enter your account email and we&apos;ll send you a link to reset it.
           </p>
@@ -80,7 +80,7 @@ export default function ForgotPassword() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="py-3 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
+                className="py-3 rounded-full bg-orange text-ink font-semibold text-sm disabled:opacity-50"
               >
                 {submitting ? "Sending…" : "Send reset link"}
               </motion.button>

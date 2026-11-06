@@ -146,12 +146,12 @@ export default function AccountOrders() {
                 <p className="text-sm font-semibold text-ink font-mono">
                   #{order.id.slice(0, 8)}
                 </p>
-                <p className="text-xs text-ink/60 capitalize mt-0.5">
+                <p className="text-sm text-ink/60 capitalize mt-0.5">
                   {order.status.replace("_", " ")} ·{" "}
                   {new Date(order.created_at).toLocaleDateString()}
                 </p>
                 {order.status === "payment_failed" && order.payment_failure_reason && (
-                  <p className="text-xs text-orange-700 mt-0.5">{order.payment_failure_reason}</p>
+                  <p className="text-sm text-orange-700 mt-0.5">{order.payment_failure_reason}</p>
                 )}
               </div>
               <span className="text-sm font-semibold text-ink">
@@ -162,15 +162,15 @@ export default function AccountOrders() {
             {canRetry && (
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 {state === "sending" && (
-                  <p className="text-xs text-ink/60">Sending M-Pesa prompt…</p>
+                  <p className="text-sm text-ink/60">Sending M-Pesa prompt…</p>
                 )}
                 {state === "awaiting_pin" && (
-                  <p className="text-xs text-lime-800">
+                  <p className="text-sm text-lime-800">
                     Check your phone ({order.shipping.phone}) and enter your PIN…
                   </p>
                 )}
                 {state && state !== "sending" && state !== "awaiting_pin" && (
-                  <p className="text-xs text-orange-700">
+                  <p className="text-sm text-orange-700">
                     {state}{" "}
                     <button onClick={() => (inFlight ? pollStatus(order) : payNow(order))} className="underline">
                       {inFlight ? "Check again" : "Try again"}
@@ -199,7 +199,7 @@ export default function AccountOrders() {
             )}
 
             {cancelling && cancelling !== "cancelling" && (
-              <p className="text-xs text-orange-700 mt-1">{cancelling}</p>
+              <p className="text-sm text-orange-700 mt-1">{cancelling}</p>
             )}
           </motion.div>
         );

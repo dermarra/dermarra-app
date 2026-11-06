@@ -101,6 +101,13 @@
   (free near-match for Gotham, the owner's reference -- Gotham itself is
   licensed); `.font-display` is bold by default; IBM Plex Mono stays for
   ingredient strengths.
+- **Type rules (owner, 2026-11-06)**: normal text >= 18px, button/badge text
+  >= 14px, nav links >= 16px, headings >= 36px -- enforced in the
+  `fontSize` scale itself (`xs`=14, `sm`=`base`=18, `3xl`=36 is the smallest
+  heading; h3 card titles >= `xl` 24px). Style reference is The Ordinary:
+  large but light -- headings semibold (not black/extrabold), nav links
+  regular/medium weight with wide gaps, centred, in a three-zone navbar
+  (logo / links / account+cart). Admin keeps bolder, denser styling.
 - **Logos** live in `frontend/public/brand/` (official files): `logo-dark.svg`
   / `logo-light.svg` (wordmark + multicolour icon, for light / ink
   backgrounds), `icon-dark.svg` / `icon-light.svg`; `logo-email.png` is a

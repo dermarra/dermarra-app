@@ -9,9 +9,9 @@
 export default function Field({ label, help, children, className = "" }) {
   return (
     <label className={`flex flex-col gap-1 min-w-0 ${className}`}>
-      <span className="text-xs font-semibold text-ink/80">{label}</span>
+      <span className="text-sm font-semibold text-ink/80">{label}</span>
       {children}
-      {help && <span className="text-[11px] leading-snug text-ink/55 font-normal">{help}</span>}
+      {help && <span className="text-sm leading-snug text-ink/55 font-normal">{help}</span>}
     </label>
   );
 }
@@ -21,8 +21,8 @@ export function FieldGroup({ title, help, children }) {
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <p className="text-xs font-semibold text-ink/80">{title}</p>
-        {help && <p className="text-[11px] leading-snug text-ink/55">{help}</p>}
+        <p className="text-sm font-semibold text-ink/80">{title}</p>
+        {help && <p className="text-sm leading-snug text-ink/55">{help}</p>}
       </div>
       {children}
     </div>

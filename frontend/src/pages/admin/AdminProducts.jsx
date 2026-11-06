@@ -58,7 +58,7 @@ const emptyForm = {
 function StockBadge({ product }) {
   const cls = product.in_stock ? "text-lime-800 border-lime/30" : "text-orange-700 border-orange-700/30";
   return (
-    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${cls}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full border ${cls}`}>
       {product.in_stock ? "In stock" : "Out of stock"}
     </span>
   );
@@ -164,7 +164,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
             className="border border-mist rounded-sm px-2 py-1 text-sm w-24 font-normal"
           />
         </Field>
-        <label className="flex items-center gap-1 text-xs pb-1.5" title="Untick to stop selling this size without deleting it.">
+        <label className="flex items-center gap-1 text-sm pb-1.5" title="Untick to stop selling this size without deleting it.">
           <input
             type="checkbox"
             checked={form.is_active}
@@ -174,7 +174,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
         </label>
         <Link
           to={`/admin/inventory/${variant.id}`}
-          className="text-xs text-ink/60 underline decoration-dotted pb-1.5"
+          className="text-sm text-ink/60 underline decoration-dotted pb-1.5"
           title="Receive production batches and adjust stock for this size"
         >
           Manage stock ({variant.available ?? 0} available) →
@@ -198,7 +198,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
           Delete
         </button>
       </div>
-      {error && <p className="text-xs text-orange-700">{error}</p>}
+      {error && <p className="text-sm text-orange-700">{error}</p>}
     </div>
   );
 }
@@ -225,7 +225,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
         <img src={url} alt="" className="w-full h-24 object-cover" />
       </div>
       {image.is_primary && (
-        <span className="absolute top-1 left-1 text-[10px] font-semibold bg-blue text-ink px-1.5 py-0.5 rounded-sm">
+        <span className="absolute top-1 left-1 text-xs font-semibold bg-blue text-ink px-1.5 py-0.5 rounded-sm">
           Primary
         </span>
       )}
@@ -235,7 +235,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
             type="button"
             onClick={() => onSetPrimary(image.id)}
             disabled={busy}
-            className="flex-1 text-[10px] py-1 border-t border-mist text-ink/70 disabled:opacity-50"
+            className="flex-1 text-sm py-1 border-t border-mist text-ink/70 disabled:opacity-50"
           >
             Set primary
           </button>
@@ -244,7 +244,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
           type="button"
           onClick={() => onDelete(image.id)}
           disabled={busy}
-          className="flex-1 text-[10px] py-1 border-t border-mist text-orange-700 disabled:opacity-50"
+          className="flex-1 text-sm py-1 border-t border-mist text-orange-700 disabled:opacity-50"
         >
           Delete
         </button>
@@ -664,7 +664,7 @@ export default function AdminProducts() {
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl text-ink">Products</h2>
+        <h2 className="font-display text-3xl text-ink">Products</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -689,7 +689,7 @@ export default function AdminProducts() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
         >
-          <h3 className="font-semibold text-sm">
+          <h3 className="font-semibold text-xl">
             {editingId === "new" ? "New product" : "Edit product"}
           </h3>
 
@@ -755,8 +755,8 @@ export default function AdminProducts() {
           </Field>
 
           <div>
-            <p className="text-xs font-semibold text-ink/80">Skin concerns</p>
-            <p className="text-[11px] text-ink/55 mb-2">
+            <p className="text-sm font-semibold text-ink/80">Skin concerns</p>
+            <p className="text-sm text-ink/55 mb-2">
               Tap every concern this product helps with -- it will be listed on that concern&apos;s shop page.
               Manage the list under Admin → Concerns.
             </p>
@@ -779,8 +779,8 @@ export default function AdminProducts() {
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-ink/80">Ingredients</p>
-            <p className="text-[11px] text-ink/55 mb-2">
+            <p className="text-sm font-semibold text-ink/80">Ingredients</p>
+            <p className="text-sm text-ink/55 mb-2">
               Tap the key ingredients it contains, so it shows under Shop by Ingredient. Manage the list under
               Admin → Ingredients.
             </p>
@@ -803,13 +803,13 @@ export default function AdminProducts() {
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-ink/80">Sizes &amp; prices</p>
-            <p className="text-[11px] text-ink/55 mb-2">
+            <p className="text-sm font-semibold text-ink/80">Sizes &amp; prices</p>
+            <p className="text-sm text-ink/55 mb-2">
               Each size is sold, priced and stocked separately. A product needs at least one active size to
               appear in the shop. After adding a size, use &quot;Manage stock&quot; to receive a production batch.
             </p>
             {editingId === "new" ? (
-              <p className="text-xs text-ink/60">Save the product first, then add sizes.</p>
+              <p className="text-sm text-ink/60">Save the product first, then add sizes.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {(currentProduct()?.variants || []).length === 0 && (
@@ -875,19 +875,19 @@ export default function AdminProducts() {
                     {addingVariant ? "Adding…" : "+ Add size"}
                   </button>
                 </div>
-                {newVariantError && <p className="text-xs text-orange-700">{newVariantError}</p>}
+                {newVariantError && <p className="text-sm text-orange-700">{newVariantError}</p>}
               </div>
             )}
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-ink/80">Images</p>
-            <p className="text-[11px] text-ink/55 mb-2">
+            <p className="text-sm font-semibold text-ink/80">Images</p>
+            <p className="text-sm text-ink/55 mb-2">
               Square product photos (you&apos;ll be asked to crop). The &quot;Primary&quot; one is used on shop cards;
               drag to reorder the gallery. All sizes share these photos.
             </p>
             {editingId === "new" ? (
-              <p className="text-xs text-ink/60">Save the product first, then add images.</p>
+              <p className="text-sm text-ink/60">Save the product first, then add images.</p>
             ) : (
               <div className="flex flex-col gap-3">
                 {form.images.length > 0 && (
@@ -958,10 +958,10 @@ export default function AdminProducts() {
                     type="file"
                     accept="image/*"
                     onChange={handleSelectFile}
-                    className="text-xs text-ink/70"
+                    className="text-sm text-ink/70"
                   />
                 )}
-                {imageError && <p className="text-xs text-orange-700">{imageError}</p>}
+                {imageError && <p className="text-sm text-orange-700">{imageError}</p>}
               </div>
             )}
           </div>
@@ -975,7 +975,7 @@ export default function AdminProducts() {
             />
             <span>
               Active (visible in shop)
-              <span className="block text-[11px] text-ink/55">
+              <span className="block text-sm text-ink/55">
                 Untick to hide the product without deleting it -- order history and stock records are kept.
               </span>
             </span>
@@ -1042,7 +1042,7 @@ export default function AdminProducts() {
 
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 mb-3 px-4 py-2 border border-mist rounded-sm bg-bone-light">
-          <span className="text-xs text-ink/70">{selectedIds.size} selected</span>
+          <span className="text-sm text-ink/70">{selectedIds.size} selected</span>
           <button
             onClick={() => bulkSetActive(true)}
             disabled={bulkBusy}
@@ -1106,9 +1106,9 @@ export default function AdminProducts() {
                     </td>
                     <td className="py-2 pr-2">
                       <p className="font-semibold text-ink">{product.name}</p>
-                      <p className="text-xs text-ink/60">{product.step_type}</p>
+                      <p className="text-sm text-ink/60">{product.step_type}</p>
                       {state && state !== "saving" && state !== "deleting" && (
-                        <p className="text-xs text-orange-700 mt-1">{state}</p>
+                        <p className="text-sm text-orange-700 mt-1">{state}</p>
                       )}
                     </td>
                     <td className="py-2 pr-2">
@@ -1130,7 +1130,7 @@ export default function AdminProducts() {
                       </button>
                       <div><StockBadge product={product} /></div>
                     </td>
-                    <td className="py-2 pr-2 text-xs text-ink/60">
+                    <td className="py-2 pr-2 text-sm text-ink/60">
                       {product.is_active ? "Active" : "Inactive"}
                     </td>
                     <td className="py-2 pr-2">

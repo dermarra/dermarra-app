@@ -13,7 +13,7 @@
   h2,
   h3 {
     /* Montserrat headings: bold and slightly tight, Gotham-style. */
-    @apply font-display font-extrabold tracking-tight;
+    @apply font-display font-semibold tracking-tight;
   }
   :focus-visible {
     outline: 2px solid theme("colors.blue.DEFAULT");
@@ -22,10 +22,10 @@
 }
 
 @layer utilities {
-  /* Montserrat display text (prices, big figures, headings) is bold by
-     default -- the old Fraunces display face carried its own emphasis. */
+  /* Montserrat display text (prices, big figures, headings) is semibold by
+     default -- large but light, in the style of The Ordinary. */
   .font-display {
-    font-weight: 700;
+    font-weight: 600;
   }
   .pb-safe-nav {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));

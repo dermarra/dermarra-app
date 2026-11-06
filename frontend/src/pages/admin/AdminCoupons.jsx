@@ -124,8 +124,8 @@ export default function AdminCoupons() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-xl text-ink">Coupons</h2>
-          <p className="text-xs text-ink/60 mt-1">
+          <h2 className="font-display text-3xl text-ink">Coupons</h2>
+          <p className="text-sm text-ink/60 mt-1">
             The newest active first-order coupon is what the homepage &quot;Become a member&quot; section advertises.
           </p>
         </div>
@@ -143,7 +143,7 @@ export default function AdminCoupons() {
             onSubmit={handleSubmit}
             className="border border-mist rounded-sm p-4 flex flex-col gap-3 overflow-hidden"
           >
-            <h3 className="text-sm font-semibold">{editingId === "new" ? "New coupon" : "Edit coupon"}</h3>
+            <h3 className="text-xl font-semibold">{editingId === "new" ? "New coupon" : "Edit coupon"}</h3>
             <div className="grid sm:grid-cols-2 gap-3">
               <Field label="Code" help="What customers type at checkout. Letters and numbers, saved in capitals, e.g. WELCOME10.">
                 <input
@@ -215,7 +215,7 @@ export default function AdminCoupons() {
               />
               <span>
                 First order only
-                <span className="block text-[11px] text-ink/55">
+                <span className="block text-sm text-ink/55">
                   Only customers who have never completed a paid order can use it. The newest active first-order code
                   is advertised in the homepage &quot;Become a member&quot; section.
                 </span>
@@ -230,7 +230,7 @@ export default function AdminCoupons() {
               />
               <span>
                 Active
-                <span className="block text-[11px] text-ink/55">Untick to switch the code off without losing its usage history.</span>
+                <span className="block text-sm text-ink/55">Untick to switch the code off without losing its usage history.</span>
               </span>
             </label>
             {error && <p className="text-sm text-orange-700">{error}</p>}
@@ -271,7 +271,7 @@ export default function AdminCoupons() {
             >
               <div>
                 <p className="font-mono text-sm font-semibold text-ink">{coupon.code}</p>
-                <p className="text-xs text-ink/60">
+                <p className="text-sm text-ink/60">
                   {describe(coupon)} · used {coupon.used_count}
                   {coupon.max_uses != null ? ` / ${coupon.max_uses}` : ""}
                   {coupon.expires_at ? ` · expires ${new Date(coupon.expires_at).toLocaleDateString()}` : ""}

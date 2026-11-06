@@ -19,7 +19,7 @@ const SKIN_TYPES = [
 function ProgressLabel({ step }) {
   if (step !== "concern" && step !== "skin_type") return null;
   return (
-    <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+    <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
       {step === "concern" ? "Step 1 of 2" : "Step 2 of 2"}
     </p>
   );
@@ -84,7 +84,7 @@ export default function RoutineQuiz() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className="mx-auto max-w-3xl px-4 pt-12 sm:pt-16 pb-10">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function RoutineQuiz() {
         <ProgressLabel step={step} />
         {step === "concern" && (
           <>
-            <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink">
+            <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink">
               What are you noticing on your skin?
             </h1>
             <p className="text-ink/60 text-sm mt-1">Pick whichever sounds closest.</p>
@@ -101,7 +101,7 @@ export default function RoutineQuiz() {
         )}
         {step === "skin_type" && (
           <>
-            <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink">
+            <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink">
               What&apos;s your skin type?
             </h1>
             <p className="text-ink/60 text-sm mt-1">
@@ -134,7 +134,7 @@ export default function RoutineQuiz() {
                   {c.description ? (
                     <>
                       <span className="font-semibold text-sm text-ink leading-snug">{c.description}</span>
-                      <p className="text-[11px] font-mono uppercase tracking-wide text-lime-800 mt-2">
+                      <p className="text-xs font-mono uppercase tracking-wide text-lime-800 mt-2">
                         {c.name}
                       </p>
                     </>
@@ -151,7 +151,7 @@ export default function RoutineQuiz() {
           <motion.div key="skin_type" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <button
               onClick={() => setStep("concern")}
-              className="text-xs text-ink/60 hover:text-ink my-4"
+              className="text-sm text-ink/60 hover:text-ink my-4"
             >
               ← Back
             </button>
@@ -159,7 +159,7 @@ export default function RoutineQuiz() {
               initial="hidden"
               animate="show"
               variants={containerReveal}
-              className="grid grid-cols-2 sm:grid-cols-3 gap-3"
+              className="grid grid-cols-1 min-[480px]:grid-cols-2 sm:grid-cols-3 gap-3"
             >
               {SKIN_TYPES.map((t) => (
                 <motion.button
@@ -229,7 +229,7 @@ export default function RoutineQuiz() {
                     )}
                   </div>
                   <div>
-                    <h2 className="font-display font-extrabold text-2xl text-ink">{routine.name}</h2>
+                    <h2 className="font-display font-semibold text-3xl text-ink">{routine.name}</h2>
                     {routine.tagline && <p className="text-ink/60 text-sm mt-1">{routine.tagline}</p>}
                   </div>
                 </div>
@@ -263,12 +263,12 @@ export default function RoutineQuiz() {
                     <Link
                       to="/login"
                       state={{ from: "/quiz" }}
-                      className="px-6 py-3 rounded-full bg-orange text-ink font-bold hover:bg-orange-400 transition-colors"
+                      className="px-6 py-3 rounded-full bg-orange text-ink font-semibold hover:bg-orange-400 transition-colors"
                     >
                       Sign in to add this routine to your cart
                     </Link>
                   )}
-                  <button onClick={startOver} className="text-xs text-ink/60 hover:text-ink">
+                  <button onClick={startOver} className="text-sm text-ink/60 hover:text-ink">
                     Start over
                   </button>
                 </div>

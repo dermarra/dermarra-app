@@ -23,8 +23,8 @@ function Card({ eyebrow, title, children }) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="border border-mist rounded-sm bg-bone-light p-5"
     >
-      <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-1">{eyebrow}</p>
-      <h2 className="font-display text-lg text-ink mb-4">{title}</h2>
+      <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-1">{eyebrow}</p>
+      <h2 className="font-display text-3xl text-ink mb-4">{title}</h2>
       {children}
     </motion.section>
   );
@@ -37,7 +37,7 @@ function SaveButton({ submitting, children = "Save" }) {
       whileTap={{ scale: 0.98 }}
       type="submit"
       disabled={submitting}
-      className="px-5 py-2.5 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
+      className="px-5 py-2.5 rounded-full bg-orange text-ink font-semibold text-sm disabled:opacity-50"
     >
       {submitting ? "Saving…" : children}
     </motion.button>
@@ -184,7 +184,7 @@ function PasswordSection() {
         <button
           type="button"
           onClick={() => setShowPasswords((s) => !s)}
-          className="self-start -mt-2 flex items-center gap-1.5 text-xs text-ink/60 hover:text-ink"
+          className="self-start -mt-2 flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
         >
           {showPasswords ? <EyeOffIcon className="w-3.5 h-3.5" /> : <EyeIcon className="w-3.5 h-3.5" />}
           {showPasswords ? "Hide passwords" : "Show passwords"}

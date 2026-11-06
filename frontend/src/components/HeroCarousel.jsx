@@ -52,7 +52,7 @@ export default function HeroCarousel({ slides }) {
       {/* Solid scrim (no gradients in the brand system) keeps white text readable on any photo. */}
       <div className="absolute inset-0 bg-ink/55" />
 
-      <div className="relative z-10 h-full flex flex-col justify-end sm:justify-center mx-auto max-w-6xl px-4 pt-32 pb-20 sm:pb-0">
+      <div className="relative z-10 h-full flex flex-col justify-end sm:justify-center mx-auto max-w-6xl px-4 pt-36 sm:pt-40 pb-20 sm:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
@@ -62,9 +62,9 @@ export default function HeroCarousel({ slides }) {
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
             {slide.eyebrow && (
-              <p className="text-sm sm:text-base font-extrabold tracking-[0.18em] text-orange uppercase mb-4">{slide.eyebrow}</p>
+              <p className="text-sm sm:text-base font-semibold tracking-[0.18em] text-orange uppercase mb-4">{slide.eyebrow}</p>
             )}
-            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-[1.05] text-white max-w-3xl">
+            <h1 className="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-white max-w-3xl">
               {slide.title}
             </h1>
             {slide.subtitle && (
@@ -78,7 +78,7 @@ export default function HeroCarousel({ slides }) {
               >
                 <Link
                   to={slide.cta_link}
-                  className="block px-8 py-4 rounded-full bg-orange text-ink text-base sm:text-lg font-extrabold hover:bg-orange-400 transition-colors"
+                  className="block px-8 py-4 rounded-full bg-orange text-ink text-base sm:text-lg font-semibold hover:bg-orange-400 transition-colors"
                 >
                   {slide.cta_label}
                 </Link>

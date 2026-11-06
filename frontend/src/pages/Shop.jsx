@@ -31,16 +31,16 @@ export default function Shop() {
   }, [stepType]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-10">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+        <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
           The full system
         </p>
-        <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-6">Shop all products</h1>
+        <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-6">Shop all products</h1>
       </motion.div>
 
       <div className="flex gap-2 overflow-x-auto pb-4 mb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -72,7 +72,7 @@ export default function Shop() {
           initial="hidden"
           animate="show"
           variants={containerReveal}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
+          className="grid grid-cols-1 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
         >
           {products.map((product) => (
             <motion.div key={product.id} variants={itemReveal}>

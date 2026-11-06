@@ -16,9 +16,9 @@ export default function Cart() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10 text-center">
+      <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">Sign in to view your cart.</p>
-        <Link to="/login" state={{ from: "/cart" }} className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
+        <Link to="/login" state={{ from: "/cart" }} className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
           Sign in
         </Link>
       </div>
@@ -37,7 +37,7 @@ export default function Cart() {
           <BagIcon className="w-6 h-6 text-ink/40" />
         </div>
         <p className="text-ink/70">Your cart is empty.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
           Shop products
         </Link>
       </motion.div>
@@ -75,12 +75,12 @@ export default function Cart() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6 pb-32 sm:pb-6">
+    <div className="mx-auto max-w-2xl px-4 pt-12 sm:pt-16 pb-10 pb-32 sm:pb-6">
       <motion.h1
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-4"
+        className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-4"
       >
         Your cart
       </motion.h1>
@@ -136,7 +136,7 @@ export default function Cart() {
                     <button
                       onClick={() => removeItem(item.id)}
                       aria-label="Remove item"
-                      className="ml-3 flex items-center gap-1 text-xs text-orange-700 hover:text-orange-700"
+                      className="ml-3 flex items-center gap-1 text-sm text-orange-700 hover:text-orange-700"
                     >
                       <TrashIcon className="w-3.5 h-3.5" />
                       Remove
@@ -185,7 +185,7 @@ export default function Cart() {
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/checkout"
-              className="block px-5 py-3 rounded-full bg-orange text-ink font-bold hover:bg-orange-400 transition-colors"
+              className="block px-5 py-3 rounded-full bg-orange text-ink font-semibold hover:bg-orange-400 transition-colors"
             >
               Checkout
             </Link>

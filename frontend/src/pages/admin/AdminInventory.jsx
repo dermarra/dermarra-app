@@ -63,7 +63,7 @@ export default function AdminInventory() {
       className="flex flex-col gap-6"
     >
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl text-ink">Inventory</h2>
+        <h2 className="font-display text-3xl text-ink">Inventory</h2>
         <div className="flex gap-2">
           {FILTERS.map((f) => (
             <button
@@ -81,10 +81,10 @@ export default function AdminInventory() {
 
       {expiringSoon.length > 0 && (
         <section className="border border-orange/60 bg-orange-300/10 rounded-sm p-4">
-          <h3 className="text-sm font-semibold text-ink mb-2">Expiring within 30 days</h3>
+          <h3 className="text-xl font-semibold text-ink mb-2">Expiring within 30 days</h3>
           <div className="flex flex-col gap-1">
             {expiringSoon.map((batch) => (
-              <p key={batch.id} className="text-xs text-ink/70">
+              <p key={batch.id} className="text-sm text-ink/70">
                 {batch.product_name} ({batch.variant_label}) — batch {batch.batch_number} ({batch.quantity_remaining} units) expires{" "}
                 {batch.expiry_date}
               </p>
@@ -113,12 +113,12 @@ export default function AdminInventory() {
                     {row.label ? ` — ${row.label}` : ""}
                   </p>
                   {row.id ? (
-                    <p className="text-xs text-ink/60 font-mono">
+                    <p className="text-sm text-ink/60 font-mono">
                       on hand {row.on_hand} · reserved {row.reserved} · available {row.available} · reorder at{" "}
                       {row.reorder_level}
                     </p>
                   ) : (
-                    <p className="text-xs text-orange-700">
+                    <p className="text-sm text-orange-700">
                       Hidden from the shop -- add a size (label, SKU, price) to sell and stock it →
                     </p>
                   )}

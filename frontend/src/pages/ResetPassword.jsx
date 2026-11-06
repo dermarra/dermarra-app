@@ -51,10 +51,10 @@ export default function ResetPassword() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+          <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Reset password
           </p>
-          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-8">Choose a new password</h1>
+          <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-8">Choose a new password</h1>
 
           {!token ? (
             <p className="text-sm text-orange-700">
@@ -109,7 +109,7 @@ export default function ResetPassword() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="py-3 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
+                className="py-3 rounded-full bg-orange text-ink font-semibold text-sm disabled:opacity-50"
               >
                 {submitting ? "Saving…" : "Reset password"}
               </motion.button>

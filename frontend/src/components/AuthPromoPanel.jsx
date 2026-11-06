@@ -75,11 +75,11 @@ export default function AuthPromoPanel() {
             </div>
           )}
           {slide.eyebrow && (
-            <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
+            <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
               {slide.eyebrow}
             </p>
           )}
-          <h2 className="font-display font-extrabold text-2xl leading-snug text-ink">{slide.title}</h2>
+          <h2 className="font-display font-semibold text-3xl leading-snug text-ink">{slide.title}</h2>
           {slide.subtitle && <p className="mt-2 text-sm text-ink/60">{slide.subtitle}</p>}
           {slide.cta_label && slide.cta_link && (
             <Link

@@ -42,7 +42,7 @@ export default function RoutineStepRail({ steps, activeStepId = null, timeOfDay 
                 isActive ? "border-orange bg-orange-300/20" : "border-mist bg-bone-light"
               }`}
             >
-              <span className="font-mono text-[10px] tracking-widest text-lime-800">
+              <span className="font-mono text-sm tracking-widest text-lime-800">
                 STEP {String(step.order_index).padStart(2, "0")}
               </span>
               <div className="w-16 h-16 rounded-sm overflow-hidden bg-mist">
@@ -58,7 +58,7 @@ export default function RoutineStepRail({ steps, activeStepId = null, timeOfDay 
               <span className="text-xs font-semibold uppercase tracking-wide text-ink text-center">
                 {STEP_LABELS[step.product.step_type] || step.product.step_type}
               </span>
-              <span className="text-[11px] text-ink/70 text-center leading-snug">
+              <span className="text-sm text-ink/70 text-center leading-snug">
                 {step.product.name}
               </span>
             </motion.div>

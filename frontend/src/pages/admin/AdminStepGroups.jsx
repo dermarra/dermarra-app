@@ -54,7 +54,7 @@ export default function AdminStepGroups() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <h2 className="font-display text-xl text-ink mb-1">Shop by Step</h2>
+      <h2 className="font-display text-3xl text-ink mb-1">Shop by Step</h2>
       <p className="text-sm text-ink/60 mb-4">
         The 4 fixed steps shown on the homepage. Each maps to a real product step type
         (Prep → Cleanser, Treat → Serum, Seal → Barrier cream, Protect → SPF) — only the
@@ -79,7 +79,7 @@ export default function AdminStepGroups() {
                     <p className="text-xs font-mono uppercase tracking-widest text-lime-800">
                       {group.key} · maps to step_type &ldquo;{group.step_type}&rdquo;
                     </p>
-                    <p className="text-[11px] text-ink/55 -mt-2">
+                    <p className="text-sm text-ink/55 -mt-2">
                       These four steps are fixed (they map to each product&apos;s &quot;Routine step&quot;), so they can be
                       renamed and re-described but not added or removed.
                     </p>
@@ -108,8 +108,8 @@ export default function AdminStepGroups() {
                       />
                     </Field>
                     <div>
-                      <p className="text-xs font-semibold text-ink/80">Photo</p>
-                      <p className="text-[11px] text-ink/55 mb-2">Square image for this step&apos;s card and shop-page banner.</p>
+                      <p className="text-sm font-semibold text-ink/80">Photo</p>
+                      <p className="text-sm text-ink/55 mb-2">Square image for this step&apos;s card and shop-page banner.</p>
                       <ImageUploadField
                         value={form.cloudinary_public_id}
                         onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
@@ -157,7 +157,7 @@ export default function AdminStepGroups() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-ink">{group.label}</p>
-                      <p className="text-xs text-ink/60">
+                      <p className="text-sm text-ink/60">
                         {group.description || "No description yet."}
                       </p>
                     </div>

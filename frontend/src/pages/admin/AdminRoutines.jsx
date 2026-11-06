@@ -199,7 +199,7 @@ export default function AdminRoutines() {
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl text-ink">Routines</h2>
+        <h2 className="font-display text-3xl text-ink">Routines</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -215,7 +215,7 @@ export default function AdminRoutines() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light"
         >
-          <h3 className="font-semibold text-sm">
+          <h3 className="font-semibold text-xl">
             {editingId === "new" ? "New routine" : "Edit routine"}
           </h3>
 
@@ -293,8 +293,8 @@ export default function AdminRoutines() {
           </Field>
 
           <div>
-            <p className="text-xs font-semibold text-ink/80">Image</p>
-            <p className="text-[11px] text-ink/55 mb-2">A square cover photo for the routine (you&apos;ll be asked to crop).</p>
+            <p className="text-sm font-semibold text-ink/80">Image</p>
+            <p className="text-sm text-ink/55 mb-2">A square cover photo for the routine (you&apos;ll be asked to crop).</p>
             <ImageUploadField
               value={form.cloudinary_public_id}
               onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
@@ -311,7 +311,7 @@ export default function AdminRoutines() {
             />
             <span>
               Active (visible in shop)
-              <span className="block text-[11px] text-ink/55">
+              <span className="block text-sm text-ink/55">
                 Inactive routines are hidden and never recommended by the quiz. A routine also needs at least one
                 step (set with &quot;Steps&quot;) before customers can see it.
               </span>
@@ -341,18 +341,18 @@ export default function AdminRoutines() {
 
       {stepsRoutineId && (
         <div className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light">
-          <h3 className="font-semibold text-sm">Steps</h3>
-          <p className="text-[11px] text-ink/55 -mt-2">
+          <h3 className="font-semibold text-xl">Steps</h3>
+          <p className="text-sm text-ink/55 -mt-2">
             List the products in the order they&apos;re applied (use ↑ ↓ to reorder). Each step is one specific
             size -- the routine&apos;s price is the sum of these sizes&apos; prices minus the bundle discount. &quot;AM&quot;,
             &quot;PM&quot; or &quot;both&quot; is when the step is used. Only sizes currently on sale can be picked.
           </p>
 
-          {steps.length === 0 && <p className="text-xs text-ink/60">No steps yet -- add the first product below.</p>}
+          {steps.length === 0 && <p className="text-sm text-ink/60">No steps yet -- add the first product below.</p>}
 
           {steps.map((step, index) => (
             <div key={index} className="flex items-center gap-2">
-              <span className="font-mono text-xs text-ink/60 w-5">{index + 1}</span>
+              <span className="font-mono text-sm text-ink/60 w-5">{index + 1}</span>
               <select
                 value={step.variant_id}
                 onChange={(e) => updateStep(index, "variant_id", e.target.value)}
@@ -449,13 +449,13 @@ export default function AdminRoutines() {
               >
                 <div>
                   <p className="text-sm font-semibold text-ink">{routine.name}</p>
-                  <p className="text-xs text-ink/60">
+                  <p className="text-sm text-ink/60">
                     {routine.steps.length} steps · {routine.bundle_discount_percent}% off ·{" "}
                     {routine.is_active ? "active" : "inactive"}
                     {routine.skin_type && ` · ${routine.skin_type} skin`}
                   </p>
                   {state && state !== "deleting" && (
-                    <p className="text-xs text-orange-700 mt-1">{state}</p>
+                    <p className="text-sm text-orange-700 mt-1">{state}</p>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">

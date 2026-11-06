@@ -31,26 +31,26 @@ export default function AccountOrderDetail() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="flex flex-col gap-4"
     >
-      <button onClick={() => navigate("/account/orders")} className="text-xs text-ink/60 self-start">
+      <button onClick={() => navigate("/account/orders")} className="text-sm text-ink/60 self-start">
         ← Back to orders
       </button>
 
       <div className="flex items-center justify-between">
-        <h2 className="font-display font-extrabold text-2xl text-ink">Order #{order.id.slice(0, 8)}</h2>
+        <h2 className="font-display font-semibold text-3xl text-ink">Order #{order.id.slice(0, 8)}</h2>
         <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1 text-ink/70">
           {order.status.replace("_", " ")}
         </span>
       </div>
 
       <section className="border border-mist rounded-sm bg-bone-light p-4">
-        <h3 className="text-sm font-semibold text-ink mb-3">Items</h3>
+        <h3 className="text-xl font-semibold text-ink mb-3">Items</h3>
         <div className="flex flex-col gap-2">
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between text-sm">
               <span className="text-ink">
                 {item.name} × {item.quantity}
                 {item.routine_id && (
-                  <span className="ml-2 text-[10px] font-mono uppercase text-lime-800 align-middle">
+                  <span className="ml-2 text-sm font-mono uppercase text-lime-800 align-middle">
                     Routine
                   </span>
                 )}
@@ -65,7 +65,7 @@ export default function AccountOrderDetail() {
       </section>
 
       <section className="border border-mist rounded-sm bg-bone-light p-4">
-        <h3 className="text-sm font-semibold text-ink mb-3">Shipping</h3>
+        <h3 className="text-xl font-semibold text-ink mb-3">Shipping</h3>
         <p className="text-sm text-ink/80">{order.shipping.name}</p>
         <p className="text-sm text-ink/80">{order.shipping.address_line1}</p>
         {order.shipping.address_line2 && (
@@ -83,7 +83,7 @@ export default function AccountOrderDetail() {
       </section>
 
       <section className="border border-mist rounded-sm bg-bone-light p-4">
-        <h3 className="text-sm font-semibold text-ink mb-3">Payment</h3>
+        <h3 className="text-xl font-semibold text-ink mb-3">Payment</h3>
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
         {order.status === "payment_failed" && order.payment_failure_reason && (
@@ -96,7 +96,7 @@ export default function AccountOrderDetail() {
 
       {proofUrl && (
         <section className="border border-mist rounded-sm bg-bone-light p-4">
-          <h3 className="text-sm font-semibold text-ink mb-3">Proof of delivery</h3>
+          <h3 className="text-xl font-semibold text-ink mb-3">Proof of delivery</h3>
           <img
             src={proofUrl}
             alt="Proof of delivery"

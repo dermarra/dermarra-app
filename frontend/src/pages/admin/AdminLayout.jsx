@@ -64,13 +64,13 @@ function SidebarContent({ onNavigate, onSignOut, user }) {
         <Link to="/admin/dashboard" onClick={onNavigate} aria-label="Admin dashboard">
           <Logo variant="light" className="h-6" />
         </Link>
-        <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-blue">Admin</p>
+        <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue">Admin</p>
       </div>
 
       <nav aria-label="Admin sections" className="flex-1 overflow-y-auto px-3 pb-4">
         {NAV.map((group) => (
           <div key={group.title} className="mb-4">
-            <p className="px-3 mb-1 text-[11px] font-bold uppercase tracking-widest text-white/50">{group.title}</p>
+            <p className="px-3 mb-1 text-xs font-bold uppercase tracking-widest text-white/50">{group.title}</p>
             <ul className="flex flex-col gap-0.5">
               {group.items.map(({ to, label, Icon }) => (
                 <li key={to}>
@@ -115,7 +115,7 @@ function SidebarContent({ onNavigate, onSignOut, user }) {
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold truncate">{user.full_name}</span>
-              <span className="block text-xs text-white/60 truncate">{user.email}</span>
+              <span className="block text-sm text-white/60 truncate">{user.email}</span>
             </span>
           </div>
         )}
@@ -194,8 +194,8 @@ export default function AdminLayout() {
             </button>
             <Logo iconOnly className="h-7 lg:hidden" />
             <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-700">Admin</p>
-              <h1 className="text-lg font-bold text-ink leading-tight truncate">{title}</h1>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Admin</p>
+              <h1 className="text-3xl font-bold text-ink leading-tight truncate">{title}</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">

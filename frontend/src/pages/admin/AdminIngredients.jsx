@@ -85,7 +85,7 @@ export default function AdminIngredients() {
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl text-ink">Ingredients</h2>
+        <h2 className="font-display text-3xl text-ink">Ingredients</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -106,7 +106,7 @@ export default function AdminIngredients() {
             onSubmit={handleSubmit}
             className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
           >
-            <h3 className="font-semibold text-sm text-ink">
+            <h3 className="font-semibold text-xl text-ink">
               {editingId === "new" ? "New ingredient" : "Edit ingredient"}
             </h3>
 
@@ -134,8 +134,8 @@ export default function AdminIngredients() {
             </Field>
 
             <div>
-              <p className="text-xs font-semibold text-ink/80">Cover photo</p>
-              <p className="text-[11px] text-ink/55 mb-2">
+              <p className="text-sm font-semibold text-ink/80">Cover photo</p>
+              <p className="text-sm text-ink/55 mb-2">
                 Square image used on the homepage &quot;Shop by ingredient&quot; section and this ingredient&apos;s page banner.
               </p>
               <ImageUploadField
@@ -191,9 +191,9 @@ export default function AdminIngredients() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-ink">{ingredient.name}</p>
-                    <p className="text-xs text-ink/60">{ingredient.slug}</p>
+                    <p className="text-sm text-ink/60">{ingredient.slug}</p>
                     {state && state !== "deleting" && (
-                      <p className="text-xs text-orange-700 mt-1">{state}</p>
+                      <p className="text-sm text-orange-700 mt-1">{state}</p>
                     )}
                   </div>
                 </div>

@@ -106,14 +106,14 @@ export default function AdminOrderDetail() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="flex flex-col gap-6 max-w-2xl"
     >
-      <button onClick={() => navigate("/admin/orders")} className="text-xs text-ink/60 self-start">
+      <button onClick={() => navigate("/admin/orders")} className="text-sm text-ink/60 self-start">
         ← Back to orders
       </button>
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-xl text-ink">Order {order.id.slice(0, 8)}</h2>
-          <p className="text-xs text-ink/60">{order.user_email}</p>
+          <h2 className="font-display text-3xl text-ink">Order {order.id.slice(0, 8)}</h2>
+          <p className="text-sm text-ink/60">{order.user_email}</p>
         </div>
         <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1">
           {order.status}
@@ -128,7 +128,7 @@ export default function AdminOrderDetail() {
       )}
 
       <section className="border border-mist rounded-sm p-4">
-        <h3 className="text-sm font-semibold mb-3">Items</h3>
+        <h3 className="text-xl font-semibold mb-3">Items</h3>
         <div className="flex flex-col gap-2">
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between text-sm">
@@ -141,7 +141,7 @@ export default function AdminOrderDetail() {
       </section>
 
       <section className="border border-mist rounded-sm p-4">
-        <h3 className="text-sm font-semibold mb-3">Shipping</h3>
+        <h3 className="text-xl font-semibold mb-3">Shipping</h3>
         <p className="text-sm text-ink/80">{order.shipping.name}</p>
         <p className="text-sm text-ink/80">{order.shipping.address_line1}</p>
         {order.shipping.address_line2 && <p className="text-sm text-ink/80">{order.shipping.address_line2}</p>}
@@ -155,7 +155,7 @@ export default function AdminOrderDetail() {
       </section>
 
       <section className="border border-mist rounded-sm p-4">
-        <h3 className="text-sm font-semibold mb-3">Payment</h3>
+        <h3 className="text-xl font-semibold mb-3">Payment</h3>
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
         {order.status === "payment_failed" && order.payment_failure_reason && (
@@ -185,13 +185,13 @@ export default function AdminOrderDetail() {
           >
             {sendingInvoice ? "Sending…" : "Email invoice to customer"}
           </motion.button>
-          {invoiceSent && <span className="text-xs text-lime-800">Invoice sent.</span>}
+          {invoiceSent && <span className="text-sm text-lime-800">Invoice sent.</span>}
         </div>
       </section>
 
       {proofUrl && (
         <section className="border border-mist rounded-sm p-4">
-          <h3 className="text-sm font-semibold mb-3">Proof of delivery</h3>
+          <h3 className="text-xl font-semibold mb-3">Proof of delivery</h3>
           <img src={proofUrl} alt="Proof of delivery" className="w-40 h-40 object-cover rounded-sm border border-mist" />
         </section>
       )}
@@ -200,11 +200,11 @@ export default function AdminOrderDetail() {
 
       {nextStatus && (
         <section className="border border-mist rounded-sm p-4">
-          <h3 className="text-sm font-semibold mb-3">Advance to {nextStatus}</h3>
+          <h3 className="text-xl font-semibold mb-3">Advance to {nextStatus}</h3>
           {nextStatus === "delivered" && (
             <div className="mb-3">
-              <p className="text-xs font-semibold text-ink/80">Proof of delivery (required)</p>
-              <p className="text-[11px] text-ink/55 mb-2">
+              <p className="text-sm font-semibold text-ink/80">Proof of delivery (required)</p>
+              <p className="text-sm text-ink/55 mb-2">
                 A photo of the package at the customer&apos;s door or in their hands. Upload it, then mark as delivered
                 -- the customer gets an email.
               </p>
@@ -217,8 +217,8 @@ export default function AdminOrderDetail() {
           )}
           {nextStatus === "shipped" && (
             <div className="mb-3">
-              <p className="text-xs font-semibold text-ink/80">Tracking number (optional)</p>
-              <p className="text-[11px] text-ink/55 mb-2">
+              <p className="text-sm font-semibold text-ink/80">Tracking number (optional)</p>
+              <p className="text-sm text-ink/55 mb-2">
                 The courier&apos;s waybill or tracking code. It&apos;s included in the &quot;your order has shipped&quot; email.
               </p>
               <input

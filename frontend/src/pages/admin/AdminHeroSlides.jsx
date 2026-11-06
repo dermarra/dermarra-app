@@ -97,7 +97,7 @@ export default function AdminHeroSlides() {
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl text-ink">Hero slides</h2>
+        <h2 className="font-display text-3xl text-ink">Hero slides</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -107,7 +107,7 @@ export default function AdminHeroSlides() {
           + Add slide
         </motion.button>
       </div>
-      <p className="text-xs text-ink/60 mb-4">
+      <p className="text-sm text-ink/60 mb-4">
         The homepage hero shows active slides in position order, auto-advancing every few seconds.
         With no active slides, the homepage falls back to its default static hero.
       </p>
@@ -122,11 +122,11 @@ export default function AdminHeroSlides() {
             onSubmit={handleSubmit}
             className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
           >
-            <h3 className="font-semibold text-sm text-ink">
+            <h3 className="font-semibold text-xl text-ink">
               {editingId === "new" ? "New slide" : "Edit slide"}
             </h3>
 
-            <p className="text-[11px] text-ink/55 -mt-2">
+            <p className="text-sm text-ink/55 -mt-2">
               Slides rotate in the full-screen homepage banner and the sign-in page panel.
             </p>
             <Field label="Eyebrow" help="Optional small text above the title, e.g. New arrival or Bestseller.">
@@ -198,14 +198,14 @@ export default function AdminHeroSlides() {
                 />
                 <span>
                   Active
-                  <span className="block text-[11px] text-ink/55">Untick to hide this slide without deleting it.</span>
+                  <span className="block text-sm text-ink/55">Untick to hide this slide without deleting it.</span>
                 </span>
               </label>
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-ink/80">Background image</p>
-              <p className="text-[11px] text-ink/55 mb-2">
+              <p className="text-sm font-semibold text-ink/80">Background image</p>
+              <p className="text-sm text-ink/55 mb-2">
                 A wide landscape photo (at least 1600px wide). It&apos;s darkened behind the text, so busy images are fine.
               </p>
               <ImageUploadField
@@ -262,14 +262,14 @@ export default function AdminHeroSlides() {
                     <p className="text-sm font-semibold text-ink">
                       {slide.title}
                       {!slide.is_active && (
-                        <span className="ml-2 text-[10px] uppercase text-ink/40 border border-mist rounded-full px-2 py-0.5">
+                        <span className="ml-2 text-xs uppercase text-ink/40 border border-mist rounded-full px-2 py-0.5">
                           Inactive
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-ink/60">Position {slide.position}</p>
+                    <p className="text-sm text-ink/60">Position {slide.position}</p>
                     {state && state !== "deleting" && (
-                      <p className="text-xs text-orange-700 mt-1">{state}</p>
+                      <p className="text-sm text-orange-700 mt-1">{state}</p>
                     )}
                   </div>
                 </div>

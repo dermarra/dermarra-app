@@ -66,7 +66,7 @@ export default function AdminUsers() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <h2 className="font-display text-xl text-ink mb-4">Users</h2>
+      <h2 className="font-display text-3xl text-ink mb-4">Users</h2>
 
       {loading ? (
         <p className="text-ink/60 text-sm">Loading users…</p>
@@ -87,12 +87,12 @@ export default function AdminUsers() {
                     <p className="text-sm font-semibold text-ink">
                       {u.full_name} {isSelf && <span className="text-ink/50 font-normal">(you)</span>}
                     </p>
-                    <p className="text-xs text-ink/60">
+                    <p className="text-sm text-ink/60">
                       {u.email} · {u.order_count} orders
                       {u.lifetime_value_cents != null && ` · ${formatKES(u.lifetime_value_cents)} lifetime`} ·
                       joined {new Date(u.created_at).toLocaleDateString()}
                     </p>
-                    {state && state !== "saving" && <p className="text-xs text-orange-700 mt-1">{state}</p>}
+                    {state && state !== "saving" && <p className="text-sm text-orange-700 mt-1">{state}</p>}
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.03 }}
@@ -120,7 +120,7 @@ export default function AdminUsers() {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="border-t border-mist px-4 py-3 bg-bone-light overflow-hidden">
                     {detailLoading === u.id ? (
-                      <p className="text-xs text-ink/60">Loading profile…</p>
+                      <p className="text-sm text-ink/60">Loading profile…</p>
                     ) : detail ? (
                       <div className="flex flex-col gap-3">
                         <div className="flex gap-6">
@@ -155,19 +155,19 @@ export default function AdminUsers() {
                                   to={`/admin/orders/${order.id}`}
                                   className="flex items-center justify-between text-sm hover:text-blue-700"
                                 >
-                                  <span className="font-mono text-xs">{order.id.slice(0, 8)}</span>
-                                  <span className="text-xs uppercase text-ink/60">{order.status}</span>
+                                  <span className="font-mono text-sm">{order.id.slice(0, 8)}</span>
+                                  <span className="text-sm uppercase text-ink/60">{order.status}</span>
                                   <span>{formatKES(order.total_cents)}</span>
                                 </Link>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-ink/60">No orders yet.</p>
+                            <p className="text-sm text-ink/60">No orders yet.</p>
                           )}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-orange-700">Could not load this profile.</p>
+                      <p className="text-sm text-orange-700">Could not load this profile.</p>
                     )}
                   </motion.div>
                 )}

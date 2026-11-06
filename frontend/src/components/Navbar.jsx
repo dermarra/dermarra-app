@@ -20,7 +20,7 @@ function CartLink({ className }) {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 15 }}
-            className="absolute -top-2 -right-2.5 min-w-[20px] h-5 px-1 rounded-full bg-orange text-ink text-xs font-extrabold flex items-center justify-center"
+            className="absolute -top-2 -right-2.5 min-w-[20px] h-5 px-1 rounded-full bg-orange text-ink text-xs font-semibold flex items-center justify-center"
           >
             {itemCount}
           </motion.span>
@@ -79,34 +79,45 @@ export default function Navbar() {
       }`}
     >
       <BrandStripe className="h-1.5" />
+      {/* Three zones, like The Ordinary: logo left, primary links centred
+          with generous gaps, account/cart right. Regular-weight links --
+          large but light, not bold. */}
       <div
-        className={`mx-auto max-w-6xl px-4 flex items-center justify-between gap-6 transition-[height] duration-300 ${
-          overHero ? "h-20 sm:h-28" : "h-16 sm:h-20"
+        className={`mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-10 transition-[height] duration-300 ${
+          overHero ? "h-24 sm:h-32" : "h-20 sm:h-24"
         }`}
       >
         <Link to="/" aria-label="Dermarra Skincare home" className="shrink-0">
           <Logo
             variant={overHero ? "light" : "dark"}
-            className={`transition-[height] duration-300 ${overHero ? "h-12 sm:h-16 lg:h-20" : "h-9 sm:h-12 lg:h-14"}`}
+            className={`transition-[height] duration-300 ${overHero ? "h-11 sm:h-14 lg:h-16" : "h-9 sm:h-11 lg:h-12"}`}
           />
         </Link>
 
-        <nav className="hidden sm:flex items-center gap-5 lg:gap-8 text-base lg:text-lg font-extrabold">
+        <nav aria-label="Main" className="hidden md:flex items-center justify-center gap-8 lg:gap-12 xl:gap-14 text-lg font-medium">
           <Link to="/shop" className={`${linkTone} transition-colors`}>Shop</Link>
           <Link to="/quiz" className={`${linkTone} transition-colors`}>Find your routine</Link>
-          <CartLink className={`${linkTone} transition-colors`} />
+          {user?.is_admin && (
+            <Link to="/admin/dashboard" className={`${linkTone} transition-colors`}>Admin</Link>
+          )}
+        </nav>
+
+        <div className="flex items-center justify-end gap-5 lg:gap-7 text-lg font-medium">
+          <CartLink className={`${overHero ? "text-white" : "text-ink"} transition-colors`} />
           {user ? (
             <>
-              {user.is_admin && (
-                <Link to="/admin/dashboard" className={`${linkTone} transition-colors`}>Admin</Link>
-              )}
-              <Link to="/account" className={`flex items-center gap-1.5 ${linkTone} transition-colors`}>
-                <UserIcon className="w-5 h-5" />
-                {user.full_name}
+              <Link
+                to="/account"
+                aria-label="My account"
+                title={user.full_name}
+                className={`hidden md:inline-flex items-center gap-2 ${linkTone} transition-colors`}
+              >
+                <UserIcon className="w-6 h-6" />
+                <span className="hidden xl:inline">{user.full_name.split(" ")[0]}</span>
               </Link>
               <button
                 onClick={signOut}
-                className={`font-bold transition-colors ${overHero ? "text-white/85 hover:text-white" : "text-ink/70 hover:text-ink"}`}
+                className={`hidden md:inline ${overHero ? "text-white/85 hover:text-white" : "text-ink/70 hover:text-ink"} transition-colors`}
               >
                 Sign out
               </button>
@@ -115,14 +126,16 @@ export default function Navbar() {
             <Link
               to="/login"
               state={returnTo ? { from: returnTo } : undefined}
-              className="px-6 py-2.5 rounded-full bg-blue text-ink hover:bg-blue-400 transition-colors"
+              className={`hidden md:inline-flex px-6 py-2.5 rounded-full border-2 transition-colors ${
+                overHero
+                  ? "border-white text-white hover:bg-white hover:text-ink"
+                  : "border-ink text-ink hover:bg-ink hover:text-white"
+              }`}
             >
               Sign in
             </Link>
           )}
-        </nav>
-
-        <CartLink className={`sm:hidden ${overHero ? "text-white" : "text-ink"}`} />
+        </div>
       </div>
     </header>
   );

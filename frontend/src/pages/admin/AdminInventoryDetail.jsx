@@ -132,16 +132,16 @@ export default function AdminInventoryDetail() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="flex flex-col gap-6 max-w-3xl"
     >
-      <button onClick={() => navigate("/admin/inventory")} className="text-xs text-ink/60 self-start">
+      <button onClick={() => navigate("/admin/inventory")} className="text-sm text-ink/60 self-start">
         ← Back to inventory
       </button>
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-xl text-ink">
+          <h2 className="font-display text-3xl text-ink">
             {variant.product_name} — {variant.label}
           </h2>
-          <p className="text-xs text-ink/60 font-mono">
+          <p className="text-sm text-ink/60 font-mono">
             on hand {variant.on_hand} · reserved {variant.reserved} · available {variant.available} · reorder at{" "}
             {variant.reorder_level}
           </p>
@@ -153,7 +153,7 @@ export default function AdminInventoryDetail() {
 
       <section className="border border-mist rounded-sm p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">Batches</h3>
+          <h3 className="text-xl font-semibold">Batches</h3>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -174,7 +174,7 @@ export default function AdminInventoryDetail() {
               onSubmit={submitReceive}
               className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-4 overflow-hidden"
             >
-              <p className="text-[11px] text-ink/55">
+              <p className="text-sm text-ink/55">
                 Log each finished production run as its own batch. Stock is sold oldest-expiry first, so expiry dates
                 matter.
               </p>
@@ -252,10 +252,10 @@ export default function AdminInventoryDetail() {
         </AnimatePresence>
 
         {batches.length === 0 ? (
-          <p className="text-xs text-ink/60">No batches yet.</p>
+          <p className="text-sm text-ink/60">No batches yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-ink/50 uppercase tracking-wide">
                   <th className="py-1.5 pr-3">Batch</th>
@@ -283,7 +283,7 @@ export default function AdminInventoryDetail() {
 
       <section className="border border-mist rounded-sm p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">Adjust stock</h3>
+          <h3 className="text-xl font-semibold">Adjust stock</h3>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -307,7 +307,7 @@ export default function AdminInventoryDetail() {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="flex flex-col gap-3 border border-mist rounded-sm p-4 overflow-hidden"
             >
-              <p className="text-[11px] text-ink/55">
+              <p className="text-sm text-ink/55">
                 For stock that leaves (or turns up) outside of normal sales -- damaged, expired, given away, or a count
                 correction. Every adjustment is permanently logged with its reason.
               </p>
@@ -391,7 +391,7 @@ export default function AdminInventoryDetail() {
                 <span className="font-mono">{adjustForm.quantity}</span> unit(s) on batch{" "}
                 <span className="font-mono">{selectedBatch?.batch_number}</span>.
               </p>
-              <p className="text-xs text-ink/60">Reason: {adjustForm.reason}</p>
+              <p className="text-sm text-ink/60">Reason: {adjustForm.reason}</p>
               {adjustError && <p className="text-sm text-orange-700">{adjustError}</p>}
               <div className="flex gap-2">
                 <motion.button
@@ -417,12 +417,12 @@ export default function AdminInventoryDetail() {
       </section>
 
       <section className="border border-mist rounded-sm p-4">
-        <h3 className="text-sm font-semibold mb-3">Transaction history</h3>
+        <h3 className="text-xl font-semibold mb-3">Transaction history</h3>
         {transactions.length === 0 ? (
-          <p className="text-xs text-ink/60">No stock movements yet.</p>
+          <p className="text-sm text-ink/60">No stock movements yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-ink/50 uppercase tracking-wide">
                   <th className="py-1.5 pr-3">When</th>

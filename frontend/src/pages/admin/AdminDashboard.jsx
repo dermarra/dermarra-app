@@ -68,7 +68,7 @@ function Delta({ current, previous, range, invert = false }) {
     tone = up !== invert ? "text-lime-800" : "text-orange-700";
   }
   return (
-    <p className="text-xs mt-1">
+    <p className="text-sm mt-1">
       <span className={`font-semibold ${tone}`}>
         {arrow && <span aria-hidden="true">{arrow} </span>}
         {text}
@@ -87,8 +87,8 @@ function Card({ title, subtitle, action, children, className = "" }) {
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            {title && <h3 className="text-base font-bold text-ink">{title}</h3>}
-            {subtitle && <p className="text-xs text-ink/60 mt-0.5">{subtitle}</p>}
+            {title && <h3 className="text-xl font-bold text-ink">{title}</h3>}
+            {subtitle && <p className="text-sm text-ink/60 mt-0.5">{subtitle}</p>}
           </div>
           {action}
         </div>
@@ -110,7 +110,7 @@ function KpiTile({ label, value, hint, delta, hero = false, Icon, tone = "blue" 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className={`text-sm font-semibold ${hero ? "text-ink" : "text-ink/70"}`}>{label}</p>
-          <p className={`font-display font-bold tabular-nums mt-2 text-ink ${hero ? "text-4xl sm:text-5xl" : "text-3xl"}`}>
+          <p className={`font-display font-bold tabular-nums mt-2 text-ink ${hero ? "text-4xl sm:text-5xl" : "text-2xl whitespace-nowrap"}`}>
             {value}
           </p>
         </div>
@@ -125,7 +125,7 @@ function KpiTile({ label, value, hint, delta, hero = false, Icon, tone = "blue" 
           </span>
         )}
       </div>
-      {hint && <p className={`text-xs mt-1 ${hero ? "text-ink font-medium" : "text-ink/60"}`}>{hint}</p>}
+      {hint && <p className={`text-sm mt-1 ${hero ? "text-ink font-medium" : "text-ink/60"}`}>{hint}</p>}
       {hero ? <div className="[&_*]:!text-ink">{delta}</div> : delta}
     </motion.div>
   );
@@ -159,14 +159,14 @@ function TodoStrip({ todo }) {
         <span aria-hidden="true" className="w-8 h-8 rounded-full bg-lime/20 text-lime-800 flex items-center justify-center">✓</span>
         <div>
           <p className="text-sm font-semibold text-ink">All caught up</p>
-          <p className="text-xs text-ink/60">No orders waiting, no stock problems.</p>
+          <p className="text-sm text-ink/60">No orders waiting, no stock problems.</p>
         </div>
       </motion.div>
     );
   }
   return (
     <motion.div variants={itemReveal}>
-      <h3 className="text-sm font-semibold text-ink mb-2">Needs your attention</h3>
+      <h3 className="text-xl font-semibold text-ink mb-2">Needs your attention</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {open.map((t) => (
           <Link
@@ -179,7 +179,7 @@ function TodoStrip({ todo }) {
             <span className="font-display font-bold text-3xl tabular-nums text-ink leading-none">{todo[t.key]}</span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-ink group-hover:text-ink">{t.label} →</span>
-              {t.help && <span className="block text-xs text-ink/55 mt-0.5">{t.help}</span>}
+              {t.help && <span className="block text-sm text-ink/55 mt-0.5">{t.help}</span>}
             </span>
           </Link>
         ))}
@@ -226,7 +226,7 @@ function RevenueChart({ days, range }) {
         // the message read as data.
         <div className="h-64 rounded-md border border-dashed border-mist bg-blue-50 flex flex-col items-center justify-center text-center px-6">
           <p className="text-sm font-semibold text-ink">No paid orders in this period yet</p>
-          <p className="text-xs text-ink/60 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
+          <p className="text-sm text-ink/60 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
         </div>
       ) : (
         <div className="h-64">
@@ -257,7 +257,7 @@ function RevenueChart({ days, range }) {
           </ResponsiveContainer>
         </div>
       )}
-      <details className="mt-3 text-xs">
+      <details className="mt-3 text-sm">
         <summary className="cursor-pointer text-blue-700 font-semibold">View as table</summary>
         <table className="w-full mt-2 tabular-nums">
           <thead>
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
   const header = (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
       <div>
-        <h2 className="text-xl font-bold text-ink">Overview</h2>
+        <h2 className="text-3xl font-bold text-ink">Overview</h2>
         <p className="text-sm text-ink/70">
           {data
             ? data.period.days === 1
@@ -423,7 +423,7 @@ export default function AdminDashboard() {
           value={kpis.paid_orders ? kes(kpis.average_order_cents) : "—"}
           delta={kpis.paid_orders ? (
             <Delta current={kpis.average_order_cents} previous={prev.average_order_cents} range={range} />
-          ) : <p className="text-xs mt-1 text-ink/55">No paid orders yet</p>}
+          ) : <p className="text-sm mt-1 text-ink/55">No paid orders yet</p>}
         />
         <KpiTile
           label="Checkout conversion"
@@ -494,7 +494,7 @@ export default function AdminDashboard() {
         <Card
           title="Low stock"
           subtitle="Sizes at or below their reorder level"
-          action={<Link to="/admin/inventory" className="text-xs font-semibold text-blue-700 hover:text-ink">Inventory →</Link>}
+          action={<Link to="/admin/inventory" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">Inventory →</Link>}
         >
           {data.low_stock.length === 0 ? (
             <p className="text-sm text-ink/60">Every size is above its reorder level.</p>
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
                 <li key={v.variant_id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <p className="text-sm text-ink truncate">{v.product_name} — {v.label}</p>
-                    <p className="text-xs text-ink/60 tabular-nums">
+                    <p className="text-sm text-ink/60 tabular-nums">
                       {v.stock_status === "out_of_stock" ? "Out of stock" : `${v.available} left`} · reorder at {v.reorder_level}
                     </p>
                   </div>
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
         <Card
           title="Coupons used"
           subtitle="On paid orders this period"
-          action={<Link to="/admin/coupons" className="text-xs font-semibold text-blue-700 hover:text-ink">Coupons →</Link>}
+          action={<Link to="/admin/coupons" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">Coupons →</Link>}
         >
           {data.coupon_usage.length === 0 ? (
             <p className="text-sm text-ink/60">No coupons redeemed in this period.</p>
@@ -544,7 +544,7 @@ export default function AdminDashboard() {
       <Card
         title="Recent orders"
         subtitle="Latest 8, any status"
-        action={<Link to="/admin/orders" className="text-xs font-semibold text-blue-700 hover:text-ink">All orders →</Link>}
+        action={<Link to="/admin/orders" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">All orders →</Link>}
       >
         {data.recent_orders.length === 0 ? (
           <p className="text-sm text-ink/60">No orders yet.</p>
@@ -552,7 +552,7 @@ export default function AdminDashboard() {
           <div className="overflow-x-auto -mx-5 px-5">
             <table className="w-full text-sm min-w-[560px]">
               <thead>
-                <tr className="text-left text-xs text-ink/60">
+                <tr className="text-left text-sm text-ink/60">
                   <th className="pb-2 font-semibold">Order</th>
                   <th className="pb-2 font-semibold">Customer</th>
                   <th className="pb-2 font-semibold">Status</th>
@@ -570,7 +570,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-2.5">
                       <span className="block text-ink">{o.customer_name || "—"}</span>
-                      <span className="block text-xs text-ink/55">{o.customer_email}</span>
+                      <span className="block text-sm text-ink/55">{o.customer_email}</span>
                     </td>
                     <td className="py-2.5"><StatusChip status={o.status} /></td>
                     <td className="py-2.5 text-right tabular-nums">{kes(o.total_cents)}</td>

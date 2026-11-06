@@ -43,6 +43,24 @@ export default {
           500: "#CD902D", 600: "#AE7C2B", 700: "#906728", 800: "#715326", 900: "#533F24",
         }),
       },
+      // Owner's readability minimums (2026-11-06): normal text >= 18px,
+      // button/badge text >= 14px, nav links >= 16px, headings >= 36px.
+      // Enforced in the scale itself so no class can go below them:
+      // xs (the smallest) = 14px for buttons/chips only; sm and base = 18px
+      // for all running text; 3xl = 36px is the smallest heading size.
+      fontSize: {
+        xs: ["0.875rem", { lineHeight: "1.25rem" }],   // 14px -- buttons, badges, chips
+        sm: ["1.125rem", { lineHeight: "1.75rem" }],   // 18px -- normal text
+        base: ["1.125rem", { lineHeight: "1.75rem" }], // 18px
+        lg: ["1.25rem", { lineHeight: "1.875rem" }],   // 20px
+        xl: ["1.5rem", { lineHeight: "2rem" }],        // 24px
+        "2xl": ["1.875rem", { lineHeight: "2.375rem" }], // 30px
+        "3xl": ["2.25rem", { lineHeight: "2.625rem" }],  // 36px -- minimum heading
+        "4xl": ["2.75rem", { lineHeight: "3rem" }],      // 44px
+        "5xl": ["3.25rem", { lineHeight: "3.5rem" }],    // 52px
+        "6xl": ["3.75rem", { lineHeight: "1.05" }],      // 60px
+        "7xl": ["4.5rem", { lineHeight: "1.05" }],       // 72px
+      },
       fontFamily: {
         // Gotham is the reference; it's a licensed (Hoefler&Co) geometric sans.
         // Montserrat is its standard free near-match. Swap here if a Gotham
