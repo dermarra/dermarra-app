@@ -153,7 +153,7 @@ export default function AdminUsers() {
                                 <Link
                                   key={order.id}
                                   to={`/admin/orders/${order.id}`}
-                                  className="flex items-center justify-between text-sm hover:text-amber"
+                                  className="flex items-center justify-between text-sm hover:text-brand-700"
                                 >
                                   <span className="font-mono text-xs">{order.id.slice(0, 8)}</span>
                                   <span className="text-xs uppercase text-ink/60">{order.status}</span>

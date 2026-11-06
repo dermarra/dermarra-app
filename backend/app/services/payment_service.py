@@ -12,11 +12,12 @@ Like inventory_service/coupon_service, nothing here commits -- the caller
 owns the transaction. Call send_paid_email() *after* committing.
 """
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import current_app
 
 from app.extensions import db
+from app.models.order import Order
 from app.models.user import User
 from app.services import coupon_service, inventory_service, mpesa_service
 from app.services.brevo_service import send_order_confirmation_email
@@ -114,6 +115,32 @@ def check_with_daraja(order, *, throttle=True):
             return None
         _last_daraja_check[order.id] = now
     return mpesa_service.query_stk_status(order.mpesa_checkout_request_id)
+
+
+ABANDONED_ORDER_HOURS = 24
+ABANDONED_REASON = "Closed automatically: not paid within 24 hours."
+
+
+def expire_abandoned_orders(max_age_hours=ABANDONED_ORDER_HOURS):
+    """Closes unpaid orders older than `max_age_hours` (owner's rule,
+    2026-11-06: 24h): status -> cancelled, any stock hold released, coupon
+    use given back. Only `pending` / `payment_failed` -- never
+    `payment_pending`: an in-flight STK push must be confirmed with Safaricom
+    before it's cancelled (see orders.cancel_order), so those surface as
+    "stuck payments" on the dashboard instead. No background worker exists,
+    so this runs lazily (dashboard, order lists, STK push) and from the
+    expire-reservations cron endpoint. Returns how many were closed; caller
+    commits."""
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=max_age_hours)
+    stale = Order.query.filter(
+        Order.status.in_(("pending", "payment_failed")), Order.created_at < cutoff
+    ).all()
+    for order in stale:
+        inventory_service.release_reservations_for_order(order)
+        coupon_service.release_usage(order)
+        order.status = "cancelled"
+        order.payment_failure_reason = ABANDONED_REASON
+    return len(stale)
 
 
 def send_paid_email(order):

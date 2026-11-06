@@ -185,7 +185,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
           onClick={save}
           disabled={saving || !dirty}
           title={dirty ? "Save changes to this size" : "Change something first"}
-          className="px-3 py-1 rounded-sm bg-amber text-bone-light text-xs font-semibold disabled:opacity-50"
+          className="px-3 py-1 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
         </button>
@@ -218,14 +218,14 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
       ref={setNodeRef}
       style={style}
       className={`relative border rounded-sm overflow-hidden ${
-        image.is_primary ? "border-amber" : "border-mist"
+        image.is_primary ? "border-brand-600" : "border-mist"
       } ${isDragging ? "opacity-50 z-10" : ""}`}
     >
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
         <img src={url} alt="" className="w-full h-24 object-cover" />
       </div>
       {image.is_primary && (
-        <span className="absolute top-1 left-1 text-[10px] font-semibold bg-amber text-bone-light px-1.5 py-0.5 rounded-sm">
+        <span className="absolute top-1 left-1 text-[10px] font-semibold bg-brand-700 text-bone-light px-1.5 py-0.5 rounded-sm">
           Primary
         </span>
       )}
@@ -669,7 +669,7 @@ export default function AdminProducts() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm"
+          className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm"
         >
           + Add product
         </motion.button>
@@ -870,7 +870,7 @@ export default function AdminProducts() {
                     type="button"
                     onClick={handleAddVariant}
                     disabled={addingVariant}
-                    className="sm:mt-5 px-3 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold disabled:opacity-50"
+                    className="sm:mt-5 px-3 py-2 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
                   >
                     {addingVariant ? "Adding…" : "+ Add size"}
                   </button>
@@ -939,7 +939,7 @@ export default function AdminProducts() {
                         type="button"
                         onClick={confirmCrop}
                         disabled={imageBusy}
-                        className="px-3 py-1.5 rounded-sm bg-amber text-bone-light text-xs font-semibold disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
                       >
                         {imageBusy ? "Uploading…" : "Confirm crop & upload"}
                       </button>
@@ -987,7 +987,7 @@ export default function AdminProducts() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
             >
               {submitting ? "Saving…" : "Save"}
             </button>
@@ -1124,7 +1124,7 @@ export default function AdminProducts() {
                     <td className="py-2 pr-2">
                       <button
                         onClick={() => openEdit(product)}
-                        className="text-ink hover:text-amber underline decoration-dotted"
+                        className="text-ink hover:text-brand-700 underline decoration-dotted"
                       >
                         {(product.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0)}
                       </button>

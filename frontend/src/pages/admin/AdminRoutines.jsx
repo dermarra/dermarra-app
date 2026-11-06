@@ -204,7 +204,7 @@ export default function AdminRoutines() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm"
+          className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm"
         >
           + Add routine
         </motion.button>
@@ -324,7 +324,7 @@ export default function AdminRoutines() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
             >
               {submitting ? "Saving…" : "Save"}
             </button>
@@ -418,7 +418,7 @@ export default function AdminRoutines() {
               type="button"
               onClick={saveSteps}
               disabled={stepsSubmitting || steps.length === 0}
-              className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
             >
               {stepsSubmitting ? "Saving…" : "Save steps"}
             </button>

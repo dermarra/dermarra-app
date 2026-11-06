@@ -234,7 +234,7 @@ export default function AdminOrderDetail() {
             whileTap={{ scale: 0.98 }}
             onClick={() => advance(nextStatus)}
             disabled={busy || (nextStatus === "delivered" && !proofPublicId)}
-            className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+            className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
           >
             {busy ? "Saving…" : `Mark as ${nextStatus}`}
           </motion.button>

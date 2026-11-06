@@ -1,5 +1,5 @@
 import re
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity
@@ -19,7 +19,7 @@ from app.models.routine import Routine, RoutineStep
 from app.models.user import User
 from app.services import brevo_service, coupon_service, payment_service
 from app.services.cloudinary_service import upload_image, delete_image
-from app.services import inventory_service
+from app.services import dashboard_service, inventory_service
 from app.services.inventory_service import InventoryError, restock_order
 from app.utils.decorators import admin_required
 from app.utils.order_transitions import can_advance, can_cancel
@@ -600,8 +600,9 @@ def expire_reservations():
     cron (or manually) to release reservations nobody paid for in time.
     Also runs lazily whenever a new reservation is created."""
     released = inventory_service.expire_stale_reservations()
+    closed = payment_service.expire_abandoned_orders()
     db.session.commit()
-    return jsonify({"released": released}), 200
+    return jsonify({"released": released, "orders_closed": closed}), 200
 
 
 # ---------- Products ----------
@@ -1070,6 +1071,8 @@ def remove_image(public_id):
 @admin_bp.get("/orders")
 @admin_required
 def list_all_orders():
+    if payment_service.expire_abandoned_orders():
+        db.session.commit()
     query = Order.query
     status = request.args.get("status")
     if status:
@@ -1278,50 +1281,8 @@ def update_user_admin_status(user_id):
 @admin_bp.get("/dashboard")
 @admin_required
 def dashboard():
-    paid_or_later = Order.query.filter(Order.status.notin_(_UNPAID_STATUSES))
-
-    total_revenue_cents = paid_or_later.with_entities(
-        func.coalesce(func.sum(Order.total_cents), 0)
-    ).scalar()
-
-    order_counts_by_status = dict(
-        db.session.query(Order.status, func.count(Order.id)).group_by(Order.status).all()
-    )
-
-    stock_summary = inventory_service.inventory_summary()
-
-    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-    revenue_rows = (
-        paid_or_later.filter(Order.paid_at.isnot(None), Order.paid_at >= thirty_days_ago)
-        .with_entities(func.date(Order.paid_at).label("day"), func.sum(Order.total_cents))
-        .group_by("day")
-        .order_by("day")
-        .all()
-    )
-    revenue_by_day = [
-        {"date": day.isoformat() if hasattr(day, "isoformat") else str(day), "revenue_cents": revenue}
-        for day, revenue in revenue_rows
-    ]
-
-    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(10).all()
-    recent_activity = [
-        {
-            "id": o.id,
-            "status": o.status,
-            "total_cents": o.total_cents,
-            "created_at": o.created_at.isoformat(),
-            "user_email": o.user.email if o.user else None,
-        }
-        for o in recent_orders
-    ]
-
-    return jsonify({
-        "total_revenue_cents": total_revenue_cents,
-        "order_counts_by_status": order_counts_by_status,
-        "low_stock_count": stock_summary["low_stock_count"],
-        "out_of_stock_count": stock_summary["out_of_stock_count"],
-        "expiring_soon_count": stock_summary["expiring_soon_count"],
-        "total_products": stock_summary["total_products"],
-        "revenue_by_day": revenue_by_day,
-        "recent_activity": recent_activity,
-    }), 200
+    """?range=today|7d|30d|90d (default 7d). Figures are in Kenyan time;
+    see app/services/dashboard_service.py for definitions."""
+    if payment_service.expire_abandoned_orders():
+        db.session.commit()
+    return jsonify(dashboard_service.build_dashboard(request.args.get("range", "7d"))), 200

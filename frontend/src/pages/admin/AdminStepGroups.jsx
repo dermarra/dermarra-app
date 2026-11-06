@@ -137,7 +137,7 @@ export default function AdminStepGroups() {
                         whileTap={{ scale: 0.98 }}
                         type="submit"
                         disabled={submitting}
-                        className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+                        className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
                       >
                         {submitting ? "Saving…" : "Save"}
                       </motion.button>

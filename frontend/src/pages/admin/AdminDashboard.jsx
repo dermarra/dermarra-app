@@ -1,235 +1,553 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LabelList,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import client from "../../api/client";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 
-const STATUS_LABELS = {
-  pending: "Pending",
-  payment_pending: "Awaiting payment",
-  paid: "Paid",
-  processing: "Processing",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-  payment_failed: "Payment failed",
+// Chart marks use brand-600 (4.1:1 on white -- passes the 3:1 floor for
+// graphics); the lighter logo blue (#009EE2, 2.9:1) is too faint for data.
+const MARK = "#0086C0";
+const GRID = "#ECECEB";
+const AXIS_TEXT = "#64615A";
+
+const RANGES = [
+  { value: "today", label: "Today" },
+  { value: "7d", label: "7 days" },
+  { value: "30d", label: "30 days" },
+  { value: "90d", label: "90 days" },
+];
+
+// Order states: label + dot. Status colours carry meaning only alongside
+// the text label, never on their own.
+const STATUS = {
+  pending: { label: "Awaiting payment", dot: "bg-amber" },
+  payment_pending: { label: "Paying (M-Pesa)", dot: "bg-brand-400" },
+  paid: { label: "Paid · to process", dot: "bg-brand-700" },
+  processing: { label: "Processing", dot: "bg-brand-600" },
+  shipped: { label: "Shipped", dot: "bg-brand-500" },
+  delivered: { label: "Delivered", dot: "bg-sage-dark" },
+  payment_failed: { label: "Payment failed", dot: "bg-clay" },
+  cancelled: { label: "Cancelled", dot: "bg-ink/30" },
 };
 
-function formatKES(cents) {
-  return `KES ${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+const kes = (cents) => `KES ${Math.round((cents || 0) / 100).toLocaleString("en-KE")}`;
+const pct = (ratio) => (ratio == null ? "—" : `${(ratio * 100).toFixed(ratio >= 0.1 || ratio === 0 ? 0 : 1)}%`);
+
+function periodLabel(range) {
+  return { today: "yesterday", "7d": "previous 7 days", "30d": "previous 30 days", "90d": "previous 90 days" }[range];
 }
 
-function ChartTooltip({ active, payload, label, formatter }) {
-  if (!active || !payload?.length) return null;
+/** ▲/▼ + percentage + words, so the change never relies on colour alone. */
+function Delta({ current, previous, range, invert = false }) {
+  if (current == null || previous == null) return null;
+  let text;
+  let tone = "text-ink/55";
+  let arrow = "";
+  if (current === previous) {
+    text = "no change";
+  } else if (!previous) {
+    text = "new this period";
+    arrow = "▲";
+    tone = invert ? "text-clay" : "text-sage-dark";
+  } else {
+    const change = (current - previous) / previous;
+    const up = change > 0;
+    arrow = up ? "▲" : "▼";
+    text = `${Math.abs(change * 100).toFixed(0)}%`;
+    tone = up !== invert ? "text-sage-dark" : "text-clay";
+  }
   return (
-    <div className="rounded-sm border border-mist bg-bone-light px-3 py-2 text-xs shadow-sm">
-      <p className="text-ink/60 mb-1">{label}</p>
-      <p className="font-semibold text-ink">{formatter(payload[0].value)}</p>
+    <p className="text-xs mt-1">
+      <span className={`font-semibold ${tone}`}>
+        {arrow && <span aria-hidden="true">{arrow} </span>}
+        {text}
+      </span>
+      <span className="text-ink/55"> vs {periodLabel(range)}</span>
+    </p>
+  );
+}
+
+function Card({ title, subtitle, action, children, className = "" }) {
+  return (
+    <motion.section
+      variants={itemReveal}
+      className={`bg-white border border-brand-100 rounded-lg shadow-[0_1px_2px_rgba(0,56,82,0.06)] p-5 ${className}`}
+    >
+      {(title || action) && (
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            {title && <h3 className="text-sm font-semibold text-brand-900">{title}</h3>}
+            {subtitle && <p className="text-xs text-ink/60 mt-0.5">{subtitle}</p>}
+          </div>
+          {action}
+        </div>
+      )}
+      {children}
+    </motion.section>
+  );
+}
+
+function KpiTile({ label, value, hint, delta, hero = false }) {
+  return (
+    <motion.div
+      variants={itemReveal}
+      className={`rounded-lg border p-5 ${
+        hero ? "bg-gradient-to-br from-brand-800 to-brand-700 border-brand-800 text-white" : "bg-white border-brand-100"
+      }`}
+    >
+      <p className={`text-xs font-semibold uppercase tracking-wide ${hero ? "text-brand-100" : "text-ink/60"}`}>{label}</p>
+      <p className={`font-display tabular-nums mt-2 ${hero ? "text-4xl sm:text-5xl" : "text-3xl text-brand-900"}`}>
+        {value}
+      </p>
+      {hint && <p className={`text-xs mt-1 ${hero ? "text-brand-100" : "text-ink/55"}`}>{hint}</p>}
+      {hero ? <div className="[&_*]:!text-brand-50">{delta}</div> : delta}
+    </motion.div>
+  );
+}
+
+// ---------- To-do strip ----------
+
+const TODO_ITEMS = [
+  { key: "to_process", label: "Paid orders to process", to: "/admin/orders", urgent: true },
+  { key: "to_ship", label: "Orders to ship", to: "/admin/orders", urgent: true },
+  { key: "in_transit", label: "Out for delivery", to: "/admin/orders" },
+  { key: "stuck_payments", label: "Payments stuck >10 min", to: "/admin/orders", urgent: true,
+    help: "Open the order and use “Refresh payment status”." },
+  { key: "unallocated_paid_orders", label: "Paid orders without stock", to: "/admin/orders", urgent: true,
+    help: "Paid after the items sold out — check before shipping." },
+  { key: "out_of_stock_sizes", label: "Sizes out of stock", to: "/admin/inventory?status=out_of_stock", urgent: true },
+  { key: "low_stock_sizes", label: "Sizes running low", to: "/admin/inventory?status=low_stock" },
+  { key: "expiring_batches", label: "Batches expiring ≤30 days", to: "/admin/inventory" },
+  { key: "products_without_sizes", label: "Products with no sizes", to: "/admin/inventory?status=out_of_stock",
+    help: "Hidden from the shop until a size is added." },
+];
+
+function TodoStrip({ todo }) {
+  const open = TODO_ITEMS.filter((t) => (todo[t.key] || 0) > 0);
+  if (open.length === 0) {
+    return (
+      <motion.div
+        variants={itemReveal}
+        className="flex items-center gap-3 rounded-lg border border-sage/40 bg-white px-5 py-4"
+      >
+        <span aria-hidden="true" className="w-8 h-8 rounded-full bg-sage/20 text-sage-dark flex items-center justify-center">✓</span>
+        <div>
+          <p className="text-sm font-semibold text-brand-900">All caught up</p>
+          <p className="text-xs text-ink/60">No orders waiting, no stock problems.</p>
+        </div>
+      </motion.div>
+    );
+  }
+  return (
+    <motion.div variants={itemReveal}>
+      <h3 className="text-sm font-semibold text-brand-900 mb-2">Needs your attention</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {open.map((t) => (
+          <Link
+            key={t.key}
+            to={t.to}
+            className={`group flex items-start gap-3 rounded-lg border bg-white p-4 transition-colors hover:border-brand-600 ${
+              t.urgent ? "border-l-4 border-l-brand-700 border-brand-100" : "border-brand-100"
+            }`}
+          >
+            <span className="font-display text-3xl tabular-nums text-brand-800 leading-none">{todo[t.key]}</span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink group-hover:text-brand-800">{t.label} →</span>
+              {t.help && <span className="block text-xs text-ink/55 mt-0.5">{t.help}</span>}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ---------- Revenue chart ----------
+
+function dayLabel(iso, range) {
+  const d = new Date(`${iso}T00:00:00`);
+  return range === "7d" || range === "today"
+    ? d.toLocaleDateString("en-KE", { weekday: "short", day: "numeric" })
+    : d.toLocaleDateString("en-KE", { day: "numeric", month: "short" });
+}
+
+function RevenueTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div className="rounded-md border border-brand-100 bg-white px-3 py-2 text-xs shadow-md">
+      <p className="text-ink/60 mb-1">{p.full}</p>
+      <p className="font-semibold text-brand-900 tabular-nums">{kes(p.revenue_cents)}</p>
+      <p className="text-ink/70">{p.paid_orders} paid order{p.paid_orders === 1 ? "" : "s"}</p>
     </div>
   );
 }
 
+function RevenueChart({ days, range }) {
+  const data = days.map((d) => ({
+    ...d,
+    label: dayLabel(d.date, range),
+    full: new Date(`${d.date}T00:00:00`).toLocaleDateString("en-KE", {
+      weekday: "long", day: "numeric", month: "long",
+    }),
+    kes: d.revenue_cents / 100,
+  }));
+  const empty = data.every((d) => d.revenue_cents === 0);
+  return (
+    <>
+      {empty ? (
+        // No axes when there's nothing to plot -- an empty 0-4 grid behind
+        // the message read as data.
+        <div className="h-64 rounded-md border border-dashed border-brand-100 bg-brand-50/50 flex flex-col items-center justify-center text-center px-6">
+          <p className="text-sm font-semibold text-brand-900">No paid orders in this period yet</p>
+          <p className="text-xs text-ink/60 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
+        </div>
+      ) : (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="30%">
+              <CartesianGrid vertical={false} stroke={GRID} />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 12, fill: AXIS_TEXT }}
+                tickLine={false}
+                axisLine={{ stroke: GRID }}
+                interval="preserveStartEnd"
+                minTickGap={12}
+              />
+              <YAxis
+                tick={{ fontSize: 12, fill: AXIS_TEXT }}
+                tickLine={false}
+                axisLine={false}
+                width={56}
+                allowDecimals={false}
+                tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : v)}
+              />
+              <Tooltip content={<RevenueTooltip />} cursor={{ fill: "rgba(0,134,192,0.08)" }} />
+              {/* No entrance animation: inside the revealing card it never
+                  started, leaving the chart blank (seen in testing). */}
+              <Bar dataKey="kes" fill={MARK} radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      <details className="mt-3 text-xs">
+        <summary className="cursor-pointer text-brand-700 font-semibold">View as table</summary>
+        <table className="w-full mt-2 tabular-nums">
+          <thead>
+            <tr className="text-left text-ink/60">
+              <th className="py-1 font-semibold">Day</th>
+              <th className="py-1 font-semibold text-right">Paid orders</th>
+              <th className="py-1 font-semibold text-right">Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((d) => (
+              <tr key={d.date} className="border-t border-mist">
+                <td className="py-1">{d.full}</td>
+                <td className="py-1 text-right">{d.paid_orders}</td>
+                <td className="py-1 text-right">{kes(d.revenue_cents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </>
+  );
+}
+
+/** Ranked horizontal bars, one hue, value printed -- for outcomes / sellers. */
+function RankedBars({ rows, valueOf, labelOf, formatValue, empty }) {
+  if (!rows.length) return <p className="text-sm text-ink/60">{empty}</p>;
+  const max = Math.max(...rows.map(valueOf), 1);
+  return (
+    <ul className="flex flex-col gap-3">
+      {rows.map((row) => (
+        <li key={labelOf(row)} title={`${labelOf(row)}: ${formatValue(row)}`}>
+          <div className="flex justify-between gap-3 text-sm mb-1">
+            <span className="text-ink truncate">{labelOf(row)}</span>
+            <span className="text-ink font-semibold tabular-nums shrink-0">{formatValue(row)}</span>
+          </div>
+          <div className="h-2 rounded-full bg-brand-50">
+            <div
+              className="h-2 rounded-full"
+              style={{ width: `${(valueOf(row) / max) * 100}%`, backgroundColor: MARK }}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StatusChip({ status }) {
+  const s = STATUS[status] || { label: status, dot: "bg-ink/30" };
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-mist bg-white px-2.5 py-0.5 text-xs text-ink whitespace-nowrap">
+      <span aria-hidden="true" className={`w-2 h-2 rounded-full ${s.dot}`} />
+      {s.label}
+    </span>
+  );
+}
+
+// ---------- Page ----------
+
 export default function AdminDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const range = RANGES.some((r) => r.value === searchParams.get("range")) ? searchParams.get("range") : "7d";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     client
-      .get("/admin/dashboard")
+      .get("/admin/dashboard", { params: { range } })
       .then(({ data }) => setData(data))
       .catch((err) => setError(err.response?.data?.error || "Couldn't load dashboard data."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
-  if (loading) return <p className="text-ink/60 text-sm">Loading dashboard…</p>;
-  if (error) return <p className="text-sm text-clay">{error}</p>;
-  if (!data) return null;
+  const setRange = (value) => setSearchParams(value === "7d" ? {} : { range: value });
 
-  const totalOrders = Object.values(data.order_counts_by_status || {}).reduce((a, b) => a + b, 0);
-  const revenueByDay = (data.revenue_by_day || []).map((d) => ({
-    date: new Date(d.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-    revenue: d.revenue_cents / 100,
-  }));
-  const ordersByStatus = Object.entries(data.order_counts_by_status || {}).map(([status, count]) => ({
-    status: STATUS_LABELS[status] || status,
-    count,
-  }));
-
-  return (
-    <div className="flex flex-col gap-8">
-      <motion.h2
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="font-display text-xl text-ink"
-      >
-        Dashboard
-      </motion.h2>
-
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={containerReveal}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-      >
-        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
-          <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Total revenue</p>
-          <p className="font-display text-2xl text-ink mt-1">{formatKES(data.total_revenue_cents)}</p>
-        </motion.div>
-        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
-          <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Total orders</p>
-          <p className="font-display text-2xl text-ink mt-1">{totalOrders}</p>
-        </motion.div>
-      </motion.div>
-
+  const header = (
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
       <div>
-        <h3 className="text-sm font-semibold text-ink mb-3">Inventory</h3>
-        <motion.div
-          initial="hidden"
-          animate="show"
-          variants={containerReveal}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-4"
-        >
-          <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
-            <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Total products</p>
-            <p className="font-display text-2xl text-ink mt-1">{data.total_products}</p>
-          </motion.div>
-          <Link to="/admin/inventory?status=low_stock">
-            <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4 hover:border-ink/40 transition-colors">
-              <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Low stock</p>
-              <p className="font-display text-2xl text-amber-dark mt-1">{data.low_stock_count}</p>
-            </motion.div>
-          </Link>
-          <Link to="/admin/inventory?status=out_of_stock">
-            <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4 hover:border-ink/40 transition-colors">
-              <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Out of stock</p>
-              <p className="font-display text-2xl text-clay mt-1">{data.out_of_stock_count}</p>
-            </motion.div>
-          </Link>
-          <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
-            <p className="text-xs text-ink/60 uppercase tracking-wide font-mono">Expiring soon</p>
-            <p className="font-display text-2xl text-ink mt-1">{data.expiring_soon_count}</p>
-          </motion.div>
-        </motion.div>
+        <h2 className="font-display text-2xl text-brand-900">Dashboard</h2>
+        <p className="text-sm text-ink/60">
+          {data
+            ? data.period.days === 1
+              ? `Today · Kenyan time`
+              : `${new Date(`${data.period.start}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" })} – ${new Date(`${data.period.end}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} · Kenyan time`
+            : "Loading…"}
+        </p>
       </div>
-
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={containerReveal}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-      >
-        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
-          <h3 className="text-sm font-semibold text-ink mb-4">Revenue, last 30 days</h3>
-          {revenueByDay.length === 0 ? (
-            <p className="text-xs text-ink/60">No revenue yet.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={revenueByDay} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#84C665" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#84C665" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="#ECECEB" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "#64615A" }}
-                  axisLine={{ stroke: "#ECECEB" }}
-                  tickLine={false}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "#64615A" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                />
-                <Tooltip content={<ChartTooltip formatter={(v) => `KES ${v.toLocaleString()}`} />} />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#63954C"
-                  strokeWidth={2}
-                  fill="url(#revenueFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-        </motion.div>
-
-        <motion.div variants={itemReveal} className="border border-mist rounded-sm p-4">
-          <h3 className="text-sm font-semibold text-ink mb-4">Orders by status</h3>
-          {ordersByStatus.length === 0 ? (
-            <p className="text-xs text-ink/60">No orders yet.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={ordersByStatus} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid stroke="#ECECEB" vertical={false} />
-                <XAxis
-                  dataKey="status"
-                  tick={{ fontSize: 10, fill: "#64615A" }}
-                  axisLine={{ stroke: "#ECECEB" }}
-                  tickLine={false}
-                  interval={0}
-                  angle={-20}
-                  textAnchor="end"
-                  height={50}
-                />
-                <YAxis hide />
-                <Tooltip content={<ChartTooltip formatter={(v) => `${v} order${v === 1 ? "" : "s"}`} />} />
-                <Bar dataKey="count" fill="#F47A53" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                  <LabelList dataKey="count" position="top" style={{ fill: "#64615A", fontSize: 11 }} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </motion.div>
-      </motion.div>
-
-      <div>
-        <h3 className="text-sm font-semibold text-ink mb-3">Recent activity</h3>
-        {(data.recent_activity || []).length === 0 ? (
-          <p className="text-xs text-ink/60">No recent orders.</p>
-        ) : (
-          <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
-            {data.recent_activity.map((order) => (
-              <motion.div key={order.id} variants={itemReveal}>
-              <Link
-                to={`/admin/orders/${order.id}`}
-                className="flex items-center justify-between border border-mist rounded-sm px-4 py-3 hover:border-ink/40 transition-colors"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink font-mono">{order.id.slice(0, 8)}</p>
-                  <p className="text-xs text-ink/60">
-                    {order.user_email} · {new Date(order.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm text-ink">{formatKES(order.total_cents)}</p>
-                  <p className="text-xs font-mono uppercase text-ink/60">{order.status}</p>
-                </div>
-              </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+      <div role="group" aria-label="Time period" className="inline-flex rounded-lg border border-brand-100 bg-white p-1 self-start">
+        {RANGES.map((r) => (
+          <button
+            key={r.value}
+            type="button"
+            aria-pressed={range === r.value}
+            onClick={() => setRange(r.value)}
+            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+              range === r.value ? "bg-brand-700 text-white" : "text-ink/70 hover:text-brand-800"
+            }`}
+          >
+            {r.label}
+          </button>
+        ))}
       </div>
     </div>
+  );
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-6">
+        {header}
+        <p className="text-sm text-clay">{error}</p>
+      </div>
+    );
+  }
+
+  if (loading && !data) {
+    return (
+      <div className="flex flex-col gap-6" aria-busy="true">
+        {header}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-lg bg-white border border-brand-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="h-72 rounded-lg bg-white border border-brand-100 animate-pulse" />
+      </div>
+    );
+  }
+
+  const { kpis, previous_kpis: prev } = data;
+  const totalOutcomes = data.payment_outcomes.reduce((s, o) => s + o.count, 0);
+
+  return (
+    <motion.div
+      key={range}
+      initial="hidden"
+      animate="show"
+      variants={containerReveal}
+      className={`flex flex-col gap-6 transition-opacity ${loading ? "opacity-60" : ""}`}
+    >
+      {header}
+
+      <TodoStrip todo={data.todo} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="sm:col-span-2">
+          <KpiTile
+            hero
+            label="Revenue"
+            value={kes(kpis.revenue_cents)}
+            hint={`${kpis.paid_orders} paid order${kpis.paid_orders === 1 ? "" : "s"}`}
+            delta={<Delta current={kpis.revenue_cents} previous={prev.revenue_cents} range={range} />}
+          />
+        </div>
+        <KpiTile
+          label="Average order"
+          value={kpis.paid_orders ? kes(kpis.average_order_cents) : "—"}
+          delta={kpis.paid_orders ? (
+            <Delta current={kpis.average_order_cents} previous={prev.average_order_cents} range={range} />
+          ) : <p className="text-xs mt-1 text-ink/55">No paid orders yet</p>}
+        />
+        <KpiTile
+          label="Checkout conversion"
+          value={pct(kpis.conversion_rate)}
+          hint={`${kpis.orders_created} order${kpis.orders_created === 1 ? "" : "s"} started`}
+        />
+        <KpiTile
+          label="Paid orders"
+          value={kpis.paid_orders}
+          delta={<Delta current={kpis.paid_orders} previous={prev.paid_orders} range={range} />}
+        />
+        <KpiTile
+          label="New customers"
+          value={kpis.new_customers}
+          delta={<Delta current={kpis.new_customers} previous={prev.new_customers} range={range} />}
+        />
+        <KpiTile
+          label="Catalogue"
+          value={data.catalog.products}
+          hint={`active products · ${data.catalog.sizes} size${data.catalog.sizes === 1 ? "" : "s"} on sale`}
+        />
+        <KpiTile
+          label="Stock alerts"
+          value={data.todo.low_stock_sizes + data.todo.out_of_stock_sizes}
+          hint={`${data.todo.out_of_stock_sizes} out · ${data.todo.low_stock_sizes} low`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card
+          className="lg:col-span-2"
+          title="Revenue per day"
+          subtitle="Paid orders, by the day payment was confirmed (KES)"
+        >
+          <RevenueChart days={data.revenue_by_day} range={range} />
+        </Card>
+        <Card title="How checkouts ended" subtitle={`${totalOutcomes} order${totalOutcomes === 1 ? "" : "s"} started this period`}>
+          <RankedBars
+            rows={data.payment_outcomes}
+            valueOf={(r) => r.count}
+            labelOf={(r) => r.label}
+            formatValue={(r) => `${r.count} · ${pct(r.count / totalOutcomes)}`}
+            empty="No checkouts started in this period."
+          />
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card title="Top sellers" subtitle="By revenue from paid orders">
+          <RankedBars
+            rows={data.top_items}
+            valueOf={(r) => r.revenue_cents}
+            labelOf={(r) => r.name}
+            formatValue={(r) => `${kes(r.revenue_cents)} · ${r.units} sold`}
+            empty="Nothing sold in this period yet."
+          />
+        </Card>
+        <Card
+          title="Low stock"
+          subtitle="Sizes at or below their reorder level"
+          action={<Link to="/admin/inventory" className="text-xs font-semibold text-brand-700 hover:text-brand-900">Inventory →</Link>}
+        >
+          {data.low_stock.length === 0 ? (
+            <p className="text-sm text-ink/60">Every size is above its reorder level.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-mist">
+              {data.low_stock.map((v) => (
+                <li key={v.variant_id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm text-ink truncate">{v.product_name} — {v.label}</p>
+                    <p className="text-xs text-ink/60 tabular-nums">
+                      {v.stock_status === "out_of_stock" ? "Out of stock" : `${v.available} left`} · reorder at {v.reorder_level}
+                    </p>
+                  </div>
+                  <Link
+                    to={`/admin/inventory/${v.variant_id}`}
+                    className="shrink-0 px-3 py-1.5 rounded-md bg-brand-700 hover:bg-brand-800 text-white text-xs font-semibold"
+                  >
+                    Receive stock
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        <Card
+          title="Coupons used"
+          subtitle="On paid orders this period"
+          action={<Link to="/admin/coupons" className="text-xs font-semibold text-brand-700 hover:text-brand-900">Coupons →</Link>}
+        >
+          {data.coupon_usage.length === 0 ? (
+            <p className="text-sm text-ink/60">No coupons redeemed in this period.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-mist">
+              {data.coupon_usage.map((c) => (
+                <li key={c.code} className="flex justify-between gap-3 py-2.5 text-sm">
+                  <span className="font-mono text-brand-900">{c.code}</span>
+                  <span className="tabular-nums text-ink">
+                    {c.uses} use{c.uses === 1 ? "" : "s"} · {kes(c.discount_cents)} off
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      <Card
+        title="Recent orders"
+        subtitle="Latest 8, any status"
+        action={<Link to="/admin/orders" className="text-xs font-semibold text-brand-700 hover:text-brand-900">All orders →</Link>}
+      >
+        {data.recent_orders.length === 0 ? (
+          <p className="text-sm text-ink/60">No orders yet.</p>
+        ) : (
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead>
+                <tr className="text-left text-xs text-ink/60">
+                  <th className="pb-2 font-semibold">Order</th>
+                  <th className="pb-2 font-semibold">Customer</th>
+                  <th className="pb-2 font-semibold">Status</th>
+                  <th className="pb-2 font-semibold text-right">Total</th>
+                  <th className="pb-2 font-semibold text-right">Placed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recent_orders.map((o) => (
+                  <tr key={o.id} className="border-t border-mist hover:bg-brand-50/60">
+                    <td className="py-2.5">
+                      <Link to={`/admin/orders/${o.id}`} className="font-mono text-brand-700 hover:text-brand-900">
+                        #{o.id.slice(0, 8)}
+                      </Link>
+                    </td>
+                    <td className="py-2.5">
+                      <span className="block text-ink">{o.customer_name || "—"}</span>
+                      <span className="block text-xs text-ink/55">{o.customer_email}</span>
+                    </td>
+                    <td className="py-2.5"><StatusChip status={o.status} /></td>
+                    <td className="py-2.5 text-right tabular-nums">{kes(o.total_cents)}</td>
+                    <td className="py-2.5 text-right text-ink/70 whitespace-nowrap">
+                      {new Date(`${o.created_at}Z`).toLocaleString("en-KE", {
+                        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </motion.div>
   );
 }

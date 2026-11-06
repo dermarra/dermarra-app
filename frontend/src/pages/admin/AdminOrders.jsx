@@ -63,7 +63,7 @@ function Column({ status, orders }) {
       ref={setNodeRef}
       variants={itemReveal}
       className={`flex-1 min-w-[220px] border rounded-sm p-3 transition-colors ${
-        isOver ? "border-amber bg-amber-light/10" : "border-mist"
+        isOver ? "border-brand-600 bg-brand-50" : "border-mist"
       }`}
     >
       <h3 className="text-xs font-semibold uppercase tracking-wide text-ink/70 mb-3">

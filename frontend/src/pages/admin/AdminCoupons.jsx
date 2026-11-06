@@ -129,7 +129,7 @@ export default function AdminCoupons() {
             The newest active first-order coupon is what the homepage &quot;Become a member&quot; section advertises.
           </p>
         </div>
-        <button onClick={openCreate} className="px-4 py-2 rounded-sm bg-amber text-bone-light text-sm font-semibold">
+        <button onClick={openCreate} className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light text-sm font-semibold">
           New coupon
         </button>
       </div>
@@ -238,7 +238,7 @@ export default function AdminCoupons() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-amber text-bone-light text-sm font-semibold disabled:opacity-50"
+                className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light text-sm font-semibold disabled:opacity-50"
               >
                 {submitting ? "Saving…" : "Save"}
               </button>

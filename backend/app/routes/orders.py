@@ -24,6 +24,8 @@ SHIPPING_FLAT_CENTS = 0  # Flat shipping fee in cents (e.g., 0 for free shipping
 @jwt_required()
 def list_orders():
     user_id = get_jwt_identity()
+    if payment_service.expire_abandoned_orders():
+        db.session.commit()
     orders = Order.query.filter_by(user_id=user_id).order_by(Order.created_at.desc()).all()
     return jsonify([o.to_dict() for o in orders]), 200
 

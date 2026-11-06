@@ -96,7 +96,7 @@ export default function AdminConcerns() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm"
+          className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm"
         >
           + Add concern
         </motion.button>
@@ -160,7 +160,7 @@ export default function AdminConcerns() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+                className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
               >
                 {submitting ? "Saving…" : "Save"}
               </motion.button>

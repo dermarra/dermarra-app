@@ -178,6 +178,36 @@
   (unanchored, `x.dermarra.pages.dev.attacker.com` passed -- verified).
 - Tests: `backend/tests/test_payments.py` (16) covers all of the above.
 
+## Admin dashboard v2 + pre-launch cleanup (2026-11-06)
+- **Test data deleted** (owner-approved): all 16 orders (none had an M-Pesa
+  receipt -- no real sale yet), and accounts `mpesa-smoke/retry/timeout45
+  @example.com` + `scratchwriting@gmail.com`. Kept: all 5 products/sizes/
+  batches, routines, coupons, hero slides, and accounts
+  stevekamnjoros/dermarradev/mwangicaxton. Stock was unchanged (holds had
+  already expired; legacy order ce5f188c predated inventory tracking).
+- **Abandoned orders close after 24h** (owner's rule):
+  `payment_service.expire_abandoned_orders()` cancels `pending`/
+  `payment_failed` orders older than 24h, releasing stock holds and coupon
+  uses, with reason "Closed automatically: not paid within 24 hours." Never
+  touches `payment_pending` (must be confirmed with Safaricom first -- shown
+  as "stuck payments" on the dashboard instead). Runs lazily on the
+  dashboard, admin/customer order lists, STK push, and the
+  expire-reservations cron endpoint.
+- **Dashboard** = `GET /api/admin/dashboard?range=today|7d|30d|90d` (default
+  7d), built in `app/services/dashboard_service.py`, in Kenyan time (UTC+3).
+  Revenue has ONE definition: paid-or-later orders by `paid_at` (cancelled
+  excluded) -- the headline and the daily chart always agree. Returns KPIs +
+  previous-period KPIs, a to-do block, revenue per day, checkout outcomes
+  (grouped by Safaricom failure reason), top sellers, coupon usage, low
+  stock, recent orders. Tests: `tests/test_dashboard.py`.
+- **Admin look**: brand blue = the logo colour `#009EE2`, as the `brand`
+  Tailwind scale. Use `brand-700` for buttons (white text 5.9:1), `brand-600`
+  (`#0086C0`) for chart marks (4.1:1 on white; the logo blue itself is only
+  2.9:1 -- too faint for data). Amber stays the storefront CTA colour and,
+  in admin, means *warning* only (low stock, expiring). Recharts bars need
+  `isAnimationActive={false}` inside the framer-motion reveal cards, or they
+  never draw.
+
 ## Admin Dashboard (shipped)
 Committed across `bb3696c`, `7860e21`, `9ce60ec`, `d0a28cb`, `f821d77`. Admins
 run orders through a delivery pipeline (`paid → processing → shipped →

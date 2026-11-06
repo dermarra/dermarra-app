@@ -28,7 +28,13 @@ def initiate_stk_push():
     if not order_id or not raw_phone:
         return jsonify({"error": "order_id and phone are required"}), 400
 
+    if payment_service.expire_abandoned_orders():
+        db.session.commit()  # an order unpaid for 24h is closed, not payable
     order = Order.query.filter_by(id=order_id, user_id=user_id).first_or_404()
+    if order.status == "cancelled" and order.payment_failure_reason == payment_service.ABANDONED_REASON:
+        return jsonify({
+            "error": "This order expired after 24 hours unpaid. Please add the items to your cart again."
+        }), 400
     if order.status not in ("pending", "payment_failed"):
         return jsonify({"error": f"order is already {order.status.replace('_', ' ')}"}), 400
 

@@ -158,7 +158,7 @@ export default function AdminInventoryDetail() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setReceiveOpen((v) => !v)}
-            className="px-3 py-1.5 rounded-sm bg-amber text-bone-light font-semibold text-xs"
+            className="px-3 py-1.5 rounded-sm bg-brand-700 text-bone-light font-semibold text-xs"
           >
             {receiveOpen ? "Cancel" : "+ Log production run"}
           </motion.button>
@@ -243,7 +243,7 @@ export default function AdminInventoryDetail() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={receiveBusy}
-                className="self-start px-4 py-2 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+                className="self-start px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
               >
                 {receiveBusy ? "Saving…" : "Log production run"}
               </motion.button>
