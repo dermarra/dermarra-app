@@ -114,7 +114,20 @@
   embed (Framer modules need Framer's runtime). Hover/focus states live in
   `.service-tiles` rules in `index.css` (hover only for `(hover: hover) and
   (pointer: fine)`). Steps use their petal accent; concerns/ingredients
-  rotate the four brand colours.
+  rotate the four brand colours. Shown as a static carousel (owner,
+  2026-11-06): 4 cards per view from `xl` (3 `lg`, 2 `sm`, 1 + peek on
+  phones), round prev/next buttons beside the section heading (passed in as
+  `heading`), hidden when all cards fit. Homepage sections use the navbar's
+  container: `max-w-[1440px] px-5 sm:px-8 lg:px-12`.
+- **Product page** (`/shop/:slug`, `ProductDetail.jsx`) follows The
+  Ordinary's product page: breadcrumb, `components/ThumbnailSlider.jsx`
+  gallery (native port of the owner's Framer "ThumbnailSlider": swipe/drag,
+  arrows, "1 / 5" counter, synced thumbnails -- a column from `lg`, a row
+  below; cover image first, then the `ProductImage` gallery), then step,
+  price, size pills, quantity + add to cart, detail rows and disclosures. No
+  live product has more than one image yet, so the arrows/thumbs only appear
+  once more are uploaded in the admin product editor. Cart product lines
+  link their image and name to this page (routine bundles have no page yet).
 - **"Why Dermarra"** (just below the hero) uses `components/FluidCardStack.jsx`
   -- native port of the owner's Framer "Fluid Card Stack"
   (framer.com/m/Fluid-Card-Stack-qBHE.js): a horizontal accordion, the

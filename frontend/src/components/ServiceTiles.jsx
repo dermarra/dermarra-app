@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { cloudinaryUrl } from "../api/client";
-import { ChevronRightIcon } from "./Icons.jsx";
+import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
 
 /** Card grid used for every "Shop by …" section on the landing page
  * (concern, step, ingredient) -- a native port of the owner-supplied Framer
@@ -19,8 +20,14 @@ import { ChevronRightIcon } from "./Icons.jsx";
  * Brand mapping: accents are brand colours (text on them is ink, 5.2:1+);
  * fonts and sizes follow the site's type rules.
  *
+ * Shown as a static carousel (no autoplay): 4 cards per view from `xl`,
+ * 3 from `lg`, 2 from `sm`, one-and-a-peek on phones; round prev/next
+ * buttons beside the section heading scroll one view at a time and disable at
+ * either end (hidden when everything fits). Swipe / trackpad scroll still work.
+ *
  * tiles: [{ key, to, title, category, description, imageId, tags[], detail,
- *           cta, accent }] */
+ *           cta, accent }]; heading: the section's title + intro, shown left
+ * of the arrows. */
 export const BRAND_ACCENTS = ["#BBD531", "#F16722", "#1D9CD7", "#CD902D"]; // lime, orange, blue, gold
 
 function Tile({ tile, index }) {
@@ -60,7 +67,7 @@ function Tile({ tile, index }) {
             {tile.category}
           </p>
         )}
-        <h3 id={titleId} className="text-2xl font-semibold tracking-tight leading-tight [overflow-wrap:anywhere] hyphens-auto">
+        <h3 id={titleId} lang="en" className="text-2xl font-semibold tracking-tight leading-tight hyphens-auto [overflow-wrap:break-word]">
           {tile.title}
         </h3>
         {tile.description && (
@@ -95,12 +102,84 @@ function Tile({ tile, index }) {
   );
 }
 
-export default function ServiceTiles({ tiles }) {
+function ArrowButton({ dir, disabled, onClick, label }) {
+  const Icon = dir === "prev" ? ChevronLeftIcon : ChevronRightIcon;
   return (
-    <div className="service-tiles grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))]">
-      {tiles.map((tile, index) => (
-        <Tile key={tile.key} tile={tile} index={index} />
-      ))}
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="w-12 h-12 rounded-full border border-ink text-ink flex items-center justify-center transition-colors hover:bg-ink hover:text-white disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+    >
+      <Icon className="w-4 h-4" />
+    </button>
+  );
+}
+
+export default function ServiceTiles({ tiles, heading, label = "cards" }) {
+  const trackRef = useRef(null);
+  const [edges, setEdges] = useState({ start: true, end: true });
+
+  const measure = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    setEdges({
+      start: el.scrollLeft <= 2,
+      end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 2,
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return undefined;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    el.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [measure, tiles.length]);
+
+  const page = (dir) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ left: dir * el.clientWidth, behavior: reduce ? "auto" : "smooth" });
+  };
+
+  const scrollable = !(edges.start && edges.end);
+
+  return (
+    <div>
+      <div className="flex items-end justify-between gap-6 mb-8">
+        <div className="min-w-0">{heading}</div>
+        {scrollable && (
+          <div className="flex gap-3 shrink-0">
+            <ArrowButton dir="prev" disabled={edges.start} onClick={() => page(-1)} label={`Previous ${label}`} />
+            <ArrowButton dir="next" disabled={edges.end} onClick={() => page(1)} label={`Next ${label}`} />
+          </div>
+        )}
+      </div>
+      <div
+        ref={trackRef}
+        role="list"
+        // Vertical padding leaves room for the hover lift + shadow, which an
+        // overflow container would otherwise clip.
+        className="service-tiles flex gap-4 overflow-x-auto snap-x snap-mandatory py-3 -my-3 px-1 -mx-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {tiles.map((tile, index) => (
+          <div
+            key={tile.key}
+            role="listitem"
+            className="shrink-0 snap-start w-[85%] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]"
+          >
+            <Tile tile={tile} index={index} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

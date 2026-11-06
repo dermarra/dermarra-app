@@ -94,7 +94,7 @@ export default function Home() {
       {heroSlides.length > 0 ? (
         <HeroCarousel slides={heroSlides} />
       ) : (
-        <section className="relative px-4 pt-10 pb-16 sm:pt-16 sm:pb-24 mx-auto max-w-6xl overflow-hidden">
+        <section className="relative px-5 sm:px-8 lg:px-12 pt-10 pb-16 sm:pt-16 sm:pb-24 mx-auto max-w-[1440px] overflow-hidden">
 
           <motion.div initial="hidden" animate="show" variants={containerReveal} className="relative">
             <motion.p
@@ -136,7 +136,7 @@ export default function Home() {
       )}
 
       {/* ---------- The Dermarra story ---------- */}
-      <Reveal as={motion.section} className="px-4 py-16 sm:py-20 mx-auto max-w-6xl">
+      <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]">
         <div className="max-w-2xl">
           <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] text-blue-700 uppercase mb-3">
             Why Dermarra
@@ -160,15 +160,18 @@ export default function Home() {
 
       {/* ---------- Shop by concern ---------- */}
       {concerns.length > 0 && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2 max-w-xl">
-            Shop by concern.
-          </motion.h2>
-          <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
-            Tell us what you&apos;re seeing, get a routine and products built to remedy it.
-          </motion.p>
+        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <motion.div variants={itemReveal}>
             <ServiceTiles
+              label="concerns"
+              heading={
+                <>
+                  <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by concern.</h2>
+                  <p className="text-lg text-ink/80 max-w-xl">
+                    Tell us what you&apos;re seeing, get a routine and products built to remedy it.
+                  </p>
+                </>
+              }
               tiles={concerns.map((concern, index) => ({
                 key: `concern-${concern.id}`,
                 to: `/shop/concern/${concern.slug}`,
@@ -187,16 +190,19 @@ export default function Home() {
 
       {/* ---------- Shop by step ---------- */}
       {stepGroups.length > 0 && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2 max-w-xl">
-            Shop by step.
-          </motion.h2>
-          <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
-            Only need one thing? Our 4-step system -- cleanse, treat, repair, protect -- works
-            just as well one product at a time.
-          </motion.p>
+        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <motion.div variants={itemReveal}>
             <ServiceTiles
+              label="steps"
+              heading={
+                <>
+                  <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by step.</h2>
+                  <p className="text-lg text-ink/80 max-w-xl">
+                    Only need one thing? Our 4-step system -- cleanse, treat, repair, protect -- works
+            just as well one product at a time.
+                  </p>
+                </>
+              }
               tiles={stepGroups.map((group, index) => ({
                 key: `step-${group.id}`,
                 to: `/shop/step/${group.key}`,
@@ -215,15 +221,18 @@ export default function Home() {
 
       {/* ---------- Shop by ingredient ---------- */}
       {ingredients.length > 0 && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
-          <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2 max-w-xl">
-            Shop by active ingredient.
-          </motion.h2>
-          <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
-            Look for products by what&apos;s actually doing the work.
-          </motion.p>
+        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <motion.div variants={itemReveal}>
             <ServiceTiles
+              label="ingredients"
+              heading={
+                <>
+                  <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by active ingredient.</h2>
+                  <p className="text-lg text-ink/80 max-w-xl">
+                    Look for products by what&apos;s actually doing the work.
+                  </p>
+                </>
+              }
               tiles={ingredients.map((ingredient, index) => ({
                 key: `ingredient-${ingredient.id}`,
                 to: `/shop/ingredient/${ingredient.slug}`,
@@ -242,7 +251,7 @@ export default function Home() {
 
       {/* ---------- Become a member ---------- */}
       {!user && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
+        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <div className="rounded-2xl bg-lime px-6 py-12 sm:py-14 text-center text-ink">
           <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] uppercase mb-3">
             Join the family
@@ -281,7 +290,7 @@ export default function Home() {
       {/* ---------- Closing CTA ---------- */}
       <Reveal
         as={motion.section}
-        className="px-4 py-16 sm:py-20 mx-auto max-w-6xl"
+        className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]"
       >
         <motion.div
           variants={itemReveal}

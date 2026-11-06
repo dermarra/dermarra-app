@@ -89,7 +89,8 @@ export default function Cart() {
         <AnimatePresence initial={false}>
           {cart.items.map((item) => {
             const image = item.product?.cloudinary_public_id || item.routine?.cloudinary_public_id;
-            const imageUrl = cloudinaryUrl(image, { width: 160 });
+            const imageUrl = cloudinaryUrl(image, { width: 200 });
+            const productUrl = item.product?.slug ? `/shop/${item.product.slug}` : null;
             const name = item.product
               ? `${item.product.name}${item.variant ? ` — ${item.variant.label}` : ""}`
               : `${item.routine.name} (Full Routine)`;
@@ -106,11 +107,30 @@ export default function Cart() {
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 className="flex gap-3 py-4"
               >
-                <div className="w-16 h-16 rounded-sm bg-mist overflow-hidden shrink-0">
-                  {imageUrl && <img src={imageUrl} alt={name} className="w-full h-full object-cover" />}
-                </div>
+                {/* A product's image and name open its product page. */}
+                {productUrl ? (
+                  <Link
+                    to={productUrl}
+                    aria-label={`View ${item.product.name}`}
+                    className="group w-20 h-20 rounded-sm bg-mist overflow-hidden shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+                  >
+                    {imageUrl && (
+                      <img src={imageUrl} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    )}
+                  </Link>
+                ) : (
+                  <div className="w-20 h-20 rounded-sm bg-mist overflow-hidden shrink-0">
+                    {imageUrl && <img src={imageUrl} alt={name} className="w-full h-full object-cover" />}
+                  </div>
+                )}
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-ink">{name}</p>
+                  {productUrl ? (
+                    <Link to={productUrl} className="text-sm font-semibold text-ink hover:underline underline-offset-4">
+                      {name}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-semibold text-ink">{name}</p>
+                  )}
                   <p className="text-sm text-ink/60">
                     {undiscountedPriceCents != null && undiscountedPriceCents !== priceCents && (
                       <span className="line-through mr-2 text-ink/40">
