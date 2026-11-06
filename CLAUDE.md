@@ -749,9 +749,19 @@ real M-Pesa payments** — see "Not production-ready yet" below before flipping
   after idling can take 50+ seconds. Acceptable for a soft launch, a real
   UX/conversion risk once real customers show up; upgrading is a cost
   decision, not yet made.
-- `dermarra.com` is verified and in use for **email only** — the website
-  itself is still on `onrender.com`/`netlify.app` subdomains; wiring the
-  custom domain to the site was explicitly deferred by the user for now.
+- ~~`dermarra.com` used for email only~~ -- **the site is live on
+  `https://dermarra.com` as of 2026-11-06**: DNS moved from Namecheap to
+  Cloudflare (nameservers `carol`/`mitchell.ns.cloudflare.com`; Namecheap
+  is still the registrar), and the domain + `www` are attached to the
+  Cloudflare Pages project `dermarra` (`dermarra.pages.dev`). All 13 email
+  records (Zoho MX/SPF/verification/DKIM at `dermarra._domainkey`, Brevo
+  DKIM CNAMEs, `brevo-code`, `_dmarc`, and Brevo branded link domains
+  `welcome`/`r.welcome`/`img.welcome`) were carried over and verified
+  identical; they **must stay DNS-only (grey cloud)** -- proxying them breaks
+  email. Cloudflare's import scan missed 4 of them, so never trust the scan
+  alone when moving DNS again. Render's `FRONTEND_ORIGIN` lists dermarra.com,
+  www, dermarra.pages.dev and the Pages-preview regex; Netlify is no longer
+  in it (the Netlify site still builds but its API calls are blocked).
 
 ### Deferred by deliberate product decision (not bugs, not forgotten)
 
