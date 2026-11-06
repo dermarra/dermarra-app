@@ -108,6 +108,13 @@
   large but light -- headings semibold (not black/extrabold), nav links
   regular/medium weight with wide gaps, centred, in a three-zone navbar
   (logo / links / account+cart). Admin keeps bolder, denser styling.
+- **Landing-page "Shop by" cards** (concern, step, ingredient) all use
+  `components/ServiceTiles.jsx` -- a native React port of the owner's Framer
+  component (framer.com/m/Component-01-xhNbW3.js, "ServiceTiles"), not an
+  embed (Framer modules need Framer's runtime). Hover/focus states live in
+  `.service-tiles` rules in `index.css` (hover only for `(hover: hover) and
+  (pointer: fine)`). Steps use their petal accent; concerns/ingredients
+  rotate the four brand colours.
 - **Logos** live in `frontend/public/brand/` (official files): `logo-dark.svg`
   / `logo-light.svg` (wordmark + multicolour icon, for light / ink
   backgrounds), `icon-dark.svg` / `icon-light.svg`; `logo-email.png` is a

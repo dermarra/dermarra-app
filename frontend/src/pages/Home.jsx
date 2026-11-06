@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import client, { cloudinaryUrl } from "../api/client";
+import client from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import HeroCarousel from "../components/HeroCarousel.jsx";
 import BrandStripe from "../components/BrandStripe.jsx";
+import ServiceTiles, { BRAND_ACCENTS, productSummary } from "../components/ServiceTiles.jsx";
 import Reveal, { containerReveal, itemReveal } from "../components/Reveal.jsx";
-import { ChevronLeftIcon, ChevronRightIcon } from "../components/Icons.jsx";
 
 // Fallback copy for a step group whose admin-editable `description` hasn't
 // been filled in yet -- keyed by Product.step_type so it lines up
@@ -35,66 +35,8 @@ const PRINCIPLES = [
 
 // Solid brand fills with brand-black text (5.2-9.8:1). No gradients.
 const PRINCIPLE_FILLS = ["bg-lime", "bg-blue", "bg-gold"];
-// Shop-by-step colours follow the logo's petals: prep, treat, seal, protect.
-const STEP_FILLS = { cleanser: "bg-lime", serum: "bg-orange", barrier_cream: "bg-blue", spf: "bg-gold" };
-
-function ConcernSlider({ concerns }) {
-  const scrollRef = useRef(null);
-  const scrollBy = (dir) => scrollRef.current?.scrollBy({ left: dir * 300, behavior: "smooth" });
-
-  return (
-    <div className="relative">
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0"
-      >
-        {concerns.map((concern) => {
-          const imageUrl = cloudinaryUrl(concern.cloudinary_public_id, { width: 300 });
-          return (
-            <Link
-              key={concern.id}
-              to={`/shop/concern/${concern.slug}`}
-              className="group shrink-0 snap-start w-40 sm:w-48"
-            >
-              <div className="aspect-square rounded-sm bg-mist overflow-hidden">
-                {imageUrl && (
-                  <img
-                    src={imageUrl}
-                    alt={concern.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                )}
-              </div>
-              <p className="mt-2 text-sm font-semibold text-ink flex items-center gap-1">
-                {concern.name}
-                <span className="transition-transform group-hover:translate-x-0.5">→</span>
-              </p>
-            </Link>
-          );
-        })}
-      </div>
-
-      {concerns.length > 4 && (
-        <>
-          <button
-            onClick={() => scrollBy(-1)}
-            aria-label="Scroll concerns left"
-            className="hidden sm:flex absolute -left-4 top-[35%] -translate-y-1/2 w-9 h-9 rounded-full bg-bone-light border border-mist items-center justify-center text-ink/70 hover:text-ink shadow-sm"
-          >
-            <ChevronLeftIcon className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => scrollBy(1)}
-            aria-label="Scroll concerns right"
-            className="hidden sm:flex absolute -right-4 top-[35%] -translate-y-1/2 w-9 h-9 rounded-full bg-bone-light border border-mist items-center justify-center text-ink/70 hover:text-ink shadow-sm"
-          >
-            <ChevronRightIcon className="w-4 h-4" />
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
+// Shop-by-step accents follow the logo's petals: prep, treat, seal, protect.
+const STEP_ACCENTS = { cleanser: "#BBD531", serum: "#F16722", barrier_cream: "#1D9CD7", spf: "#CD902D" };
 
 export default function Home() {
   const { user } = useAuth();
@@ -102,6 +44,7 @@ export default function Home() {
   const [concerns, setConcerns] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [stepGroups, setStepGroups] = useState([]);
+  const [products, setProducts] = useState([]);
   const [featuredCoupon, setFeaturedCoupon] = useState(null);
 
   useEffect(() => {
@@ -112,6 +55,7 @@ export default function Home() {
     client.get("/products/concerns").then(({ data }) => setConcerns(data)).catch(ignore);
     client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6))).catch(ignore);
     client.get("/products/step-groups").then(({ data }) => setStepGroups(data)).catch(ignore);
+    client.get("/products").then(({ data }) => setProducts(data)).catch(ignore);
     client.get("/coupons/featured").then(({ data }) => setFeaturedCoupon(data)).catch(ignore);
   }, []);
 
@@ -204,7 +148,21 @@ export default function Home() {
           <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
             Tell us what you&apos;re seeing, get a routine and products built to remedy it.
           </motion.p>
-          <ConcernSlider concerns={concerns} />
+          <motion.div variants={itemReveal}>
+            <ServiceTiles
+              tiles={concerns.map((concern, index) => ({
+                key: `concern-${concern.id}`,
+                to: `/shop/concern/${concern.slug}`,
+                title: concern.name,
+                category: `Concern ${String(index + 1).padStart(2, "0")}`,
+                description: concern.description,
+                imageId: concern.cloudinary_public_id,
+                ...productSummary(products.filter((p) => p.skin_concerns?.some((c) => c.id === concern.id))),
+                cta: `Shop for ${concern.name.toLowerCase()}`,
+                accent: BRAND_ACCENTS[index % BRAND_ACCENTS.length],
+              }))}
+            />
+          </motion.div>
         </Reveal>
       )}
 
@@ -218,37 +176,21 @@ export default function Home() {
             Only need one thing? Our 4-step system -- cleanse, treat, repair, protect -- works
             just as well one product at a time.
           </motion.p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {stepGroups.map((group) => {
-              const imageUrl = cloudinaryUrl(group.cloudinary_public_id, { width: 400 });
-              return (
-                <motion.div
-                  key={group.id}
-                  variants={itemReveal}
-                  whileHover={{ y: -3 }}
-                  className={`rounded-2xl p-3 pb-5 text-ink ${STEP_FILLS[group.step_type] || "bg-blue"}`}
-                >
-                  <div className="aspect-square rounded-xl bg-white/40 overflow-hidden mb-3">
-                    {imageUrl && (
-                      <img src={imageUrl} alt={group.label} className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                  <div className="px-1">
-                    <h3 className="text-xl font-semibold">{group.label}</h3>
-                    <p className="text-sm mt-1 leading-relaxed">
-                      {group.description || STEP_COPY[group.step_type]}
-                    </p>
-                    <Link
-                      to={`/shop/step/${group.key}`}
-                      className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4 mt-2"
-                    >
-                      View all <span aria-hidden="true">→</span>
-                    </Link>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+          <motion.div variants={itemReveal}>
+            <ServiceTiles
+              tiles={stepGroups.map((group, index) => ({
+                key: `step-${group.id}`,
+                to: `/shop/step/${group.key}`,
+                title: group.label,
+                category: `Step ${String(index + 1).padStart(2, "0")} · ${group.key}`,
+                description: group.description || STEP_COPY[group.step_type],
+                imageId: group.cloudinary_public_id,
+                ...productSummary(products.filter((p) => p.step_type === group.step_type)),
+                cta: `Shop ${group.label.replace(/^Step\s*\d+:?\s*/i, "")}`,
+                accent: STEP_ACCENTS[group.step_type],
+              }))}
+            />
+          </motion.div>
         </Reveal>
       )}
 
@@ -261,30 +203,21 @@ export default function Home() {
           <motion.p variants={itemReveal} className="text-lg text-ink/80 mb-8 max-w-xl">
             Look for products by what&apos;s actually doing the work.
           </motion.p>
-          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {ingredients.map((ingredient) => {
-              const imageUrl = cloudinaryUrl(ingredient.cloudinary_public_id, { width: 300 });
-              return (
-                <motion.div key={ingredient.id} variants={itemReveal}>
-                  <Link to={`/shop/ingredient/${ingredient.slug}`} className="group block">
-                    <div className="aspect-square rounded-sm bg-mist overflow-hidden">
-                      {imageUrl && (
-                        <img
-                          src={imageUrl}
-                          alt={ingredient.name}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      )}
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-ink flex items-center gap-1">
-                      {ingredient.name}
-                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                    </p>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
+          <motion.div variants={itemReveal}>
+            <ServiceTiles
+              tiles={ingredients.map((ingredient, index) => ({
+                key: `ingredient-${ingredient.id}`,
+                to: `/shop/ingredient/${ingredient.slug}`,
+                title: ingredient.name,
+                category: "Active ingredient",
+                description: ingredient.description,
+                imageId: ingredient.cloudinary_public_id,
+                ...productSummary(products.filter((p) => p.ingredients?.some((i) => i.id === ingredient.id))),
+                cta: `Shop ${ingredient.name}`,
+                accent: BRAND_ACCENTS[index % BRAND_ACCENTS.length],
+              }))}
+            />
+          </motion.div>
         </Reveal>
       )}
 

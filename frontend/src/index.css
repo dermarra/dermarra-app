@@ -31,3 +31,40 @@
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }
 }
+
+/* "Shop by" tiles (components/ServiceTiles.jsx) -- interaction states ported
+   from the owner's Framer component: lift + shadow, image zoom, CTA accent
+   sweep, arrow tilt. Hover only on real pointers (no sticky hover on touch);
+   the same state on keyboard focus; all motion off under reduced-motion. */
+@layer components {
+  .service-tiles .st-card:focus-visible {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1), 0 3px 8px rgba(0, 0, 0, 0.035);
+  }
+  .service-tiles .st-card:focus-visible .st-cta::before { transform: scaleX(1); }
+  .service-tiles .st-card:focus-visible .st-arrow { transform: rotate(-35deg); }
+
+  @media (hover: hover) and (pointer: fine) {
+    .service-tiles .st-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1), 0 3px 8px rgba(0, 0, 0, 0.035);
+    }
+    .service-tiles .st-card:hover .st-image { transform: scale(1.06); }
+    .service-tiles .st-card:hover .st-cta::before { transform: scaleX(1); }
+    .service-tiles .st-card:hover .st-arrow { transform: rotate(-35deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .service-tiles .st-card,
+    .service-tiles .st-image,
+    .service-tiles .st-cta::before,
+    .service-tiles .st-arrow {
+      transition: none !important;
+    }
+    .service-tiles .st-card,
+    .service-tiles .st-image,
+    .service-tiles .st-arrow {
+      transform: none !important;
+    }
+  }
+}
