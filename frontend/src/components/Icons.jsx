@@ -13,6 +13,7 @@ import {
   SlArrowLeft,
   SlArrowRight,
   SlBadge,
+  SlBookOpen,
   SlBag,
   SlBasket,
   SlCheck,
@@ -100,6 +101,7 @@ export const QuizIcon = sl(SlMagicWand);
 export const SearchIcon = sl(SlMagnifier);
 export const CompassIcon = sl(SlCompass);
 export const ClockIcon = sl(SlClock);
+export const BookIcon = sl(SlBookOpen);
 export const ChemistryIcon = sl(SlChemistry);
 export const BadgeIcon = sl(SlBadge);
 

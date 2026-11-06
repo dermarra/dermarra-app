@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
@@ -11,6 +12,8 @@ import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
 import Terms from "./pages/Terms.jsx";
 import Privacy from "./pages/Privacy.jsx";
+import Blog from "./pages/Blog.jsx";
+import BlogPost from "./pages/BlogPost.jsx";
 import ConcernShop from "./pages/ConcernShop.jsx";
 import IngredientShop from "./pages/IngredientShop.jsx";
 import StepShop from "./pages/StepShop.jsx";
@@ -44,6 +47,8 @@ import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
 import AdminRoles from "./pages/admin/AdminRoles.jsx";
 import AdminActivity from "./pages/admin/AdminActivity.jsx";
+// The blog editor (TipTap) only loads when an admin opens it.
+const AdminBlog = lazy(() => import("./pages/admin/AdminBlog.jsx"));
 import RequirePermission, { AdminHome } from "./components/admin/RequirePermission.jsx";
 
 export default function App() {
@@ -72,6 +77,8 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/account" element={<AccountLayout />}>
             <Route index element={<Navigate to="profile" replace />} />
             <Route path="profile" element={<AccountProfile />} />
@@ -103,6 +110,16 @@ export default function App() {
             <Route path="step-groups" element={<RequirePermission page="step-groups"><AdminStepGroups /></RequirePermission>} />
             <Route path="users" element={<RequirePermission page="users"><AdminUsers /></RequirePermission>} />
             <Route path="coupons" element={<RequirePermission page="coupons"><AdminCoupons /></RequirePermission>} />
+            <Route
+              path="blog"
+              element={
+                <RequirePermission page="blog">
+                  <Suspense fallback={<p className="text-ink/70">Loading the editor…</p>}>
+                    <AdminBlog />
+                  </Suspense>
+                </RequirePermission>
+              }
+            />
             <Route path="roles" element={<RequirePermission page="roles"><AdminRoles /></RequirePermission>} />
             <Route path="activity" element={<RequirePermission page="activity"><AdminActivity /></RequirePermission>} />
           </Route>

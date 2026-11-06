@@ -20,6 +20,7 @@ export const PAGE_PERMS = {
   concerns: ["content.manage"],
   ingredients: ["content.manage"],
   "step-groups": ["content.manage"],
+  blog: ["blog.manage"],
   users: ["users.view"],
   roles: ["roles.manage"],
   activity: ["activity.view"],

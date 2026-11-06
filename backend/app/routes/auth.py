@@ -7,6 +7,7 @@ from flask_jwt_extended import (
 )
 
 from app.extensions import db
+from app.services import newsletter_service
 from app.models.user import User
 from app.services.brevo_service import send_welcome_email, send_password_reset_email
 from app.utils.tokens import generate_password_reset_token, verify_password_reset_token
@@ -37,6 +38,10 @@ def signup():
         send_welcome_email(user)
     except Exception:
         pass
+
+    # Optional "Send me skincare tips" tick box on the sign-up form.
+    if data.get("newsletter") is True:
+        newsletter_service.subscribe_quietly(user.email, user.full_name)
 
     tokens = _issue_tokens(user)
     return jsonify({"user": user.to_dict(), **tokens}), 201

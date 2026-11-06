@@ -344,6 +344,33 @@
   orders.fulfil, Cancel needs orders.cancel, stock changes inventory.manage).
   The server enforces all of it regardless. Tests: `tests/test_roles.py`.
 
+## Blog + newsletter fixes (2026-11-06)
+- **Blog** at `/blog` (`pages/Blog.jsx`: category pills, newest post featured,
+  card grid) and `/blog/:slug` (`pages/BlogPost.jsx`: `.blog-prose` article,
+  newsletter box, "More from the Blog"); Navbar + footer links. Backend
+  `app/routes/blog.py` (public `/api/blog/*`, admin `/api/admin/blog/*` on
+  `admin_bp`), models `app/models/blog.py` (`BlogPost`, `BlogCategory`),
+  migration `9d4f2b7e1c3a` (applied 2026-11-06; seeded 3 categories and gave
+  `blog.manage` to Store manager + Marketing & content).
+- **Scheduling needs no job**: a post is live when `status == "published"`
+  and `published_at <= now`; a future `published_at` = scheduled.
+- **Post HTML is sanitised on save** (`app/services/blog_service.py`, `nh3`
+  allow-list: formatting tags, https/http/mailto links, img) -- the
+  storefront renders `body_html` as-is, so never bypass `clean_html`.
+- Admin: `pages/admin/AdminBlog.jsx` (kit list + EditorDrawer; Draft /
+  Publish now / Schedule), `components/admin/RichTextEditor.jsx` (TipTap 3;
+  photos go through `/admin/upload-image`). **AdminBlog is `React.lazy`** in
+  `App.jsx` so TipTap (~430 KB) stays out of the storefront bundle.
+- **Newsletter** (`app/services/newsletter_service.py`): Brevo list id 2
+  (still named Brevo's default "Your first list" -- rename it in Brevo).
+  Fixed: existing Brevo contacts were never added to the list (now
+  `update_enabled=True`), names went to a non-existent `FULL_NAME`
+  attribute (now `FIRSTNAME`/`LASTNAME`). Shared `components/NewsletterForm.jsx`
+  (footer + blog); optional unticked "Send me skincare tips" at sign-up
+  (`newsletter: true` on `/auth/signup`) and checkout (`/orders/checkout`),
+  via `subscribe_quietly` so a Brevo failure never blocks the main action.
+  No double opt-in yet (needs a Brevo DOI template). Tests: `tests/test_blog.py`.
+
 ## Admin Dashboard (shipped)
 Committed across `bb3696c`, `7860e21`, `9ce60ec`, `d0a28cb`, `f821d77`. Admins
 run orders through a delivery pipeline (`paid → processing → shipped →

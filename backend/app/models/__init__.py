@@ -10,6 +10,7 @@ from app.models.inventory import Inventory, InventoryBatch, InventoryTransaction
 from app.models.hero_slide import HeroSlide
 from app.models.wishlist import Wishlist, WishlistItem
 from app.models.coupon import Coupon
+from app.models.blog import BlogCategory, BlogPost
 
 __all__ = [
     "User",
@@ -36,4 +37,6 @@ __all__ = [
     "Wishlist",
     "WishlistItem",
     "Coupon",
+    "BlogCategory",
+    "BlogPost",
 ]

@@ -15,7 +15,7 @@ export default function Signup() {
   const returnTo =
     from && !["/login", "/signup", "/forgot-password", "/reset-password"].includes(from) ? from : "/account";
   const prefillEmail = useLocation().state?.email || "";
-  const [form, setForm] = useState({ fullName: "", email: prefillEmail, password: "", phone: "" });
+  const [form, setForm] = useState({ fullName: "", email: prefillEmail, password: "", phone: "", newsletter: false });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -109,6 +109,16 @@ export default function Signup() {
               >
                 {showPassword ? <EyeOffIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
               </button>
+            </label>
+
+            <label className="flex items-start gap-3 text-ink/80 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.newsletter}
+                onChange={(e) => setForm({ ...form, newsletter: e.target.checked })}
+                className="mt-1 w-5 h-5 accent-orange shrink-0"
+              />
+              <span>Send me skincare tips and new-routine news by email. Unsubscribe any time.</span>
             </label>
 
             {error && <p className="text-sm text-orange-700">{error}</p>}

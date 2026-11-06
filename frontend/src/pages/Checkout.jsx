@@ -42,6 +42,7 @@ export default function Checkout() {
     return { ...emptyShipping, ...nonNull };
   });
   const [saveAddress, setSaveAddress] = useState(!hasSavedAddress);
+  const [newsletter, setNewsletter] = useState(false);
   const [step, setStep] = useState("form");
   const [error, setError] = useState(null);
   const [order, setOrder] = useState(null);
@@ -121,7 +122,7 @@ export default function Checkout() {
     setError(null);
     setStep("creating_order");
     try {
-      const { data: createdOrder } = await client.post("/orders/checkout", { shipping });
+      const { data: createdOrder } = await client.post("/orders/checkout", { shipping, newsletter });
       setOrder(createdOrder);
       refreshCart(); // Clear the cart after creating the order
 
@@ -339,6 +340,10 @@ export default function Checkout() {
             Save this address to my account
           </label>
         )}
+        <label className="flex items-start gap-2 text-sm text-ink/70">
+          <input type="checkbox" checked={newsletter} onChange={(e) => setNewsletter(e.target.checked)} className="mt-1" />
+          Send me skincare tips and new-routine news by email. Unsubscribe any time.
+        </label>
 
         <AnimatePresence>
           {error && (

@@ -35,12 +35,13 @@ export function AuthProvider({ children }) {
     setUser(user);
   };
 
-  const signup = useCallback(async ({ email, password, fullName, phone }) => {
+  const signup = useCallback(async ({ email, password, fullName, phone, newsletter = false }) => {
     const { data } = await client.post("/auth/signup", {
       email,
       password,
       full_name: fullName,
       phone,
+      newsletter: newsletter === true,
     });
     _persistSession(data);
     return data.user;

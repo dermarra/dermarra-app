@@ -35,6 +35,11 @@ PERMISSIONS = {
         "Manage storefront content",
         "Hero slides, concerns, ingredients and Shop by Step.",
     ),
+    "blog.manage": (
+        "Storefront",
+        "Manage the blog",
+        "Write, schedule and publish blog posts, and manage blog categories.",
+    ),
     "users.view": ("People", "See users", "Customer and admin accounts, with order history."),
     "roles.manage": (
         "People",
@@ -78,8 +83,8 @@ PRESET_ROLES = {
     },
     "marketing_content": {
         "name": "Marketing & content",
-        "description": "Homepage slides, concerns, ingredients, Shop by Step and coupons.",
-        "permissions": ["dashboard.view", "content.manage", "coupons.manage"],
+        "description": "Homepage slides, concerns, ingredients, Shop by Step, the blog and coupons.",
+        "permissions": ["dashboard.view", "content.manage", "blog.manage", "coupons.manage"],
     },
 }
 

@@ -70,6 +70,12 @@ _ACTIVITY = {
     "send_order_invoice": ("orders", "Emailed an invoice"),
     "cancel_order_admin": ("orders", "Cancelled an order"),
     "update_user_admin_status": ("access", "Changed someone's admin access"),
+    "create_blog_post": ("blog", "Added a blog post"),
+    "update_blog_post": ("blog", "Edited a blog post"),
+    "delete_blog_post": ("blog", "Deleted a blog post"),
+    "create_blog_category": ("blog", "Added a blog category"),
+    "update_blog_category": ("blog", "Edited a blog category"),
+    "delete_blog_category": ("blog", "Deleted a blog category"),
 }
 _SECRET_KEYS = ("password", "token", "secret")
 
@@ -1145,7 +1151,7 @@ def set_routine_steps(routine_id):
 # ---------- Image upload ----------
 
 @admin_bp.post("/upload-image")
-@permission_required("catalogue.manage", "content.manage", "orders.fulfil")
+@permission_required("catalogue.manage", "content.manage", "blog.manage", "orders.fulfil")
 def upload_product_image():
     """Multipart form upload -- send the file under the "file" field.
 
@@ -1160,7 +1166,7 @@ def upload_product_image():
 
 
 @admin_bp.delete("/upload-image/<path:public_id>")
-@permission_required("catalogue.manage", "content.manage", "orders.fulfil")
+@permission_required("catalogue.manage", "content.manage", "blog.manage", "orders.fulfil")
 def remove_image(public_id):
     delete_image(public_id)
     return "", 204

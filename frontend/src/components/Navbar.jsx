@@ -97,6 +97,7 @@ export default function Navbar() {
         <nav aria-label="Main" className="hidden md:flex items-center justify-center gap-8 lg:gap-12 xl:gap-14 text-lg font-medium">
           <Link to="/shop" className={`${linkTone} transition-colors`}>Shop</Link>
           <Link to="/quiz" className={`${linkTone} transition-colors`}>Find your routine</Link>
+          <Link to="/blog" className={`${linkTone} transition-colors`}>Blog</Link>
           {user?.is_admin && (
             <Link to="/admin/dashboard" className={`${linkTone} transition-colors`}>Admin</Link>
           )}

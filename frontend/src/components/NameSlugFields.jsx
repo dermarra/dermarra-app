@@ -10,7 +10,7 @@ import { inputClass } from "./admin/Kit.jsx";
  * "Edit" opens the input for the rare manual fix; it stays URL-safe as they
  * type. No `urlPrefix` (e.g. routines, which have no page) shows it as a
  * "Reference" instead. Slugs must match ^[a-z0-9]+(-[a-z0-9]+)*$ (see CLAUDE.md). */
-export default function NameSlugFields({ form, setForm, urlPrefix, namePlaceholder = "Name", nameHelp }) {
+export default function NameSlugFields({ form, setForm, urlPrefix, namePlaceholder = "Name", nameHelp, nameLabel = "Name" }) {
   const slugFollowsName = !form.slug || form.slug === slugify(form.name);
   const [editingSlug, setEditingSlug] = useState(false);
 
@@ -21,7 +21,7 @@ export default function NameSlugFields({ form, setForm, urlPrefix, namePlacehold
 
   return (
     <div className="flex flex-col gap-2">
-      <Field label="Name" help={nameHelp}>
+      <Field label={nameLabel} help={nameHelp}>
         <input required placeholder={namePlaceholder} value={form.name} onChange={onNameChange} className={inputClass} />
       </Field>
       {editingSlug ? (

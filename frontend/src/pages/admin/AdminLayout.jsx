@@ -7,6 +7,7 @@ import Logo from "../../components/Logo.jsx";
 import BrandStripe from "../../components/BrandStripe.jsx";
 import { can, PAGE_PERMS } from "../../lib/permissions.js";
 import {
+  BookIcon,
   BoxIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -65,6 +66,7 @@ const NAV = [
     color: "text-blue",
     items: [
       { to: "hero-slides", label: "Hero slides", Icon: ImageIcon },
+      { to: "blog", label: "Blog", Icon: BookIcon },
       {
         key: "browse",
         label: "Browse by",

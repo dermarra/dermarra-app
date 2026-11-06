@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import client from "../api/client";
 import { InstagramIcon, FacebookIcon, TiktokIcon } from "./Icons.jsx";
 import Logo from "./Logo.jsx";
+import NewsletterForm from "./NewsletterForm.jsx";
 import BrandStripe from "./BrandStripe.jsx";
 
 const QUICK_LINKS = [
   { to: "/shop", label: "Shop all products" },
   { to: "/quiz", label: "Find your routine" },
+  { to: "/blog", label: "Blog" },
   { to: "/shop/step/prep", label: "Shop by step" },
   { to: "/account", label: "My account" },
 ];
@@ -22,24 +22,6 @@ const SOCIAL_LINKS = [
 ].filter((link) => link.href);
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
-  const [error, setError] = useState(null);
-
-  const handleSubscribe = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setStatus("sending");
-    try {
-      await client.post("/newsletter/subscribe", { email });
-      setStatus("sent");
-      setEmail("");
-    } catch (err) {
-      setStatus("error");
-      setError(err.response?.data?.error || "Couldn't sign you up -- please try again.");
-    }
-  };
-
   return (
     <footer className="mt-16 bg-ink text-white">
       <BrandStripe className="h-2" />
@@ -91,25 +73,7 @@ export default function Footer() {
         <div>
           <p className="text-xs font-semibold tracking-widest text-blue uppercase mb-3">Get in touch</p>
           <p className="text-sm text-white/80 mb-3">Skincare tips and new-routine drops, occasionally.</p>
-          <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
-            <input
-              type="email"
-              required
-              aria-label="Email address"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="rounded-md px-3 py-2.5 text-sm bg-white text-ink placeholder:text-ink/50"
-            />
-            <button
-              type="submit"
-              disabled={status === "sending"}
-              className="px-4 py-2.5 rounded-md bg-orange text-ink font-semibold text-sm hover:bg-orange-400 disabled:opacity-50 transition-colors"
-            >
-              {status === "sending" ? "Signing up…" : status === "sent" ? "Subscribed ✓" : "Subscribe"}
-            </button>
-            {error && <p className="text-sm text-orange-300">{error}</p>}
-          </form>
+          <NewsletterForm variant="dark" source="footer" />
         </div>
       </div>
 

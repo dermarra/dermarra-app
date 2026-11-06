@@ -1,3 +1,4 @@
+from app.services import newsletter_service
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -141,6 +142,12 @@ def checkout():
     cart.coupon_id = None
 
     db.session.commit()
+
+    # Optional "Send me skincare tips" tick box at checkout.
+    if data.get("newsletter") is True:
+        buyer = User.query.get(user_id)
+        if buyer:
+            newsletter_service.subscribe_quietly(buyer.email, shipping.get("name") or buyer.full_name)
 
     return jsonify(order.to_dict()), 201
 

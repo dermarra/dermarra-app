@@ -2,7 +2,6 @@ import html
 
 from flask import current_app
 import sib_api_v3_sdk
-from sib_api_v3_sdk.rest import ApiException
 
 
 def _get_client():
@@ -250,17 +249,3 @@ def send_order_invoice_email(user, order):
         ),
     )
     _send(email, failure_label="invoice email")
-
-
-def add_contact_to_list(email, full_name, list_id):
-    configuration = sib_api_v3_sdk.Configuration()
-    configuration.api_key["api-key"] = current_app.config["BREVO_API_KEY"]
-    contacts_api = sib_api_v3_sdk.ContactsApi(sib_api_v3_sdk.ApiClient(configuration))
-    contact = sib_api_v3_sdk.CreateContact(
-        email=email, attributes={"FULL_NAME": full_name}, list_ids=[list_id]
-    )
-    try:
-        contacts_api.create_contact(contact)
-    except ApiException as e:
-        current_app.logger.error(f"Brevo contact creation failed: {e}")
-        raise
