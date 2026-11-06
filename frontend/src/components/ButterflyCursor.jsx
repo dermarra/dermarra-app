@@ -35,7 +35,39 @@ function useEnabled() {
   return enabled;
 }
 
-function Butterfly({ color, size, smoothing }) {
+// Contrast-aware colour: the wings take `color` unless what's under the
+// pointer is too close to it (blue on a blue tile, or on orange/lime/gold,
+// which are all similarly bright), then switch to `altColor`. Reads the first
+// opaque background colour up the tree from the element under the pointer.
+const parseRgb = (css) => {
+  const m = css && css.match(/rgba?\(([^)]+)\)/);
+  if (!m) return null;
+  const [r, g, b, a = "1"] = m[1].split(/[\s,/]+/).filter(Boolean);
+  return parseFloat(a) < 0.5 ? null : [r, g, b].map(Number);
+};
+const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const luminance = ([r, g, b]) => {
+  const c = [r, g, b].map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+function backgroundAt(x, y) {
+  let el = document.elementFromPoint(x, y);
+  while (el && el !== document.documentElement) {
+    const rgb = parseRgb(getComputedStyle(el).backgroundColor);
+    if (rgb) return rgb;
+    el = el.parentElement;
+  }
+  return parseRgb(getComputedStyle(document.body).backgroundColor) || [255, 255, 255];
+}
+
+function Butterfly({ color, altColor, size, smoothing }) {
   const width = 12 * size;
   const height = 16 * size;
   const mouseX = useMotionValue(window.innerWidth / 2);
@@ -48,6 +80,27 @@ function Butterfly({ color, size, smoothing }) {
   const hasMoved = useRef(false);
   const [boost, setBoost] = useState(false);
   const [flapKey, setFlapKey] = useState(0);
+  const [fill, setFill] = useState(color);
+
+  // Re-check the colour underneath once per frame at most, on move and scroll.
+  useEffect(() => {
+    const base = hexRgb(color);
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      setFill(contrast(base, backgroundAt(mouseX.get(), mouseY.get())) < 2 ? altColor : color);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+    window.addEventListener("pointermove", schedule, { passive: true });
+    window.addEventListener("scroll", schedule, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener("pointermove", schedule);
+      window.removeEventListener("scroll", schedule, { capture: true });
+      cancelAnimationFrame(frame);
+    };
+  }, [color, altColor, mouseX, mouseY]);
 
   useEffect(() => {
     let timeout = null;
@@ -139,7 +192,7 @@ function Butterfly({ color, size, smoothing }) {
             style={{ transformOrigin: "right center" }}
             {...flap(1)}
           >
-            <path d={WING_RIGHT} fill={color} />
+            <path d={WING_RIGHT} fill={fill} style={{ transition: "fill 0.2s" }} />
           </motion.svg>
         </div>
         <div className="absolute top-1/2 left-1/2 -translate-y-1/2" style={{ width, height }}>
@@ -150,7 +203,7 @@ function Butterfly({ color, size, smoothing }) {
             style={{ transformOrigin: "left center" }}
             {...flap(-1)}
           >
-            <path d={WING_LEFT} fill={color} />
+            <path d={WING_LEFT} fill={fill} style={{ transition: "fill 0.2s" }} />
           </motion.svg>
         </div>
       </motion.div>
@@ -158,7 +211,7 @@ function Butterfly({ color, size, smoothing }) {
   );
 }
 
-export default function ButterflyCursor({ color = "#1D9CD7", size = 2, smoothing = 0.6 }) {
+export default function ButterflyCursor({ color = "#1D9CD7", altColor = "#231F20", size = 2, smoothing = 0.6 }) {
   const enabled = useEnabled();
-  return enabled ? <Butterfly color={color} size={size} smoothing={smoothing} /> : null;
+  return enabled ? <Butterfly color={color} altColor={altColor} size={size} smoothing={smoothing} /> : null;
 }

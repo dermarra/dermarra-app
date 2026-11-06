@@ -139,7 +139,11 @@
   only (not `/admin`), brand blue, native cursor kept. Renders only for
   `(pointer: fine)` and no reduced-motion -- so headless Chromium never shows
   it (it reports no fine pointer even with emulation; override `matchMedia`
-  with a stand-in object to screenshot it).
+  with a stand-in object to screenshot it). **Contrast-aware** (owner,
+  2026-11-07): each frame it reads the first opaque background colour under
+  the pointer (`elementFromPoint`, walking up) and switches the wings to
+  `altColor` (ink) when contrast with blue is < 2:1 -- i.e. over blue,
+  orange, lime or gold; stays blue on white, tints and ink.
 - **Routine builder** (`/quiz`, `pages/RoutineQuiz.jsx`) follows The
   Ordinary's regimen builder: white split screen (question left, answers
   right), "01 / 03" counter, "Why we ask" drawer, progress line + text
@@ -918,8 +922,18 @@ real M-Pesa payments** — see "Not production-ready yet" below before flipping
   be debugged blind once Render's log retention window passes.
 
 **Legal/compliance:**
-- `frontend/src/pages/Privacy.jsx` and `Terms.jsx` are still literal
-  10-line placeholder stubs ("replace this with Dermarra Skincare's actual
+- **Privacy policy written 2026-11-07** (`pages/Privacy.jsx`, Kenya Data
+  Protection Act 2019 + General Regulations 2021): describes the actual
+  processing (data table with lawful bases, processors incl. Safaricom/
+  Brevo/Supabase/Render/Cloudflare/Cloudinary/Zoho, cross-border s.48-49,
+  localStorage items, retention -- orders 5 years for tax law, rights,
+  72h breach notice, ODPC complaints). Contact is the `CONTACT_EMAIL`
+  constant (`privacy@dermarra.com` -- that mailbox/alias must exist in Zoho).
+  **Update the page whenever a new kind of data, processor or tracker is
+  added.** It doesn't claim ODPC registration; add the number once
+  registered. Account deletion is by email request (no self-serve button).
+- `frontend/src/pages/Terms.jsx` is still a literal
+  10-line placeholder stub ("replace this with Dermarra Skincare's actual
   privacy policy") on a live site that collects real names, addresses,
   phone numbers, and (once M-Pesa goes to production) payment activity.
 - **No cookie-consent mechanism** anywhere in the frontend.
