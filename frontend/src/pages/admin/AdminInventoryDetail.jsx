@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import client from "../../api/client";
 import Field from "../../components/admin/Field.jsx";
+import { can } from "../../lib/permissions.js";
+import { useAuth } from "../../context/AuthContext";
 import {
   BackLink,
   Button,
@@ -70,6 +72,7 @@ function formatKES(cents) {
 }
 
 export default function AdminInventoryDetail() {
+  const { user } = useAuth();
   const { variantId } = useParams();
 
   const [detail, setDetail] = useState(null);
@@ -158,6 +161,7 @@ export default function AdminInventoryDetail() {
   const selectedBatch = batches.find((b) => b.id === adjustForm.batch_id);
 
   const status = STATUS[variant.stock_status] || STATUS.out_of_stock;
+  const mayManage = can(user, "inventory.manage");
   const canAdjust = batches.some((b) => b.status === "active" || b.status === "depleted");
   const setR = (key) => (e) => setReceiveForm({ ...receiveForm, [key]: e.target.value });
   const setA = (key) => (e) => setAdjustForm({ ...adjustForm, [key]: e.target.value });
@@ -175,6 +179,7 @@ export default function AdminInventoryDetail() {
           title={`${variant.product_name} — ${variant.label}`}
           description="Log each production run as a batch. Stock always sells from the batch that expires first."
           actions={
+            mayManage && (
             <>
               <Button variant="secondary" size="lg" onClick={() => setAdjustOpen(true)} disabled={!canAdjust}>
                 Adjust stock
@@ -183,6 +188,7 @@ export default function AdminInventoryDetail() {
                 + Log production run
               </Button>
             </>
+            )
           }
         />
       </div>

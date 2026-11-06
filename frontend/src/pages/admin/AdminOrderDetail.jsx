@@ -7,11 +7,14 @@ import OrderTotals from "../../components/OrderTotals.jsx";
 import Field from "../../components/admin/Field.jsx";
 import { BackLink, Button, EmptyState, LoadingState, PageHeader, Panel, StatusBadge, inputClass } from "../../components/admin/Kit.jsx";
 import { ORDER_STATUS } from "../../lib/orderStatus.js";
+import { can } from "../../lib/permissions.js";
+import { useAuth } from "../../context/AuthContext";
 
 const NEXT_STEP = { paid: "processing", processing: "shipped", shipped: "delivered" };
 const CANCELLABLE = new Set(["paid", "processing", "shipped"]);
 
 export default function AdminOrderDetail() {
+  const { user } = useAuth();
   const { orderId } = useParams();
 
   const [order, setOrder] = useState(null);
@@ -101,6 +104,8 @@ export default function AdminOrderDetail() {
   const nextStatus = NEXT_STEP[order.status];
   const proofUrl = cloudinaryUrl(order.delivery_proof_public_id, { width: 300 });
 
+  const mayFulfil = can(user, "orders.fulfil");
+  const mayCancel = can(user, "orders.cancel");
   const status = ORDER_STATUS[order.status] || { label: order.status, tone: "neutral" };
   const PIPELINE = ["paid", "processing", "shipped", "delivered"];
   const stage = PIPELINE.indexOf(order.status);
@@ -130,10 +135,12 @@ export default function AdminOrderDetail() {
           }
           actions={
             <>
-              <Button size="lg" onClick={sendInvoice} disabled={sendingInvoice}>
-                {sendingInvoice ? "Sending…" : invoiceSent ? "Invoice sent ✓" : "Email invoice"}
-              </Button>
-              {CANCELLABLE.has(order.status) && (
+              {mayFulfil && (
+                <Button size="lg" onClick={sendInvoice} disabled={sendingInvoice}>
+                  {sendingInvoice ? "Sending…" : invoiceSent ? "Invoice sent ✓" : "Email invoice"}
+                </Button>
+              )}
+              {mayCancel && CANCELLABLE.has(order.status) && (
                 <Button variant="danger" size="lg" onClick={cancelOrder} disabled={busy}>
                   Cancel order
                 </Button>
@@ -163,7 +170,8 @@ export default function AdminOrderDetail() {
               </li>
             ))}
           </ol>
-          {nextStatus && (
+          {nextStatus && !mayFulfil && <p className="text-ink/70">Your role can see this order but not move it along.</p>}
+          {nextStatus && mayFulfil && (
             <div className="flex flex-col gap-5 max-w-xl">
               {nextStatus === "shipped" && (
                 <Field label="Tracking number (optional)" help="The courier's waybill code. It goes in the “your order has shipped” email.">
@@ -225,7 +233,7 @@ export default function AdminOrderDetail() {
             {proofUrl && <img src={proofUrl} alt="Proof of delivery" className="mt-4 w-40 h-40 object-cover rounded-lg border border-mist" />}
           </Panel>
 
-          <Panel title="Payment" actions={order.status === "payment_pending" && (
+          <Panel title="Payment" actions={order.status === "payment_pending" && (mayFulfil || mayCancel) && (
             <Button onClick={refreshPaymentStatus} disabled={busy}>
               {busy ? "Checking…" : "Check with M-Pesa"}
             </Button>

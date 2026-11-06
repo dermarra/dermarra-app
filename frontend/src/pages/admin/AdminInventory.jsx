@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import client from "../../api/client";
+import { can } from "../../lib/permissions.js";
+import { useAuth } from "../../context/AuthContext";
 import { containerReveal } from "../../components/Reveal.jsx";
 import {
   Button,
@@ -26,6 +28,7 @@ const STATUS = {
 };
 
 export default function AdminInventory() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get("status") || "";
 
@@ -57,6 +60,7 @@ export default function AdminInventory() {
       .catch(() => {});
   }, []);
 
+  const mayEditCatalogue = can(user, "catalogue.manage");
   const count = (status) => rows.filter((r) => r.stock_status === status).length;
   const shown = rows.filter(
     (r) => (statusFilter === "" || r.stock_status === statusFilter) && matches(query, r.product_name, r.label, r.sku)
@@ -130,11 +134,11 @@ export default function AdminInventory() {
                 actions={
                   hasSize ? (
                     <Button to={`/admin/inventory/${row.id}`}>Manage</Button>
-                  ) : (
+                  ) : mayEditCatalogue ? (
                     <Button variant="secondary" to={`/admin/products?edit=${row.product_id}`}>
                       Add a size
                     </Button>
-                  )
+                  ) : null
                 }
               />
             );

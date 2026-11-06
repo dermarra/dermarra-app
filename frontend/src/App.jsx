@@ -42,6 +42,9 @@ import AdminIngredients from "./pages/admin/AdminIngredients.jsx";
 import AdminStepGroups from "./pages/admin/AdminStepGroups.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
+import AdminRoles from "./pages/admin/AdminRoles.jsx";
+import AdminActivity from "./pages/admin/AdminActivity.jsx";
+import RequirePermission, { AdminHome } from "./components/admin/RequirePermission.jsx";
 
 export default function App() {
   const location = useLocation();
@@ -86,20 +89,22 @@ export default function App() {
               </AdminRoute>
             }
           >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="hero-slides" element={<AdminHeroSlides />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="orders/:orderId" element={<AdminOrderDetail />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="inventory" element={<AdminInventory />} />
-            <Route path="inventory/:variantId" element={<AdminInventoryDetail />} />
-            <Route path="routines" element={<AdminRoutines />} />
-            <Route path="concerns" element={<AdminConcerns />} />
-            <Route path="ingredients" element={<AdminIngredients />} />
-            <Route path="step-groups" element={<AdminStepGroups />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="coupons" element={<AdminCoupons />} />
+            <Route index element={<AdminHome />} />
+            <Route path="dashboard" element={<RequirePermission page="dashboard"><AdminDashboard /></RequirePermission>} />
+            <Route path="hero-slides" element={<RequirePermission page="hero-slides"><AdminHeroSlides /></RequirePermission>} />
+            <Route path="orders" element={<RequirePermission page="orders"><AdminOrders /></RequirePermission>} />
+            <Route path="orders/:orderId" element={<RequirePermission page="orders"><AdminOrderDetail /></RequirePermission>} />
+            <Route path="products" element={<RequirePermission page="products"><AdminProducts /></RequirePermission>} />
+            <Route path="inventory" element={<RequirePermission page="inventory"><AdminInventory /></RequirePermission>} />
+            <Route path="inventory/:variantId" element={<RequirePermission page="inventory"><AdminInventoryDetail /></RequirePermission>} />
+            <Route path="routines" element={<RequirePermission page="routines"><AdminRoutines /></RequirePermission>} />
+            <Route path="concerns" element={<RequirePermission page="concerns"><AdminConcerns /></RequirePermission>} />
+            <Route path="ingredients" element={<RequirePermission page="ingredients"><AdminIngredients /></RequirePermission>} />
+            <Route path="step-groups" element={<RequirePermission page="step-groups"><AdminStepGroups /></RequirePermission>} />
+            <Route path="users" element={<RequirePermission page="users"><AdminUsers /></RequirePermission>} />
+            <Route path="coupons" element={<RequirePermission page="coupons"><AdminCoupons /></RequirePermission>} />
+            <Route path="roles" element={<RequirePermission page="roles"><AdminRoles /></RequirePermission>} />
+            <Route path="activity" element={<RequirePermission page="activity"><AdminActivity /></RequirePermission>} />
           </Route>
         </Routes>
         </ErrorBoundary>

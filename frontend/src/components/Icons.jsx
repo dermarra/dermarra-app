@@ -17,6 +17,7 @@ import {
   SlBasket,
   SlCheck,
   SlChemistry,
+  SlClock,
   SlClose,
   SlCompass,
   SlDirections,
@@ -98,6 +99,7 @@ export const ShopIcon = sl(SlBasket);
 export const QuizIcon = sl(SlMagicWand);
 export const SearchIcon = sl(SlMagnifier);
 export const CompassIcon = sl(SlCompass);
+export const ClockIcon = sl(SlClock);
 export const ChemistryIcon = sl(SlChemistry);
 export const BadgeIcon = sl(SlBadge);
 

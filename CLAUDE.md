@@ -308,6 +308,42 @@
   `isAnimationActive={false}` inside the framer-motion reveal cards, or they
   never draw.
 
+## Admin roles & permissions (2026-11-06)
+- **Admin access = having an admin role** (`users.admin_role_id` ->
+  `admin_roles`); `users.is_admin` is kept in step with it so older checks
+  (storefront Admin link, `AdminRoute`, dashboard customer counts) still work.
+  Migration `7b1e4c9d2a60` (applied 2026-11-06) seeded the roles and gave the
+  owner Super admin, Caxton Store manager.
+- **Permissions are fixed keys in code** (`app/utils/permissions.py`:
+  dashboard.view, orders.view/fulfil/cancel, coupons.manage,
+  catalogue.manage, inventory.view/manage, content.manage, users.view,
+  roles.manage, activity.view; fulfil/cancel imply orders.view, manage
+  implies inventory.view, roles.manage implies users.view). **Roles are
+  editable** bundles of those keys (owner's choice) at Admin -> People ->
+  Roles & access, except the locked **Super admin** role (`is_super`: every
+  permission, now and future). Presets: Store manager (all but roles),
+  Orders & dispatch, Catalogue & stock, Marketing & content.
+- **Every admin endpoint uses `@permission_required(...)`**
+  (`app/utils/decorators.py`; 403 body has `code: "forbidden"` + `needs`).
+  New admin routes must pick a permission -- don't use bare
+  `admin_required`. Roles/activity routes live in
+  `app/routes/admin_access.py` on the same `admin_bp`.
+- **Assigning access** (`PATCH /api/admin/users/<id>` `{admin_role_id|null}`,
+  roles.manage): nobody changes their own access, only a super admin gives
+  or removes Super admin, and the last super admin can't lose it. Lock-out
+  recovery / bootstrap: `flask make-super-admin EMAIL`.
+- **Activity log** (`admin_activity`): an `after_request` hook on `admin_bp`
+  records every successful non-GET admin request (actor + name snapshot,
+  plain-English summary from `_ACTIVITY` or `g.activity_summary`, target,
+  request body minus password/token/secret keys). Shown at Admin -> People
+  -> Activity (activity.view).
+- **Frontend**: `lib/permissions.js` (`can(user, ...keys)`, `PAGE_PERMS`);
+  every `/admin/*` route is wrapped in `components/admin/RequirePermission.jsx`
+  (friendly "No access" page); the sidebar lists only permitted pages;
+  page buttons are hidden without their permission (dispatch actions need
+  orders.fulfil, Cancel needs orders.cancel, stock changes inventory.manage).
+  The server enforces all of it regardless. Tests: `tests/test_roles.py`.
+
 ## Admin Dashboard (shipped)
 Committed across `bb3696c`, `7860e21`, `9ce60ec`, `d0a28cb`, `f821d77`. Admins
 run orders through a delivery pipeline (`paid → processing → shipped →

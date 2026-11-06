@@ -30,6 +30,7 @@ def create_app(config_name=None):
     from app.routes.newsletter import newsletter_bp
     from app.routes.coupons import coupons_bp
     from app.routes.admin import admin_bp
+    from app.routes import admin_access  # noqa: F401 -- adds roles/activity routes to admin_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(products_bp, url_prefix="/api/products")
@@ -42,6 +43,7 @@ def create_app(config_name=None):
     app.register_blueprint(newsletter_bp, url_prefix="/api/newsletter")
     app.register_blueprint(coupons_bp, url_prefix="/api/coupons")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
+    admin_access.register_cli(app)
 
     from app.utils.errors import register_error_handlers
 

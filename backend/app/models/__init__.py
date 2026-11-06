@@ -1,4 +1,5 @@
 from app.models.user import User
+from app.models.admin_role import AdminRole, AdminActivity
 from app.models.product import (
     Product, ProductVariant, SkinConcern, Ingredient, StepGroup, product_concerns, product_ingredients,
 )
@@ -12,6 +13,8 @@ from app.models.coupon import Coupon
 
 __all__ = [
     "User",
+    "AdminRole",
+    "AdminActivity",
     "Product",
     "ProductVariant",
     "SkinConcern",

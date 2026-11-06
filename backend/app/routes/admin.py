@@ -1,7 +1,7 @@
 import re
 from datetime import date, datetime, timedelta
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, g, request, jsonify
 from flask_jwt_extended import get_jwt_identity
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
@@ -17,11 +17,12 @@ from app.models.coupon import Coupon
 from app.models.product import Product, ProductVariant, ProductImage, SkinConcern, Ingredient, StepGroup
 from app.models.routine import Routine, RoutineStep
 from app.models.user import User
+from app.models.admin_role import AdminActivity, AdminRole
 from app.services import brevo_service, coupon_service, payment_service
 from app.services.cloudinary_service import upload_image, delete_image
 from app.services import dashboard_service, inventory_service
 from app.services.inventory_service import InventoryError, restock_order
-from app.utils.decorators import admin_required
+from app.utils.decorators import permission_required
 from app.utils.order_transitions import can_advance, can_cancel
 
 # Orders in any of these statuses never reached a successful payment, so
@@ -29,6 +30,103 @@ from app.utils.order_transitions import can_advance, can_cancel
 _UNPAID_STATUSES = ("pending", "payment_pending", "payment_failed", "cancelled")
 
 admin_bp = Blueprint("admin", __name__)
+
+# Plain-English activity-log lines, keyed by view function. A route can
+# override with g.activity_summary for a richer line (e.g. role changes).
+_ACTIVITY = {
+    "create_concern": ("content", "Added a concern"),
+    "update_concern": ("content", "Edited a concern"),
+    "delete_concern": ("content", "Deleted a concern"),
+    "create_ingredient": ("content", "Added an ingredient"),
+    "update_ingredient": ("content", "Edited an ingredient"),
+    "delete_ingredient": ("content", "Deleted an ingredient"),
+    "update_step_group": ("content", "Edited a Shop by Step card"),
+    "create_hero_slide": ("content", "Added a hero slide"),
+    "update_hero_slide": ("content", "Edited a hero slide"),
+    "delete_hero_slide": ("content", "Deleted a hero slide"),
+    "create_coupon": ("coupons", "Added a coupon"),
+    "update_coupon": ("coupons", "Edited a coupon"),
+    "delete_coupon": ("coupons", "Switched off a coupon"),
+    "receive_stock": ("inventory", "Logged a production run"),
+    "adjust_stock": ("inventory", "Adjusted stock"),
+    "expire_reservations": ("inventory", "Cleared expired stock holds"),
+    "create_product": ("catalogue", "Added a product"),
+    "update_product": ("catalogue", "Edited a product"),
+    "delete_product": ("catalogue", "Deleted a product"),
+    "create_product_variant": ("catalogue", "Added a size"),
+    "update_product_variant": ("catalogue", "Edited a size"),
+    "delete_product_variant": ("catalogue", "Deleted a size"),
+    "add_product_image": ("catalogue", "Added a product photo"),
+    "update_product_image": ("catalogue", "Changed a product photo"),
+    "delete_product_image": ("catalogue", "Deleted a product photo"),
+    "create_routine": ("catalogue", "Added a routine"),
+    "update_routine": ("catalogue", "Edited a routine"),
+    "delete_routine": ("catalogue", "Deleted a routine"),
+    "set_routine_steps": ("catalogue", "Changed a routine's steps"),
+    "upload_product_image": ("uploads", "Uploaded a photo"),
+    "remove_image": ("uploads", "Removed a photo"),
+    "refresh_order_payment_status": ("orders", "Checked an order's payment with M-Pesa"),
+    "advance_order": ("orders", "Moved an order forward"),
+    "send_order_invoice": ("orders", "Emailed an invoice"),
+    "cancel_order_admin": ("orders", "Cancelled an order"),
+    "update_user_admin_status": ("access", "Changed someone's admin access"),
+}
+_SECRET_KEYS = ("password", "token", "secret")
+
+
+def _clean_details(data):
+    if not isinstance(data, dict):
+        return None
+    out = {}
+    for k, v in data.items():
+        if any(s in k.lower() for s in _SECRET_KEYS):
+            continue
+        out[k] = v if isinstance(v, (int, float, bool)) or v is None else str(v)[:300]
+    return out or None
+
+
+def record_activity(response):
+    """Log every successful admin change (non-GET, status < 400). Never
+    breaks the response it's logging."""
+    if request.method == "GET" or response.status_code >= 400:
+        return response
+    actor = g.get("admin_user")
+    if actor is None:
+        return response
+    try:
+        fn = (request.endpoint or "").split(".")[-1]
+        area, summary = _ACTIVITY.get(fn, ("other", fn.replace("_", " ").capitalize()))
+        args = request.view_args or {}
+        if fn == "advance_order":
+            status = (request.get_json(silent=True) or {}).get("status")
+            if status:
+                summary = f"Marked an order {status}"
+        if "order_id" in args:
+            target_type = "order"
+        else:
+            target_type = next((k[:-3] for k in args if k.endswith("_id")), area)
+        target_id = next(iter(args.values()), None)
+        db.session.add(
+            AdminActivity(
+                actor_id=actor.id,
+                actor_name=actor.full_name or actor.email,
+                action=f"{area}.{fn}",
+                summary=g.get("activity_summary") or summary,
+                target_type=target_type,
+                target_id=str(target_id) if target_id is not None else None,
+                method=request.method,
+                path=request.path[:255],
+                details=_clean_details(request.get_json(silent=True)),
+            )
+        )
+        db.session.commit()
+    except Exception:  # noqa: BLE001 -- logging must never fail the request
+        db.session.rollback()
+        current_app.logger.exception("couldn't record admin activity")
+    return response
+
+
+admin_bp.after_request(record_activity)
 
 
 def _commit_or_conflict(message):
@@ -96,14 +194,14 @@ def _int_field(data, field, *, minimum=None, maximum=None, multiple_of=None, req
 # ---------- Skin concerns ----------
 
 @admin_bp.get("/concerns")
-@admin_required
+@permission_required("content.manage", "catalogue.manage")
 def list_concerns():
     concerns = SkinConcern.query.order_by(SkinConcern.name).all()
     return jsonify([c.to_dict() for c in concerns]), 200
 
 
 @admin_bp.post("/concerns")
-@admin_required
+@permission_required("content.manage")
 def create_concern():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
@@ -124,7 +222,7 @@ def create_concern():
 
 
 @admin_bp.patch("/concerns/<concern_id>")
-@admin_required
+@permission_required("content.manage")
 def update_concern(concern_id):
     concern = SkinConcern.query.get_or_404(concern_id)
     data = request.get_json(silent=True) or {}
@@ -140,7 +238,7 @@ def update_concern(concern_id):
 
 
 @admin_bp.delete("/concerns/<concern_id>")
-@admin_required
+@permission_required("content.manage")
 def delete_concern(concern_id):
     concern = SkinConcern.query.get_or_404(concern_id)
     routines = Routine.query.filter_by(primary_concern_id=concern.id).all()
@@ -159,14 +257,14 @@ def delete_concern(concern_id):
 # ---------- Ingredients ----------
 
 @admin_bp.get("/ingredients")
-@admin_required
+@permission_required("content.manage", "catalogue.manage")
 def list_ingredients():
     ingredients = Ingredient.query.order_by(Ingredient.name).all()
     return jsonify([i.to_dict() for i in ingredients]), 200
 
 
 @admin_bp.post("/ingredients")
-@admin_required
+@permission_required("content.manage")
 def create_ingredient():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
@@ -187,7 +285,7 @@ def create_ingredient():
 
 
 @admin_bp.patch("/ingredients/<ingredient_id>")
-@admin_required
+@permission_required("content.manage")
 def update_ingredient(ingredient_id):
     ingredient = Ingredient.query.get_or_404(ingredient_id)
     data = request.get_json(silent=True) or {}
@@ -203,7 +301,7 @@ def update_ingredient(ingredient_id):
 
 
 @admin_bp.delete("/ingredients/<ingredient_id>")
-@admin_required
+@permission_required("content.manage")
 def delete_ingredient(ingredient_id):
     ingredient = Ingredient.query.get_or_404(ingredient_id)
     image_id = ingredient.cloudinary_public_id
@@ -235,14 +333,14 @@ def _validate_coupon_values(data, discount_type):
 
 
 @admin_bp.get("/coupons")
-@admin_required
+@permission_required("coupons.manage")
 def list_coupons():
     coupons = Coupon.query.order_by(Coupon.created_at.desc()).all()
     return jsonify([c.to_dict(include_admin_fields=True) for c in coupons]), 200
 
 
 @admin_bp.post("/coupons")
-@admin_required
+@permission_required("coupons.manage")
 def create_coupon():
     data = request.get_json(silent=True) or {}
     required = ["code", "discount_type", "discount_value"]
@@ -281,7 +379,7 @@ def create_coupon():
 
 
 @admin_bp.patch("/coupons/<coupon_id>")
-@admin_required
+@permission_required("coupons.manage")
 def update_coupon(coupon_id):
     coupon = Coupon.query.get_or_404(coupon_id)
     data = request.get_json(silent=True) or {}
@@ -315,7 +413,7 @@ def update_coupon(coupon_id):
 
 
 @admin_bp.delete("/coupons/<coupon_id>")
-@admin_required
+@permission_required("coupons.manage")
 def delete_coupon(coupon_id):
     coupon = Coupon.query.get_or_404(coupon_id)
     coupon.is_active = False
@@ -328,14 +426,14 @@ def delete_coupon(coupon_id):
 # edit-only, no create/delete (see StepGroup model docstring).
 
 @admin_bp.get("/step-groups")
-@admin_required
+@permission_required("content.manage")
 def list_step_groups_admin():
     groups = StepGroup.query.order_by(StepGroup.position).all()
     return jsonify([g.to_dict() for g in groups]), 200
 
 
 @admin_bp.patch("/step-groups/<step_group_id>")
-@admin_required
+@permission_required("content.manage")
 def update_step_group(step_group_id):
     group = StepGroup.query.get_or_404(step_group_id)
     data = request.get_json(silent=True) or {}
@@ -351,14 +449,14 @@ def update_step_group(step_group_id):
 # a specific Product/Routine (cta_link is a free-text path/URL).
 
 @admin_bp.get("/hero-slides")
-@admin_required
+@permission_required("content.manage")
 def list_hero_slides_admin():
     slides = HeroSlide.query.order_by(HeroSlide.position).all()
     return jsonify([s.to_dict() for s in slides]), 200
 
 
 @admin_bp.post("/hero-slides")
-@admin_required
+@permission_required("content.manage")
 def create_hero_slide():
     data = request.get_json(silent=True) or {}
     if not data.get("title"):
@@ -379,7 +477,7 @@ def create_hero_slide():
 
 
 @admin_bp.patch("/hero-slides/<slide_id>")
-@admin_required
+@permission_required("content.manage")
 def update_hero_slide(slide_id):
     slide = HeroSlide.query.get_or_404(slide_id)
     data = request.get_json(silent=True) or {}
@@ -394,7 +492,7 @@ def update_hero_slide(slide_id):
 
 
 @admin_bp.delete("/hero-slides/<slide_id>")
-@admin_required
+@permission_required("content.manage")
 def delete_hero_slide(slide_id):
     slide = HeroSlide.query.get_or_404(slide_id)
     image_id = slide.cloudinary_public_id
@@ -438,7 +536,7 @@ def _variant_admin_dict(variant):
 
 
 @admin_bp.get("/inventory")
-@admin_required
+@permission_required("inventory.view")
 def list_inventory():
     """Optional ?status=in_stock|low_stock|out_of_stock filter.
 
@@ -468,7 +566,7 @@ def list_inventory():
 
 
 @admin_bp.get("/inventory/low-stock")
-@admin_required
+@permission_required("inventory.view")
 def low_stock_products():
     variants = (
         ProductVariant.query.join(ProductVariant.product)
@@ -481,7 +579,7 @@ def low_stock_products():
 
 
 @admin_bp.get("/inventory/expiring-soon")
-@admin_required
+@permission_required("inventory.view")
 def expiring_soon_batches():
     """Optional ?days= (default 30)."""
     try:
@@ -511,7 +609,7 @@ def expiring_soon_batches():
 
 
 @admin_bp.get("/inventory/<variant_id>")
-@admin_required
+@permission_required("inventory.view")
 def get_inventory_detail(variant_id):
     variant = ProductVariant.query.get_or_404(variant_id)
     batches = (
@@ -535,7 +633,7 @@ def get_inventory_detail(variant_id):
 
 
 @admin_bp.post("/inventory/<variant_id>/receive")
-@admin_required
+@permission_required("inventory.manage")
 def receive_stock(variant_id):
     """Logs a finished in-house production run into inventory.
 
@@ -568,7 +666,7 @@ def receive_stock(variant_id):
 
 
 @admin_bp.post("/inventory/<variant_id>/adjust")
-@admin_required
+@permission_required("inventory.manage")
 def adjust_stock(variant_id):
     """A manual correction against one batch -- always requires a reason.
 
@@ -596,7 +694,7 @@ def adjust_stock(variant_id):
 
 
 @admin_bp.post("/inventory/expire-reservations")
-@admin_required
+@permission_required("inventory.manage")
 def expire_reservations():
     """No background worker in this project -- hit this from an external
     cron (or manually) to release reservations nobody paid for in time.
@@ -610,14 +708,14 @@ def expire_reservations():
 # ---------- Products ----------
 
 @admin_bp.get("/products")
-@admin_required
+@permission_required("catalogue.manage", "inventory.view")
 def list_products():
     products = Product.query.order_by(Product.created_at.desc()).all()
     return jsonify([p.to_dict(include_admin_fields=True) for p in products]), 200
 
 
 @admin_bp.post("/products")
-@admin_required
+@permission_required("catalogue.manage")
 def create_product():
     data = request.get_json(silent=True) or {}
     required = ["name", "slug", "step_type"]
@@ -658,7 +756,7 @@ def create_product():
 
 
 @admin_bp.patch("/products/<product_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def update_product(product_id):
     product = Product.query.get_or_404(product_id)
     data = request.get_json(silent=True) or {}
@@ -691,7 +789,7 @@ def update_product(product_id):
 
 
 @admin_bp.delete("/products/<product_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
 
@@ -743,7 +841,7 @@ def _variant_delete_blocker(variant_ids):
 # ---------- Product variants ----------
 
 @admin_bp.post("/products/<product_id>/variants")
-@admin_required
+@permission_required("catalogue.manage")
 def create_product_variant(product_id):
     product = Product.query.get_or_404(product_id)
     data = request.get_json(silent=True) or {}
@@ -783,7 +881,7 @@ def create_product_variant(product_id):
 
 
 @admin_bp.patch("/products/<product_id>/variants/<variant_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def update_product_variant(product_id, variant_id):
     variant = ProductVariant.query.filter_by(id=variant_id, product_id=product_id).first_or_404()
     data = request.get_json(silent=True) or {}
@@ -815,7 +913,7 @@ def update_product_variant(product_id, variant_id):
 
 
 @admin_bp.delete("/products/<product_id>/variants/<variant_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def delete_product_variant(product_id, variant_id):
     variant = ProductVariant.query.filter_by(id=variant_id, product_id=product_id).first_or_404()
 
@@ -836,7 +934,7 @@ def delete_product_variant(product_id, variant_id):
 
 
 @admin_bp.post("/products/<product_id>/images")
-@admin_required
+@permission_required("catalogue.manage")
 def add_product_image(product_id):
     """Multipart form upload -- send the file under the "file" field."""
     product = Product.query.get_or_404(product_id)
@@ -863,7 +961,7 @@ def add_product_image(product_id):
 
 
 @admin_bp.patch("/products/<product_id>/images/<image_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def update_product_image(product_id, image_id):
     """Body: { "is_primary"?: bool, "position"?: int }"""
     product = Product.query.get_or_404(product_id)
@@ -885,7 +983,7 @@ def update_product_image(product_id, image_id):
 
 
 @admin_bp.delete("/products/<product_id>/images/<image_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def delete_product_image(product_id, image_id):
     product = Product.query.get_or_404(product_id)
     image = ProductImage.query.filter_by(id=image_id, product_id=product.id).first_or_404()
@@ -927,14 +1025,14 @@ def _validate_routine_fields(data):
 
 
 @admin_bp.get("/routines")
-@admin_required
+@permission_required("catalogue.manage")
 def list_routines():
     routines = Routine.query.order_by(Routine.created_at.desc()).all()
     return jsonify([r.to_dict() for r in routines]), 200
 
 
 @admin_bp.post("/routines")
-@admin_required
+@permission_required("catalogue.manage")
 def create_routine():
     data = request.get_json(silent=True) or {}
     if not data.get("name") or not data.get("slug"):
@@ -962,7 +1060,7 @@ def create_routine():
 
 
 @admin_bp.patch("/routines/<routine_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def update_routine(routine_id):
     routine = Routine.query.get_or_404(routine_id)
     data = request.get_json(silent=True) or {}
@@ -989,7 +1087,7 @@ def update_routine(routine_id):
 
 
 @admin_bp.delete("/routines/<routine_id>")
-@admin_required
+@permission_required("catalogue.manage")
 def delete_routine(routine_id):
     routine = Routine.query.get_or_404(routine_id)
     if OrderItem.query.filter_by(routine_id=routine.id).first():
@@ -1003,7 +1101,7 @@ def delete_routine(routine_id):
 
 
 @admin_bp.put("/routines/<routine_id>/steps")
-@admin_required
+@permission_required("catalogue.manage")
 def set_routine_steps(routine_id):
     """Replaces the full ordered step list in one call.
 
@@ -1047,7 +1145,7 @@ def set_routine_steps(routine_id):
 # ---------- Image upload ----------
 
 @admin_bp.post("/upload-image")
-@admin_required
+@permission_required("catalogue.manage", "content.manage", "orders.fulfil")
 def upload_product_image():
     """Multipart form upload -- send the file under the "file" field.
 
@@ -1062,7 +1160,7 @@ def upload_product_image():
 
 
 @admin_bp.delete("/upload-image/<path:public_id>")
-@admin_required
+@permission_required("catalogue.manage", "content.manage", "orders.fulfil")
 def remove_image(public_id):
     delete_image(public_id)
     return "", 204
@@ -1071,7 +1169,7 @@ def remove_image(public_id):
 # ---------- Orders ----------
 
 @admin_bp.get("/orders")
-@admin_required
+@permission_required("orders.view")
 def list_all_orders():
     if payment_service.expire_abandoned_orders():
         db.session.commit()
@@ -1084,7 +1182,7 @@ def list_all_orders():
 
 
 @admin_bp.get("/orders/<order_id>")
-@admin_required
+@permission_required("orders.view")
 def get_admin_order(order_id):
     order = Order.query.get_or_404(order_id)
     return jsonify(_admin_order_detail(order)), 200
@@ -1103,7 +1201,7 @@ def _admin_order_detail(order):
 
 
 @admin_bp.post("/orders/<order_id>/refresh-payment-status")
-@admin_required
+@permission_required("orders.fulfil", "orders.cancel")
 def refresh_order_payment_status(order_id):
     """Only meaningful while a payment is in flight -- queries Safaricom's
     live status rather than trusting local state, same rule as cancel_order
@@ -1131,7 +1229,7 @@ def refresh_order_payment_status(order_id):
 
 
 @admin_bp.post("/orders/<order_id>/advance")
-@admin_required
+@permission_required("orders.fulfil")
 def advance_order(order_id):
     """Body: { "status": "processing"|"shipped"|"delivered", "delivery_proof_public_id": "..." }
 
@@ -1171,7 +1269,7 @@ def advance_order(order_id):
 
 
 @admin_bp.post("/orders/<order_id>/send-invoice")
-@admin_required
+@permission_required("orders.fulfil")
 def send_order_invoice(order_id):
     order = Order.query.get_or_404(order_id)
     if not order.user:
@@ -1186,7 +1284,7 @@ def send_order_invoice(order_id):
 
 
 @admin_bp.post("/orders/<order_id>/cancel")
-@admin_required
+@permission_required("orders.cancel")
 def cancel_order_admin(order_id):
     order = Order.query.get_or_404(order_id)
 
@@ -1219,6 +1317,7 @@ def _user_admin_dict(user):
         "full_name": user.full_name,
         "phone": user.phone,
         "is_admin": user.is_admin,
+        "admin_role": user._admin_role_summary(),
         "created_at": user.created_at.isoformat(),
         "order_count": user.orders.count(),
         "lifetime_value_cents": _lifetime_value_cents(user),
@@ -1226,14 +1325,14 @@ def _user_admin_dict(user):
 
 
 @admin_bp.get("/users")
-@admin_required
+@permission_required("users.view")
 def list_users():
     users = User.query.order_by(User.created_at.desc()).all()
     return jsonify([_user_admin_dict(u) for u in users]), 200
 
 
 @admin_bp.get("/users/<user_id>")
-@admin_required
+@permission_required("users.view")
 def get_user_admin(user_id):
     user = User.query.get_or_404(user_id)
     recent_orders = user.orders.order_by(Order.created_at.desc()).limit(10).all()
@@ -1262,18 +1361,44 @@ def get_user_admin(user_id):
 
 
 @admin_bp.patch("/users/<user_id>")
-@admin_required
+@permission_required("roles.manage")
 def update_user_admin_status(user_id):
+    """Body: {"admin_role_id": "<role id>" | null}. null removes admin access.
+
+    Guards: you can't change your own access (ask another super admin);
+    only a super admin can give or take away the super-admin role; and the
+    last super admin can't lose it -- so the store can never be locked out."""
     user = User.query.get_or_404(user_id)
     data = request.get_json(silent=True) or {}
+    if "admin_role_id" not in data:
+        return jsonify({"error": "admin_role_id is required (a role id, or null to remove admin access)"}), 400
 
-    if "is_admin" not in data:
-        return jsonify({"error": "is_admin is required"}), 400
+    actor = g.admin_user
+    if user.id == actor.id:
+        return jsonify({"error": "you can't change your own access -- ask another super admin"}), 400
 
-    if user.id == get_jwt_identity() and data["is_admin"] is False:
-        return jsonify({"error": "you cannot remove your own admin access"}), 400
+    new_role = None
+    if data["admin_role_id"]:
+        new_role = AdminRole.query.get(data["admin_role_id"])
+        if not new_role:
+            return jsonify({"error": "that role doesn't exist"}), 400
 
-    user.is_admin = bool(data["is_admin"])
+    old_role = user.admin_role if user.is_admin else None
+    touches_super = (old_role and old_role.is_super) or (new_role and new_role.is_super)
+    if touches_super and not (actor.admin_role and actor.admin_role.is_super):
+        return jsonify({"error": "only a super admin can give or remove super-admin access"}), 403
+    if old_role and old_role.is_super and not (new_role and new_role.is_super):
+        supers = User.query.join(AdminRole, User.admin_role_id == AdminRole.id).filter(
+            AdminRole.is_super.is_(True), User.is_admin.is_(True)
+        ).count()
+        if supers <= 1:
+            return jsonify({"error": "this is the last super admin -- make someone else super admin first"}), 400
+
+    user.admin_role_id = new_role.id if new_role else None
+    user.is_admin = new_role is not None
+    g.activity_summary = (
+        f"Gave {user.full_name} the {new_role.name} role" if new_role else f"Removed admin access from {user.full_name}"
+    )
     db.session.commit()
     return jsonify(_user_admin_dict(user)), 200
 
@@ -1281,7 +1406,7 @@ def update_user_admin_status(user_id):
 # ---------- Dashboard ----------
 
 @admin_bp.get("/dashboard")
-@admin_required
+@permission_required("dashboard.view")
 def dashboard():
     """?range=today|7d|30d|90d (default 7d). Figures are in Kenyan time;
     see app/services/dashboard_service.py for definitions."""

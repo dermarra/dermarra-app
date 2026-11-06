@@ -5,16 +5,19 @@ import client from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo.jsx";
 import BrandStripe from "../../components/BrandStripe.jsx";
+import { can, PAGE_PERMS } from "../../lib/permissions.js";
 import {
   BoxIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ClockIcon,
   CompassIcon,
   DirectionsIcon,
   DropletIcon,
   GridIcon,
   ImageIcon,
   LayersIcon,
+  LockIcon,
   LogOutIcon,
   MenuIcon,
   ReceiptIcon,
@@ -74,7 +77,16 @@ const NAV = [
       },
     ],
   },
-  { key: "people", title: "People", color: "text-gold", items: [{ to: "users", label: "Users", Icon: UsersIcon }] },
+  {
+    key: "people",
+    title: "People",
+    color: "text-gold",
+    items: [
+      { to: "users", label: "Users", Icon: UsersIcon },
+      { to: "roles", label: "Roles & access", Icon: LockIcon },
+      { to: "activity", label: "Activity", Icon: ClockIcon },
+    ],
+  },
 ];
 
 const leavesOf = (items) => items.flatMap((i) => (i.children ? i.children : [i]));
@@ -105,7 +117,17 @@ function Badge({ count, small = false }) {
   );
 }
 
+/** Only the pages this admin's role opens (sections with none are dropped). */
+const navFor = (user) =>
+  NAV.map((s) => ({
+    ...s,
+    items: s.items
+      .map((i) => (i.children ? { ...i, children: i.children.filter((c) => can(user, ...(PAGE_PERMS[c.to] || []))) } : i))
+      .filter((i) => (i.children ? i.children.length : can(user, ...(PAGE_PERMS[i.to] || [])))),
+  })).filter((s) => s.items.length);
+
 function AdminSidebar({ collapsed, counts, user, onSignOut, onNavigate, onExpand, inDrawer = false, focusSignal = 0 }) {
+  const NAV = useMemo(() => navFor(user), [user]);
   const location = useLocation();
   const navigate = useNavigate();
   const section = location.pathname.split("/")[2] || "dashboard";
@@ -142,7 +164,7 @@ function AdminSidebar({ collapsed, counts, user, onSignOut, onNavigate, onExpand
         )
         .filter((i) => (i.children ? i.children.length : i.label.toLowerCase().includes(q) || s.title.toLowerCase().includes(q))),
     })).filter((s) => s.items.length);
-  }, [q]);
+  }, [q, NAV]);
   const firstMatch = sections.flatMap((s) => leavesOf(s.items))[0];
 
   const go = () => {
@@ -368,7 +390,7 @@ function AdminSidebar({ collapsed, counts, user, onSignOut, onNavigate, onExpand
             <span className="w-10 h-10 rounded-full bg-lime text-ink font-bold flex items-center justify-center shrink-0">{initial(user)}</span>
             <span className="min-w-0">
               <span className="block text-base font-semibold truncate">{user.full_name}</span>
-              <span className="block text-sm text-white/70 truncate">{user.email}</span>
+              <span className="block text-sm text-white/70 truncate">{user.admin_role?.name || user.email}</span>
             </span>
           </div>
         )}
@@ -403,7 +425,9 @@ export default function AdminLayout() {
   useEffect(() => setDrawerOpen(false), [location.pathname]);
 
   // Live badge counts (orders waiting, sizes low or out), refreshed each minute.
+  const canSeeCounts = can(user, "dashboard.view");
   useEffect(() => {
+    if (!canSeeCounts) return undefined;
     let alive = true;
     const load = () =>
       client
@@ -423,7 +447,7 @@ export default function AdminLayout() {
       alive = false;
       clearInterval(id);
     };
-  }, []);
+  }, [canSeeCounts]);
 
   // "/" jumps to the menu search (unless typing somewhere already).
   useEffect(() => {

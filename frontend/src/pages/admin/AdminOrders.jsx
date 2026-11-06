@@ -12,6 +12,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import client from "../../api/client";
 import { ORDER_STATUS } from "../../lib/orderStatus.js";
+import { can } from "../../lib/permissions.js";
+import { useAuth } from "../../context/AuthContext";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 import {
   Button,
@@ -95,6 +97,7 @@ function Column({ status, orders }) {
 }
 
 export default function AdminOrders() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -159,6 +162,7 @@ export default function AdminOrders() {
     }
   };
 
+  const mayFulfil = can(user, "orders.fulfil");
   const countOf = (status) => orders.filter((o) => o.status === status).length;
   const onBoard = orders.filter((o) => BOARD_STATUSES.includes(o.status)).length;
 
@@ -212,7 +216,7 @@ export default function AdminOrders() {
           </motion.div>
         )
       ) : (
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={mayFulfil ? sensors : undefined} onDragEnd={mayFulfil ? handleDragEnd : undefined}>
           <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex gap-3 overflow-x-auto pb-4">
             {BOARD_STATUSES.map((status) => (
               <Column key={status} status={status} orders={columns[status]} />
