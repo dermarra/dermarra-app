@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import client from "../../api/client";
+import { PageHeader, FilterTabs } from "../../components/admin/Kit.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
 import { AlertIcon, BoxIcon, ReceiptIcon, TrendIcon, UsersIcon } from "../../components/Icons.jsx";
 
@@ -52,7 +53,7 @@ function periodLabel(range) {
 function Delta({ current, previous, range, invert = false }) {
   if (current == null || previous == null) return null;
   let text;
-  let tone = "text-ink/55";
+  let tone = "text-ink/70";
   let arrow = "";
   if (current === previous) {
     text = "no change";
@@ -73,7 +74,7 @@ function Delta({ current, previous, range, invert = false }) {
         {arrow && <span aria-hidden="true">{arrow} </span>}
         {text}
       </span>
-      <span className="text-ink/55"> vs {periodLabel(range)}</span>
+      <span className="text-ink/70"> vs {periodLabel(range)}</span>
     </p>
   );
 }
@@ -88,7 +89,7 @@ function Card({ title, subtitle, action, children, className = "" }) {
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             {title && <h3 className="text-xl font-bold text-ink">{title}</h3>}
-            {subtitle && <p className="text-sm text-ink/60 mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-ink/70 mt-0.5">{subtitle}</p>}
           </div>
           {action}
         </div>
@@ -125,7 +126,7 @@ function KpiTile({ label, value, hint, delta, hero = false, Icon, tone = "blue" 
           </span>
         )}
       </div>
-      {hint && <p className={`text-sm mt-1 ${hero ? "text-ink font-medium" : "text-ink/60"}`}>{hint}</p>}
+      {hint && <p className={`text-sm mt-1 ${hero ? "text-ink font-medium" : "text-ink/70"}`}>{hint}</p>}
       {hero ? <div className="[&_*]:!text-ink">{delta}</div> : delta}
     </motion.div>
   );
@@ -159,7 +160,7 @@ function TodoStrip({ todo }) {
         <span aria-hidden="true" className="w-8 h-8 rounded-full bg-lime/20 text-lime-800 flex items-center justify-center">✓</span>
         <div>
           <p className="text-sm font-semibold text-ink">All caught up</p>
-          <p className="text-sm text-ink/60">No orders waiting, no stock problems.</p>
+          <p className="text-sm text-ink/70">No orders waiting, no stock problems.</p>
         </div>
       </motion.div>
     );
@@ -179,7 +180,7 @@ function TodoStrip({ todo }) {
             <span className="font-display font-bold text-3xl tabular-nums text-ink leading-none">{todo[t.key]}</span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-ink group-hover:text-ink">{t.label} →</span>
-              {t.help && <span className="block text-sm text-ink/55 mt-0.5">{t.help}</span>}
+              {t.help && <span className="block text-sm text-ink/70 mt-0.5">{t.help}</span>}
             </span>
           </Link>
         ))}
@@ -202,7 +203,7 @@ function RevenueTooltip({ active, payload }) {
   const p = payload[0].payload;
   return (
     <div className="rounded-md border border-mist bg-white px-3 py-2 text-xs shadow-md">
-      <p className="text-ink/60 mb-1">{p.full}</p>
+      <p className="text-ink/70 mb-1">{p.full}</p>
       <p className="font-semibold text-ink tabular-nums">{kes(p.revenue_cents)}</p>
       <p className="text-ink/70">{p.paid_orders} paid order{p.paid_orders === 1 ? "" : "s"}</p>
     </div>
@@ -226,7 +227,7 @@ function RevenueChart({ days, range }) {
         // the message read as data.
         <div className="h-64 rounded-md border border-dashed border-mist bg-blue-50 flex flex-col items-center justify-center text-center px-6">
           <p className="text-sm font-semibold text-ink">No paid orders in this period yet</p>
-          <p className="text-sm text-ink/60 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
+          <p className="text-sm text-ink/70 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
         </div>
       ) : (
         <div className="h-64">
@@ -261,7 +262,7 @@ function RevenueChart({ days, range }) {
         <summary className="cursor-pointer text-blue-700 font-semibold">View as table</summary>
         <table className="w-full mt-2 tabular-nums">
           <thead>
-            <tr className="text-left text-ink/60">
+            <tr className="text-left text-ink/70">
               <th className="py-1 font-semibold">Day</th>
               <th className="py-1 font-semibold text-right">Paid orders</th>
               <th className="py-1 font-semibold text-right">Revenue</th>
@@ -284,7 +285,7 @@ function RevenueChart({ days, range }) {
 
 /** Ranked horizontal bars, one hue, value printed -- for outcomes / sellers. */
 function RankedBars({ rows, valueOf, labelOf, formatValue, empty }) {
-  if (!rows.length) return <p className="text-sm text-ink/60">{empty}</p>;
+  if (!rows.length) return <p className="text-sm text-ink/70">{empty}</p>;
   const max = Math.max(...rows.map(valueOf), 1);
   return (
     <ul className="flex flex-col gap-3">
@@ -337,34 +338,18 @@ export default function AdminDashboard() {
 
   const setRange = (value) => setSearchParams(value === "7d" ? {} : { range: value });
 
+  const periodText = data
+    ? data.period.days === 1
+      ? "Today, Kenyan time."
+      : `${new Date(`${data.period.start}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" })} – ${new Date(`${data.period.end}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}, Kenyan time.`
+    : "Loading…";
+
   const header = (
-    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-      <div>
-        <h2 className="text-3xl font-bold text-ink">Overview</h2>
-        <p className="text-sm text-ink/70">
-          {data
-            ? data.period.days === 1
-              ? `Today · Kenyan time`
-              : `${new Date(`${data.period.start}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" })} – ${new Date(`${data.period.end}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} · Kenyan time`
-            : "Loading…"}
-        </p>
-      </div>
-      <div role="group" aria-label="Time period" className="inline-flex rounded-lg border border-mist bg-white p-1 self-start">
-        {RANGES.map((r) => (
-          <button
-            key={r.value}
-            type="button"
-            aria-pressed={range === r.value}
-            onClick={() => setRange(r.value)}
-            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-              range === r.value ? "bg-blue text-ink" : "text-ink/70 hover:text-ink"
-            }`}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
-    </div>
+    <PageHeader
+      title="Overview"
+      description={periodText}
+      actions={<FilterTabs label="Time period" value={range} onChange={setRange} options={RANGES} />}
+    />
   );
 
   if (error) {
@@ -423,7 +408,7 @@ export default function AdminDashboard() {
           value={kpis.paid_orders ? kes(kpis.average_order_cents) : "—"}
           delta={kpis.paid_orders ? (
             <Delta current={kpis.average_order_cents} previous={prev.average_order_cents} range={range} />
-          ) : <p className="text-sm mt-1 text-ink/55">No paid orders yet</p>}
+          ) : <p className="text-sm mt-1 text-ink/70">No paid orders yet</p>}
         />
         <KpiTile
           label="Checkout conversion"
@@ -497,14 +482,14 @@ export default function AdminDashboard() {
           action={<Link to="/admin/inventory" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">Inventory →</Link>}
         >
           {data.low_stock.length === 0 ? (
-            <p className="text-sm text-ink/60">Every size is above its reorder level.</p>
+            <p className="text-sm text-ink/70">Every size is above its reorder level.</p>
           ) : (
             <ul className="flex flex-col divide-y divide-mist">
               {data.low_stock.map((v) => (
                 <li key={v.variant_id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <p className="text-sm text-ink truncate">{v.product_name} — {v.label}</p>
-                    <p className="text-sm text-ink/60 tabular-nums">
+                    <p className="text-sm text-ink/70 tabular-nums">
                       {v.stock_status === "out_of_stock" ? "Out of stock" : `${v.available} left`} · reorder at {v.reorder_level}
                     </p>
                   </div>
@@ -525,12 +510,12 @@ export default function AdminDashboard() {
           action={<Link to="/admin/coupons" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">Coupons →</Link>}
         >
           {data.coupon_usage.length === 0 ? (
-            <p className="text-sm text-ink/60">No coupons redeemed in this period.</p>
+            <p className="text-sm text-ink/70">No coupons redeemed in this period.</p>
           ) : (
             <ul className="flex flex-col divide-y divide-mist">
               {data.coupon_usage.map((c) => (
                 <li key={c.code} className="flex justify-between gap-3 py-2.5 text-sm">
-                  <span className="font-mono text-ink">{c.code}</span>
+                  <span className="text-ink">{c.code}</span>
                   <span className="tabular-nums text-ink">
                     {c.uses} use{c.uses === 1 ? "" : "s"} · {kes(c.discount_cents)} off
                   </span>
@@ -547,12 +532,12 @@ export default function AdminDashboard() {
         action={<Link to="/admin/orders" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">All orders →</Link>}
       >
         {data.recent_orders.length === 0 ? (
-          <p className="text-sm text-ink/60">No orders yet.</p>
+          <p className="text-sm text-ink/70">No orders yet.</p>
         ) : (
           <div className="overflow-x-auto -mx-5 px-5">
             <table className="w-full text-sm min-w-[560px]">
               <thead>
-                <tr className="text-left text-sm text-ink/60">
+                <tr className="text-left text-sm text-ink/70">
                   <th className="pb-2 font-semibold">Order</th>
                   <th className="pb-2 font-semibold">Customer</th>
                   <th className="pb-2 font-semibold">Status</th>
@@ -564,13 +549,13 @@ export default function AdminDashboard() {
                 {data.recent_orders.map((o) => (
                   <tr key={o.id} className="border-t border-mist hover:bg-blue-50/60">
                     <td className="py-2.5">
-                      <Link to={`/admin/orders/${o.id}`} className="font-mono text-blue-700 hover:text-ink">
+                      <Link to={`/admin/orders/${o.id}`} className="text-blue-700 hover:text-ink">
                         #{o.id.slice(0, 8)}
                       </Link>
                     </td>
                     <td className="py-2.5">
                       <span className="block text-ink">{o.customer_name || "—"}</span>
-                      <span className="block text-sm text-ink/55">{o.customer_email}</span>
+                      <span className="block text-sm text-ink/70">{o.customer_email}</span>
                     </td>
                     <td className="py-2.5"><StatusChip status={o.status} /></td>
                     <td className="py-2.5 text-right tabular-nums">{kes(o.total_cents)}</td>

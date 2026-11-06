@@ -5,9 +5,29 @@ import NameSlugFields from "../../components/NameSlugFields.jsx";
 import Field from "../../components/admin/Field.jsx";
 import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
-import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { containerReveal } from "../../components/Reveal.jsx";
+import { ChevronLeftIcon, ChevronRightIcon } from "../../components/Icons.jsx";
+import {
+  Button,
+  EditorDrawer,
+  EmptyState,
+  FilterTabs,
+  FormSection,
+  ListRow,
+  LoadingState,
+  PageHeader,
+  SearchBox,
+  StatusBadge,
+  Thumb,
+  Toggle,
+  Toolbar,
+  inputClass,
+  matches,
+  selectClass,
+} from "../../components/admin/Kit.jsx";
 
-const TIME_OF_DAY = ["both", "am", "pm"];
+const kes = (cents) => `KES ${Math.round(cents / 100).toLocaleString("en-KE")}`;
+
 const SKIN_TYPES = ["oily", "dry", "combination", "normal", "sensitive"];
 
 const emptyForm = {
@@ -39,6 +59,8 @@ export default function AdminRoutines() {
   const [stepsError, setStepsError] = useState(null);
 
   const [rowState, setRowState] = useState({});
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -192,83 +214,107 @@ export default function AdminRoutines() {
     }
   };
 
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+  const priceOf = Object.fromEntries(products.flatMap((p) => (p.variants || []).map((v) => [v.id, v.price_cents])));
+  const stepsRoutine = routines.find((r) => r.id === stepsRoutineId);
+  const stepsTotal = steps.reduce((sum, st) => sum + (priceOf[st.variant_id] || 0), 0);
+  const stepsDiscount = stepsRoutine?.bundle_discount_percent || 0;
+  const routinePrice = (r) => {
+    const total = r.steps.reduce((sum, st) => sum + (st.variant?.price_cents || 0), 0);
+    return Math.round((total * (100 - (r.bundle_discount_percent || 0))) / 100 / 100) * 100;
+  };
+  const activeCount = routines.filter((r) => r.is_active).length;
+  const shown = routines.filter(
+    (r) =>
+      (statusFilter === "" || (statusFilter === "active" ? r.is_active : !r.is_active)) &&
+      matches(query, r.name, r.tagline, r.primary_concern?.name)
+  );
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h2 className="font-display text-3xl text-ink">Routines</h2>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={openCreate}
-          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
-        >
-          + Add routine
-        </motion.button>
-      </div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
+      <PageHeader
+        title="Routines"
+        description="Bundles of products used in order. The quiz recommends one by concern and skin type."
+        actions={
+          <Button variant="primary" size="lg" onClick={openCreate}>
+            + Add routine
+          </Button>
+        }
+      >
+        <Toolbar>
+          <FilterTabs
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "", label: "All", count: routines.length },
+              { value: "active", label: "Active", count: activeCount },
+              { value: "hidden", label: "Hidden", count: routines.length - activeCount },
+            ]}
+          />
+          <SearchBox value={query} onChange={setQuery} placeholder="Search routines" />
+        </Toolbar>
+      </PageHeader>
 
-      {editingId && (
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light"
-        >
-          <h3 className="font-semibold text-xl">
-            {editingId === "new" ? "New routine" : "Edit routine"}
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <NameSlugFields
-              form={form}
-              setForm={setForm}
-              urlPrefix="routine id: "
-              namePlaceholder="e.g. Brightening Routine"
-              nameHelp="The bundle's name, e.g. Brightening Routine. Shown on the quiz result and concern pages."
+      {/* ---------- Routine details ---------- */}
+      <EditorDrawer
+        open={!!editingId}
+        title={editingId === "new" ? "New routine" : "Edit routine"}
+        description="Add the products afterwards with “Steps”."
+        onClose={() => setEditingId(null)}
+        onSubmit={handleSubmit}
+        saving={submitting}
+        error={error}
+        submitLabel={editingId === "new" ? "Add routine" : "Save changes"}
+      >
+        <FormSection title="Basics">
+          <NameSlugFields
+            form={form}
+            setForm={setForm}
+            namePlaceholder="e.g. Brightening Routine"
+            nameHelp="Shown on the quiz result and concern pages."
+          />
+          <Field label="Tagline" help="One short line under the name.">
+            <input placeholder="e.g. Fade dark spots in 4 weeks" value={form.tagline} onChange={set("tagline")} className={inputClass} />
+          </Field>
+          <Field label="Description" help="A few sentences on what it does and who it's for.">
+            <textarea
+              placeholder="e.g. A four-step system that targets dark spots while protecting your barrier…"
+              value={form.description}
+              onChange={set("description")}
+              className={`${inputClass} min-h-[6rem]`}
+              rows={3}
             />
-            <Field label="Tagline" help="One short line under the name, e.g. 'Fade dark spots in 4 weeks.'">
-              <input
-                placeholder="e.g. Fade dark spots in 4 weeks"
-                value={form.tagline}
-                onChange={(e) => setForm({ ...form, tagline: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              />
-            </Field>
-            <Field
-              label="Primary concern"
-              help="The skin concern this routine treats. The quiz recommends it to customers who pick this concern."
-            >
-              <select
-                value={form.primary_concern_id}
-                onChange={(e) => setForm({ ...form, primary_concern_id: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              >
-                <option value="">No primary concern (never recommended by the quiz)</option>
+          </Field>
+        </FormSection>
+
+        <FormSection title="Who it's for">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="Main concern" help="The quiz recommends it for this concern. None = never recommended.">
+              <select value={form.primary_concern_id} onChange={set("primary_concern_id")} className={selectClass}>
+                <option value="">None</option>
                 {concerns.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </Field>
-            <Field
-              label="Skin type"
-              help="Pick one if this routine is made for a specific skin type; the quiz prefers an exact match. 'Any' suits everyone."
-            >
-              <select
-                value={form.skin_type}
-                onChange={(e) => setForm({ ...form, skin_type: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              >
+            <Field label="Skin type" help="“Any” suits everyone.">
+              <select value={form.skin_type} onChange={set("skin_type")} className={selectClass}>
                 <option value="">Any skin type</option>
                 {SKIN_TYPES.map((t) => (
-                  <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
                 ))}
               </select>
             </Field>
-            <Field
-              label="Bundle discount (%)"
-              help="Whole number 0-100. Taken off the total of the step prices when bought as a full routine, e.g. 10 = 10% off."
-            >
+          </div>
+        </FormSection>
+
+        <FormSection title="Price and visibility">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+            <Field label="Bundle saving (%)" help="Taken off the steps' total, e.g. 10 = 10% off.">
               <input
                 type="number"
                 min="0"
@@ -276,210 +322,151 @@ export default function AdminRoutines() {
                 step="1"
                 placeholder="e.g. 10"
                 value={form.bundle_discount_percent}
-                onChange={(e) => setForm({ ...form, bundle_discount_percent: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                onChange={set("bundle_discount_percent")}
+                className={inputClass}
               />
             </Field>
-          </div>
-
-          <Field label="Description" help="A few sentences on what the routine does and who it's for.">
-            <textarea
-              placeholder="e.g. A four-step system that targets dark spots while protecting your barrier…"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              rows={2}
-            />
-          </Field>
-
-          <div>
-            <p className="text-sm font-semibold text-ink/80">Image</p>
-            <p className="text-sm text-ink/55 mb-2">A square cover photo for the routine (you&apos;ll be asked to crop).</p>
-            <ImageUploadField
-              value={form.cloudinary_public_id}
-              onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
-              folder="derma-skincare/routines"
-              aspect={1}
-            />
-          </div>
-
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.is_active}
-              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-            />
-            <span>
-              Active (visible in shop)
-              <span className="block text-sm text-ink/55">
-                Inactive routines are hidden and never recommended by the quiz. A routine also needs at least one
-                step (set with &quot;Steps&quot;) before customers can see it.
-              </span>
-            </span>
-          </label>
-
-          {error && <p className="text-sm text-orange-700">{error}</p>}
-
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-            >
-              {submitting ? "Saving…" : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditingId(null)}
-              className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
-      {stepsRoutineId && (
-        <div className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light">
-          <h3 className="font-semibold text-xl">Steps</h3>
-          <p className="text-sm text-ink/55 -mt-2">
-            List the products in the order they&apos;re applied (use ↑ ↓ to reorder). Each step is one specific
-            size -- the routine&apos;s price is the sum of these sizes&apos; prices minus the bundle discount. &quot;AM&quot;,
-            &quot;PM&quot; or &quot;both&quot; is when the step is used. Only sizes currently on sale can be picked.
-          </p>
-
-          {steps.length === 0 && <p className="text-sm text-ink/60">No steps yet -- add the first product below.</p>}
-
-          {steps.map((step, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <span className="font-mono text-sm text-ink/60 w-5">{index + 1}</span>
-              <select
-                value={step.variant_id}
-                onChange={(e) => updateStep(index, "variant_id", e.target.value)}
-                aria-label={`Step ${index + 1} product and size`}
-                title="The exact product size used for this step"
-                className="border border-mist rounded-sm px-3 py-2 text-sm flex-1 min-w-0"
-              >
-                {variantOptions
-                  .filter((v) => v.onSale || v.id === step.variant_id)
-                  .map((v) => (
-                    <option key={v.id} value={v.id} disabled={!v.onSale}>{v.label}</option>
-                  ))}
-              </select>
-              <select
-                value={step.time_of_day}
-                onChange={(e) => updateStep(index, "time_of_day", e.target.value)}
-                aria-label={`Step ${index + 1} time of day`}
-                title="When this step is used: morning (am), evening (pm) or both"
-                className="border border-mist rounded-sm px-3 py-2 text-sm"
-              >
-                {TIME_OF_DAY.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => moveStep(index, -1)}
-                disabled={index === 0}
-                className="px-2 py-1.5 rounded-sm border border-mist text-xs disabled:opacity-30"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => moveStep(index, 1)}
-                disabled={index === steps.length - 1}
-                className="px-2 py-1.5 rounded-sm border border-mist text-xs disabled:opacity-30"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                onClick={() => removeStep(index)}
-                className="px-2 py-1.5 rounded-sm border border-mist text-orange-700 text-xs"
-              >
-                Remove
-              </button>
+            <div className="sm:pt-8">
+              <Toggle
+                checked={form.is_active}
+                onChange={(v) => setForm({ ...form, is_active: v })}
+                label="Show in the shop"
+                help="Also needs at least one step."
+              />
             </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addStep}
-            className="self-start px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-          >
-            + Add step
-          </button>
-
-          {stepsError && <p className="text-sm text-orange-700">{stepsError}</p>}
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={saveSteps}
-              disabled={stepsSubmitting || steps.length === 0}
-              className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-            >
-              {stepsSubmitting ? "Saving…" : "Save steps"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setStepsRoutineId(null)}
-              className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-            >
-              Cancel
-            </button>
           </div>
+        </FormSection>
+
+        <Field label="Cover photo" help="Square. You'll crop it after choosing.">
+          <ImageUploadField
+            value={form.cloudinary_public_id}
+            onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
+            folder="derma-skincare/routines"
+            aspect={1}
+            removable
+            hint="Square photo, at least 800 × 800px"
+          />
+        </Field>
+      </EditorDrawer>
+
+      {/* ---------- Steps ---------- */}
+      <EditorDrawer
+        open={!!stepsRoutineId}
+        title={stepsRoutine ? `Steps: ${stepsRoutine.name}` : "Steps"}
+        description="The products in the order they're applied. Each step is one exact size."
+        onClose={() => setStepsRoutineId(null)}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (steps.length) saveSteps();
+        }}
+        saving={stepsSubmitting}
+        error={stepsError}
+        submitLabel="Save steps"
+        wide
+      >
+        {steps.length === 0 && <EmptyState>No steps yet -- add the first product.</EmptyState>}
+        <ol className="flex flex-col gap-3">
+          {steps.map((step, index) => (
+            <li key={index} className="flex flex-wrap items-center gap-3 p-4 bg-bone-light border border-mist rounded-lg">
+              <span className="w-9 h-9 shrink-0 rounded-full bg-ink text-white text-sm font-bold flex items-center justify-center">{index + 1}</span>
+              <label className="flex-[1_1_260px] min-w-0">
+                <span className="sr-only">Step {index + 1} product and size</span>
+                <select value={step.variant_id} onChange={(e) => updateStep(index, "variant_id", e.target.value)} className={selectClass}>
+                  {variantOptions
+                    .filter((v) => v.onSale || v.id === step.variant_id)
+                    .map((v) => (
+                      <option key={v.id} value={v.id} disabled={!v.onSale}>
+                        {v.label}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div role="group" aria-label={`Step ${index + 1}: when it's used`} className="flex p-1 bg-white border border-mist rounded-lg">
+                {[
+                  ["am", "AM"],
+                  ["pm", "PM"],
+                  ["both", "Both"],
+                ].map(([value, text]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => updateStep(index, "time_of_day", value)}
+                    aria-pressed={step.time_of_day === value}
+                    className={`h-9 px-3.5 rounded-md text-[15px] font-semibold ${step.time_of_day === value ? "bg-ink text-white" : "text-ink hover:bg-blue-50"}`}
+                  >
+                    {text}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                <Button onClick={() => moveStep(index, -1)} disabled={index === 0} aria-label={`Move step ${index + 1} up`} className="!px-3">
+                  <ChevronLeftIcon className="w-3.5 h-3.5 rotate-90" />
+                </Button>
+                <Button onClick={() => moveStep(index, 1)} disabled={index === steps.length - 1} aria-label={`Move step ${index + 1} down`} className="!px-3">
+                  <ChevronRightIcon className="w-3.5 h-3.5 rotate-90" />
+                </Button>
+                <Button variant="danger" onClick={() => removeStep(index)}>
+                  Remove
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Button variant="secondary" onClick={addStep} disabled={sellableOptions.length === 0}>
+            + Add step
+          </Button>
+          {steps.length > 0 && (
+            <p className="text-ink/70">
+              Routine price:{" "}
+              <span className="font-semibold text-ink">{kes(Math.round((stepsTotal * (100 - stepsDiscount)) / 100 / 100) * 100)}</span>
+              {stepsDiscount > 0 && ` (${kes(stepsTotal)} less ${stepsDiscount}%)`}
+            </p>
+          )}
         </div>
-      )}
+      </EditorDrawer>
 
       {loading ? (
-        <p className="text-ink/60 text-sm">Loading routines…</p>
-      ) : routines.length === 0 ? (
-        <p className="text-ink/60 text-sm">No routines yet.</p>
+        <LoadingState>Loading routines…</LoadingState>
+      ) : shown.length === 0 ? (
+        <EmptyState>{routines.length ? "No routines match." : "No routines yet -- add the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
-          {routines.map((routine) => {
+          {shown.map((routine, index) => {
             const state = rowState[routine.id];
+            const noSteps = routine.steps.length === 0;
             return (
-              <motion.div
+              <ListRow
                 key={routine.id}
-                variants={itemReveal}
-                className="flex items-center justify-between gap-4 bg-white border border-mist rounded-xl px-5 py-4"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink">{routine.name}</p>
-                  <p className="text-sm text-ink/60">
-                    {routine.steps.length} steps · {routine.bundle_discount_percent}% off ·{" "}
-                    {routine.is_active ? "active" : "inactive"}
-                    {routine.skin_type && ` · ${routine.skin_type} skin`}
-                  </p>
-                  {state && state !== "deleting" && (
-                    <p className="text-sm text-orange-700 mt-1">{state}</p>
-                  )}
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => openSteps(routine)}
-                    className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                  >
-                    Steps
-                  </button>
-                  <button
-                    onClick={() => openEdit(routine)}
-                    className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(routine.id)}
-                    disabled={state === "deleting"}
-                    className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
-                  >
-                    {state === "deleting" ? "Deleting…" : "Delete"}
-                  </button>
-                </div>
-              </motion.div>
+                thumb={<Thumb imageId={routine.cloudinary_public_id} name={routine.name} index={index} />}
+                title={routine.name}
+                subtitle={routine.tagline || routine.primary_concern?.name}
+                note={state && state !== "deleting" ? state : null}
+                stats={[
+                  { label: "Steps", value: routine.steps.length, tone: noSteps ? "warn" : undefined },
+                  { label: "Saving", value: `${routine.bundle_discount_percent || 0}%` },
+                  { label: "Price", value: noSteps ? "—" : kes(routinePrice(routine)) },
+                  { label: "Skin type", value: routine.skin_type ? routine.skin_type[0].toUpperCase() + routine.skin_type.slice(1) : "Any" },
+                ]}
+                badge={
+                  noSteps ? (
+                    <StatusBadge tone="warn">No steps</StatusBadge>
+                  ) : (
+                    <StatusBadge tone={routine.is_active ? "info" : "neutral"}>{routine.is_active ? "Active" : "Hidden"}</StatusBadge>
+                  )
+                }
+                actions={
+                  <>
+                    <Button variant="secondary" onClick={() => openSteps(routine)}>
+                      Steps
+                    </Button>
+                    <Button onClick={() => openEdit(routine)}>Edit</Button>
+                    <Button variant="danger" onClick={() => handleDelete(routine.id)} disabled={state === "deleting"}>
+                      {state === "deleting" ? "Deleting…" : "Delete"}
+                    </Button>
+                  </>
+                }
+              />
             );
           })}
         </motion.div>

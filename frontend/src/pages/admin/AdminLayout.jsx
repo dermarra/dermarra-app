@@ -26,9 +26,11 @@ import {
 
 // Grouped like the reference dashboards: day-to-day work first.
 const NAV = [
-  { title: "Overview", items: [{ to: "dashboard", label: "Dashboard", Icon: GridIcon }] },
+  { title: "Overview", hideTitle: true, items: [{ to: "dashboard", label: "Dashboard", Icon: GridIcon }] },
   {
     title: "Sales",
+    color: "text-orange",
+    bar: "bg-orange",
     items: [
       { to: "orders", label: "Orders", Icon: ReceiptIcon },
       { to: "coupons", label: "Coupons", Icon: TagIcon },
@@ -36,6 +38,8 @@ const NAV = [
   },
   {
     title: "Catalogue",
+    color: "text-lime",
+    bar: "bg-lime",
     items: [
       { to: "products", label: "Products", Icon: BoxIcon },
       { to: "inventory", label: "Inventory", Icon: LayersIcon },
@@ -44,6 +48,8 @@ const NAV = [
   },
   {
     title: "Storefront",
+    color: "text-blue",
+    bar: "bg-blue",
     items: [
       { to: "hero-slides", label: "Hero slides", Icon: ImageIcon },
       { to: "concerns", label: "Concerns", Icon: TargetIcon },
@@ -51,7 +57,7 @@ const NAV = [
       { to: "step-groups", label: "Shop by Step", Icon: DirectionsIcon },
     ],
   },
-  { title: "People", items: [{ to: "users", label: "Users", Icon: UsersIcon }] },
+  { title: "People", color: "text-gold", bar: "bg-gold", items: [{ to: "users", label: "Users", Icon: UsersIcon }] },
 ];
 
 const ALL_ITEMS = NAV.flatMap((g) => g.items);
@@ -88,7 +94,7 @@ function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false, collaps
     onFocus: showTip(text),
     onBlur: hideTip,
   });
-  const row = `flex items-center gap-3 rounded-md py-2 text-sm font-semibold transition-colors ${
+  const row = `flex items-center gap-3 rounded-lg py-2 text-sm transition-colors ${
     collapsed ? "justify-center px-0" : "px-3"
   }`;
   const label = (text) => <span className={collapsed ? "sr-only" : "truncate"}>{text}</span>;
@@ -115,8 +121,15 @@ function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false, collaps
                 {gi > 0 && <div aria-hidden="true" className="h-px bg-white/10 mx-2 mb-4" />}
                 <p className="sr-only">{group.title}</p>
               </>
+            ) : group.hideTitle ? (
+              <p className="sr-only">{group.title}</p>
             ) : (
-              <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-white/50">{group.title}</p>
+              // Group labels wear their brand colour (5.2-9.8:1 on ink) so they
+              // read as headings, distinct from the white links (16:1).
+              <p className={`flex items-center gap-2 px-3 mb-2 text-xs font-bold uppercase tracking-[0.16em] ${group.color}`}>
+                <span aria-hidden="true" className={`w-3.5 h-[3px] rounded-full ${group.bar}`} />
+                {group.title}
+              </p>
             )}
             <ul className="flex flex-col gap-0.5">
               {group.items.map(({ to, label: text, Icon }) => (
@@ -126,7 +139,7 @@ function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false, collaps
                     onClick={onNavigate}
                     {...tipProps(text)}
                     className={({ isActive }) =>
-                      `${row} ${isActive ? "bg-blue text-ink" : "text-white/80 hover:bg-white/10 hover:text-white"}`
+                      `${row} ${isActive ? "bg-blue text-ink font-semibold" : "text-white font-medium hover:bg-white/10"}`
                     }
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" />
@@ -142,7 +155,7 @@ function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false, collaps
       <div className="border-t border-white/10 p-3 flex flex-col gap-0.5">
         {/* Desktop has "View store" in the top bar; the drawer needs its own. */}
         {inDrawer && (
-          <Link to="/" onClick={onNavigate} className={`${row} text-white/80 hover:bg-white/10 hover:text-white`}>
+          <Link to="/" onClick={onNavigate} className={`${row} text-white font-medium hover:bg-white/10`}>
             <StoreIcon className="w-[18px] h-[18px]" /> View store
           </Link>
         )}
@@ -150,7 +163,7 @@ function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false, collaps
           type="button"
           onClick={onSignOut}
           {...tipProps("Sign out")}
-          className={`${row} text-white/80 hover:bg-white/10 hover:text-white text-left`}
+          className={`${row} text-white font-medium hover:bg-white/10 text-left`}
         >
           <LogOutIcon className="w-[18px] h-[18px] shrink-0" />
           {label("Sign out")}
@@ -255,7 +268,7 @@ export default function AdminLayout() {
 
       {/* Top bar */}
       <header className="sticky top-0 z-20 bg-white border-b border-mist">
-        <div className="h-16 px-5 sm:px-8 lg:px-12 flex items-center justify-between gap-3">
+        <div className="h-20 lg:h-[100px] px-5 sm:px-8 lg:px-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
@@ -278,20 +291,20 @@ export default function AdminLayout() {
             <Logo iconOnly className="h-7 lg:hidden" />
             {/* The page itself shows its heading (with its actions), so the
                 bar doesn't repeat it -- just today's date. */}
-            <p className="hidden sm:block text-sm text-ink/70 truncate">{today}</p>
+            <p className="hidden sm:block text-base text-ink/70 truncate">{today}</p>
             <h1 className="sr-only">{title}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link
               to="/"
-              className="hidden sm:inline-flex items-center gap-2 rounded-full border border-mist px-4 py-2 text-sm font-semibold text-ink hover:border-blue hover:text-blue-700"
+              className="hidden sm:inline-flex items-center gap-2 h-11 rounded-lg border border-lime px-4 text-[15px] font-semibold text-ink hover:bg-lime"
             >
               <StoreIcon className="w-4 h-4" /> View store
             </Link>
             {user && (
               <span
                 title={user.email}
-                className="w-9 h-9 rounded-full bg-lime text-ink text-sm font-bold flex items-center justify-center"
+                className="w-10 h-10 rounded-full bg-lime text-ink text-sm font-bold flex items-center justify-center"
               >
                 {initial(user)}
               </span>

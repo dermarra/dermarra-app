@@ -433,6 +433,7 @@ def _variant_admin_dict(variant):
     data = variant.to_dict(include_admin_fields=True)
     data["product_name"] = variant.product.name
     data["product_id"] = variant.product_id
+    data["cloudinary_public_id"] = variant.product.cloudinary_public_id
     return data
 
 
@@ -453,6 +454,7 @@ def list_inventory():
             "id": None,
             "product_id": p.id,
             "product_name": p.name,
+            "cloudinary_public_id": p.cloudinary_public_id,
             "label": None,
             "is_active": p.is_active,
             "stock_status": "no_sizes",

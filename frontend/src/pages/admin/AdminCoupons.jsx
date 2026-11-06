@@ -1,8 +1,26 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import client from "../../api/client";
 import Field from "../../components/admin/Field.jsx";
-import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { containerReveal } from "../../components/Reveal.jsx";
+import {
+  Button,
+  EditorDrawer,
+  EmptyState,
+  ErrorText,
+  FilterTabs,
+  FormSection,
+  ListRow,
+  LoadingState,
+  PageHeader,
+  SearchBox,
+  StatusBadge,
+  Thumb,
+  Toggle,
+  Toolbar,
+  inputClass,
+  matches,
+} from "../../components/admin/Kit.jsx";
 
 const emptyForm = {
   code: "",
@@ -32,6 +50,8 @@ export default function AdminCoupons() {
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -109,7 +129,7 @@ export default function AdminCoupons() {
   };
 
   const toggleActive = async (coupon) => {
-    if (coupon.is_active && !window.confirm(`Deactivate ${coupon.code}? Customers won't be able to use it.`)) return;
+    if (coupon.is_active && !window.confirm(`Switch off ${coupon.code}? Customers won't be able to use it.`)) return;
     try {
       const { data } = await client.patch(`/admin/coupons/${coupon.id}`, { is_active: !coupon.is_active });
       setCoupons((prev) => prev.map((c) => (c.id === coupon.id ? data : c)));
@@ -118,184 +138,176 @@ export default function AdminCoupons() {
     }
   };
 
-  const inputClass = "border border-mist rounded-sm px-3 py-2 text-sm";
+  const now = new Date();
+  const statusOf = (c) =>
+    !c.is_active ? "off" : c.expires_at && new Date(c.expires_at) < now ? "expired" : c.max_uses != null && c.used_count >= c.max_uses ? "used_up" : "live";
+  const STATUS = {
+    live: { label: "Active", tone: "info" },
+    off: { label: "Switched off", tone: "neutral" },
+    expired: { label: "Expired", tone: "neutral" },
+    used_up: { label: "Used up", tone: "warn" },
+  };
+  const liveCount = coupons.filter((c) => statusOf(c) === "live").length;
+  const shown = coupons.filter(
+    (c) => (statusFilter === "" || (statusFilter === "live" ? statusOf(c) === "live" : statusOf(c) !== "live")) && matches(query, c.code)
+  );
+  const isPercent = form.discount_type === "percent";
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-3xl text-ink">Coupons</h2>
-          <p className="text-sm text-ink/60 mt-1">
-            The newest active first-order coupon is what the homepage &quot;Become a member&quot; section advertises.
-          </p>
-        </div>
-        <button onClick={openCreate} className="px-4 py-2 rounded-sm bg-blue text-ink text-sm font-semibold">
-          New coupon
-        </button>
-      </div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
+      <PageHeader
+        title="Coupons"
+        description="Codes customers type at checkout. The newest active first-order code is what the homepage “Become a member” section advertises."
+        actions={
+          <Button variant="primary" size="lg" onClick={openCreate}>
+            + Add coupon
+          </Button>
+        }
+      >
+        <Toolbar>
+          <FilterTabs
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "", label: "All", count: coupons.length },
+              { value: "live", label: "Active", count: liveCount },
+              { value: "inactive", label: "Not active", count: coupons.length - liveCount },
+            ]}
+          />
+          <SearchBox value={query} onChange={setQuery} placeholder="Search codes" />
+        </Toolbar>
+      </PageHeader>
 
-      <AnimatePresence>
-        {editingId && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleSubmit}
-            className="border border-mist rounded-sm p-4 flex flex-col gap-3 overflow-hidden"
-          >
-            <h3 className="text-xl font-semibold">{editingId === "new" ? "New coupon" : "Edit coupon"}</h3>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Code" help="What customers type at checkout. Letters and numbers, saved in capitals, e.g. WELCOME10.">
+      <EditorDrawer
+        open={!!editingId}
+        title={editingId === "new" ? "New coupon" : `Edit ${form.code || "coupon"}`}
+        description="Taken off the cart subtotal at checkout, never more than the cart total."
+        onClose={() => setEditingId(null)}
+        onSubmit={handleSubmit}
+        saving={submitting}
+        error={error}
+        submitLabel={editingId === "new" ? "Add coupon" : "Save changes"}
+      >
+        <Field label="Code" help="What customers type. Letters and numbers, saved in capitals.">
+          <input
+            required
+            placeholder="e.g. WELCOME10"
+            value={form.code}
+            onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
+            className={`${inputClass} uppercase tracking-[0.08em] font-semibold placeholder:normal-case placeholder:tracking-normal placeholder:font-normal`}
+          />
+        </Field>
+
+        <FormSection title="Discount">
+          <div className="flex flex-wrap items-end gap-4">
+            <div role="group" aria-label="Discount type" className="flex p-1 bg-white border border-mist rounded-lg">
+              {[
+                ["percent", "% off"],
+                ["fixed_cents", "KES off"],
+              ].map(([value, text]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setForm({ ...form, discount_type: value })}
+                  aria-pressed={form.discount_type === value}
+                  className={`h-10 px-4 rounded-md text-[15px] font-semibold ${form.discount_type === value ? "bg-ink text-white" : "text-ink hover:bg-blue-50"}`}
+                >
+                  {text}
+                </button>
+              ))}
+            </div>
+            <label className="flex-1 min-w-[10rem]">
+              <span className="sr-only">Discount amount</span>
+              <span className="flex items-center rounded-lg border border-ink/20 bg-white focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/30">
+                {!isPercent && <span className="pl-4 text-ink/70">KES</span>}
                 <input
                   required
-                  placeholder="e.g. WELCOME10"
-                  value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
-                  className={`${inputClass} uppercase font-mono font-normal`}
-                />
-              </Field>
-              <Field
-                label="Discount"
-                help={
-                  form.discount_type === "percent"
-                    ? "Percent off the cart subtotal, 1-100 (e.g. 10 = 10% off)."
-                    : "Fixed shillings off the cart subtotal (e.g. 500 = KES 500 off). Never more than the cart total."
-                }
-              >
-                <div className="flex gap-2">
-                  <select
-                    value={form.discount_type}
-                    onChange={(e) => setForm({ ...form, discount_type: e.target.value })}
-                    aria-label="Discount type"
-                    className={`${inputClass} font-normal`}
-                  >
-                    <option value="percent">% off</option>
-                    <option value="fixed_cents">KES off</option>
-                  </select>
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    max={form.discount_type === "percent" ? 100 : undefined}
-                    step="1"
-                    placeholder={form.discount_type === "percent" ? "e.g. 10" : "e.g. 500"}
-                    value={form.value}
-                    onChange={(e) => setForm({ ...form, value: e.target.value })}
-                    aria-label="Discount amount"
-                    className={`${inputClass} flex-1 min-w-0 font-normal`}
-                  />
-                </div>
-              </Field>
-              <Field label="Max uses" help="Total times the code can be used across all customers. Leave blank for unlimited.">
-                <input
                   type="number"
                   min="1"
+                  max={isPercent ? 100 : undefined}
                   step="1"
-                  placeholder="Unlimited"
-                  value={form.max_uses}
-                  onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
-                  className={`${inputClass} font-normal`}
+                  placeholder={isPercent ? "10" : "500"}
+                  value={form.value}
+                  onChange={(e) => setForm({ ...form, value: e.target.value })}
+                  className="flex-1 min-w-0 bg-transparent px-4 py-2.5 text-base text-ink outline-none"
                 />
-              </Field>
-              <Field label="Expires on" help="Optional. Last day the code works (valid until the end of that day). Blank = never expires.">
-                <input
-                  type="date"
-                  value={form.expires_on}
-                  onChange={(e) => setForm({ ...form, expires_on: e.target.value })}
-                  className={`${inputClass} font-normal`}
-                />
-              </Field>
-            </div>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={form.first_order_only}
-                onChange={(e) => setForm({ ...form, first_order_only: e.target.checked })}
-              />
-              <span>
-                First order only
-                <span className="block text-sm text-ink/55">
-                  Only customers who have never completed a paid order can use it. The newest active first-order code
-                  is advertised in the homepage &quot;Become a member&quot; section.
-                </span>
+                {isPercent && <span className="pr-4 text-ink/70">%</span>}
               </span>
             </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={form.is_active}
-                onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-              />
-              <span>
-                Active
-                <span className="block text-sm text-ink/55">Untick to switch the code off without losing its usage history.</span>
-              </span>
-            </label>
-            {error && <p className="text-sm text-orange-700">{error}</p>}
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-blue text-ink text-sm font-semibold disabled:opacity-50"
-              >
-                {submitting ? "Saving…" : "Save"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingId(null)}
-                className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
+          </div>
+          <p className="-mt-2 text-sm text-ink/70">
+            {isPercent ? "A whole number from 1 to 100, e.g. 10 = 10% off." : "Whole shillings, e.g. 500 = KES 500 off."}
+          </p>
+        </FormSection>
 
-      {loadError && <p className="text-sm text-orange-700">{loadError}</p>}
+        <FormSection title="Limits">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="Max uses" help="Across all customers. Blank = unlimited.">
+              <input type="number" min="1" step="1" placeholder="Unlimited" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} className={inputClass} />
+            </Field>
+            <Field label="Expires on" help="Works until the end of that day. Blank = never.">
+              <input type="date" value={form.expires_on} onChange={(e) => setForm({ ...form, expires_on: e.target.value })} className={inputClass} />
+            </Field>
+          </div>
+          <Toggle
+            checked={form.first_order_only}
+            onChange={(v) => setForm({ ...form, first_order_only: v })}
+            label="First order only"
+            help="Only for customers who've never completed a paid order."
+          />
+          <Toggle
+            checked={form.is_active}
+            onChange={(v) => setForm({ ...form, is_active: v })}
+            label="Active"
+            help="Switch off without losing its usage history."
+          />
+        </FormSection>
+      </EditorDrawer>
+
+      <ErrorText>{loadError}</ErrorText>
       {loading ? (
-        <p className="text-sm text-ink/60">Loading coupons…</p>
-      ) : coupons.length === 0 ? (
-        <p className="text-sm text-ink/60">No coupons yet.</p>
+        <LoadingState>Loading coupons…</LoadingState>
+      ) : shown.length === 0 ? (
+        <EmptyState>{coupons.length ? "No coupons match." : "No coupons yet -- add the first one."}</EmptyState>
       ) : (
-        <motion.ul initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
-          {coupons.map((coupon) => (
-            <motion.li
-              key={coupon.id}
-              variants={itemReveal}
-              className={`border border-mist rounded-sm p-3 flex flex-wrap items-center justify-between gap-3 ${
-                coupon.is_active ? "" : "opacity-60"
-              }`}
-            >
-              <div>
-                <p className="font-mono text-sm font-semibold text-ink">{coupon.code}</p>
-                <p className="text-sm text-ink/60">
-                  {describe(coupon)} · used {coupon.used_count}
-                  {coupon.max_uses != null ? ` / ${coupon.max_uses}` : ""}
-                  {coupon.expires_at ? ` · expires ${new Date(coupon.expires_at).toLocaleDateString()}` : ""}
-                  {coupon.is_active ? "" : " · inactive"}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => openEdit(coupon)}
-                  className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => toggleActive(coupon)}
-                  className="px-3 py-1.5 rounded-sm border border-mist text-xs text-ink/70"
-                >
-                  {coupon.is_active ? "Deactivate" : "Activate"}
-                </button>
-              </div>
-            </motion.li>
-          ))}
-        </motion.ul>
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
+          {shown.map((coupon, index) => {
+            const status = STATUS[statusOf(coupon)];
+            return (
+              <ListRow
+                key={coupon.id}
+                thumb={<Thumb name={coupon.code} index={index} />}
+                title={<span className="tracking-[0.06em]">{coupon.code}</span>}
+                subtitle={describe(coupon)}
+                stats={[
+                  { label: "Used", value: `${coupon.used_count}${coupon.max_uses != null ? ` / ${coupon.max_uses}` : ""}` },
+                  {
+                    label: "Expires",
+                    value: coupon.expires_at
+                      ? new Date(coupon.expires_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })
+                      : "Never",
+                  },
+                ]}
+                badge={<StatusBadge tone={status.tone}>{status.label}</StatusBadge>}
+                actions={
+                  <>
+                    <Button onClick={() => openEdit(coupon)}>Edit</Button>
+                    {coupon.is_active ? (
+                      <Button variant="danger" onClick={() => toggleActive(coupon)}>
+                        Switch off
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" onClick={() => toggleActive(coupon)}>
+                        Switch on
+                      </Button>
+                    )}
+                  </>
+                }
+              />
+            );
+          })}
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

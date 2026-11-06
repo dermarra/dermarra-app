@@ -1,9 +1,26 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import client, { cloudinaryUrl } from "../../api/client";
+import { motion } from "framer-motion";
+import client from "../../api/client";
 import Field from "../../components/admin/Field.jsx";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
-import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { containerReveal } from "../../components/Reveal.jsx";
+import {
+  Button,
+  EditorDrawer,
+  EmptyState,
+  FilterTabs,
+  FormSection,
+  ListRow,
+  LoadingState,
+  PageHeader,
+  SearchBox,
+  StatusBadge,
+  Thumb,
+  Toggle,
+  Toolbar,
+  inputClass,
+  matches,
+} from "../../components/admin/Kit.jsx";
 
 const emptyForm = {
   eyebrow: "",
@@ -24,6 +41,8 @@ export default function AdminHeroSlides() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [rowState, setRowState] = useState({});
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -90,205 +109,133 @@ export default function AdminHeroSlides() {
     }
   };
 
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+  const activeCount = slides.filter((s) => s.is_active).length;
+  const shown = slides.filter(
+    (s) =>
+      (statusFilter === "" || (statusFilter === "active" ? s.is_active : !s.is_active)) &&
+      matches(query, s.title, s.eyebrow, s.subtitle)
+  );
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h2 className="font-display text-3xl text-ink">Hero slides</h2>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={openCreate}
-          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
-        >
-          + Add slide
-        </motion.button>
-      </div>
-      <p className="text-sm text-ink/60 mb-4">
-        The homepage hero shows active slides in position order, auto-advancing every few seconds.
-        With no active slides, the homepage falls back to its default static hero.
-      </p>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
+      <PageHeader
+        title="Hero slides"
+        description="The full-screen homepage banner (also the sign-in page panel). Active slides rotate in position order; with none, the homepage shows its default hero."
+        actions={
+          <Button variant="primary" size="lg" onClick={openCreate}>
+            + Add slide
+          </Button>
+        }
+      >
+        <Toolbar>
+          <FilterTabs
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "", label: "All", count: slides.length },
+              { value: "active", label: "Active", count: activeCount },
+              { value: "hidden", label: "Hidden", count: slides.length - activeCount },
+            ]}
+          />
+          <SearchBox value={query} onChange={setQuery} placeholder="Search slides" />
+        </Toolbar>
+      </PageHeader>
 
-      <AnimatePresence>
-        {editingId && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
-          >
-            <h3 className="font-semibold text-xl text-ink">
-              {editingId === "new" ? "New slide" : "Edit slide"}
-            </h3>
+      <EditorDrawer
+        open={!!editingId}
+        title={editingId === "new" ? "New slide" : "Edit slide"}
+        description="Big, short and bold reads best: the photo sits behind the text, darkened."
+        onClose={() => setEditingId(null)}
+        onSubmit={handleSubmit}
+        saving={submitting}
+        error={error}
+        submitLabel={editingId === "new" ? "Add slide" : "Save changes"}
+      >
+        <FormSection title="Text">
+          <Field label="Title" help="The big headline, about 3-7 words.">
+            <input required placeholder="e.g. Exfoliation is now simpler" value={form.title} onChange={set("title")} className={inputClass} />
+          </Field>
+          <Field label="Eyebrow (optional)" help="Small text above the title.">
+            <input placeholder="e.g. New arrival" value={form.eyebrow} onChange={set("eyebrow")} className={inputClass} />
+          </Field>
+          <Field label="Subtitle (optional)" help="One supporting sentence under the title.">
+            <textarea
+              placeholder="e.g. Slough away dead skin cells for smoother, brighter skin."
+              value={form.subtitle}
+              onChange={set("subtitle")}
+              className={`${inputClass} min-h-[5rem]`}
+              rows={2}
+            />
+          </Field>
+        </FormSection>
 
-            <p className="text-sm text-ink/55 -mt-2">
-              Slides rotate in the full-screen homepage banner and the sign-in page panel.
-            </p>
-            <Field label="Eyebrow" help="Optional small text above the title, e.g. New arrival or Bestseller.">
-              <input
-                placeholder="e.g. New arrival"
-                value={form.eyebrow}
-                onChange={(e) => setForm({ ...form, eyebrow: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              />
+        <FormSection title="Button (optional)">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="Button text" help="Shows only when the link is set too.">
+              <input placeholder="e.g. Shop now" value={form.cta_label} onChange={set("cta_label")} className={inputClass} />
             </Field>
-            <Field label="Title" help="The big headline -- keep it short (about 3-7 words).">
-              <input
-                required
-                placeholder="e.g. Exfoliation is now simpler"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              />
+            <Field label="Links to" help="A page on this site, e.g. /quiz or /shop/concern/signs-of-ageing.">
+              <input placeholder="/shop/anti-ageing-serum" value={form.cta_link} onChange={set("cta_link")} className={inputClass} />
             </Field>
-            <Field label="Subtitle" help="Optional supporting sentence under the title.">
-              <textarea
-                placeholder="e.g. Slough away dead skin cells for smoother, brighter skin."
-                value={form.subtitle}
-                onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                rows={2}
-              />
+          </div>
+        </FormSection>
+
+        <FormSection title="Display">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+            <Field label="Position" help="0 shows first, then 1, 2…">
+              <input type="number" min="0" step="1" value={form.position} onChange={set("position")} className={inputClass} />
             </Field>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Button text" help="Optional. The button only shows if both button text and link are filled in.">
-                <input
-                  placeholder="e.g. Shop now"
-                  value={form.cta_label}
-                  onChange={(e) => setForm({ ...form, cta_label: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                />
-              </Field>
-              <Field
-                label="Button link"
-                help="A page on this site, starting with / -- e.g. /shop/anti-ageing-serum, /shop/concern/signs-of-ageing or /quiz."
-              >
-                <input
-                  placeholder="e.g. /shop/anti-ageing-serum"
-                  value={form.cta_link}
-                  onChange={(e) => setForm({ ...form, cta_link: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm font-mono font-normal text-ink"
-                />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-              <Field label="Position" help="Order in the carousel: 0 shows first, then 1, 2…">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.position}
-                  onChange={(e) => setForm({ ...form, position: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                />
-              </Field>
-              <label className="flex items-start gap-2 text-sm text-ink sm:mt-6">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={form.is_active}
-                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                />
-                <span>
-                  Active
-                  <span className="block text-sm text-ink/55">Untick to hide this slide without deleting it.</span>
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-ink/80">Background image</p>
-              <p className="text-sm text-ink/55 mb-2">
-                A wide landscape photo (at least 1600px wide). It&apos;s darkened behind the text, so busy images are fine.
-              </p>
-              <ImageUploadField
-                value={form.cloudinary_public_id}
-                onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
-                folder="derma-skincare/hero-slides"
+            <div className="sm:pt-8">
+              <Toggle
+                checked={form.is_active}
+                onChange={(v) => setForm({ ...form, is_active: v })}
+                label="Show on the homepage"
+                help="Turn off to hide it without deleting."
               />
             </div>
+          </div>
+        </FormSection>
 
-            {error && <p className="text-sm text-orange-700">{error}</p>}
-
-            <div className="flex gap-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-              >
-                {submitting ? "Saving…" : "Save"}
-              </motion.button>
-              <button
-                type="button"
-                onClick={() => setEditingId(null)}
-                className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
+        <Field label="Background photo" help="Wide landscape, at least 1600px across.">
+          <ImageUploadField
+            value={form.cloudinary_public_id}
+            onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
+            folder="derma-skincare/hero-slides"
+            hint="Landscape photo, at least 1600px wide"
+          />
+        </Field>
+      </EditorDrawer>
 
       {loading ? (
-        <p className="text-ink/60 text-sm">Loading slides…</p>
-      ) : slides.length === 0 ? (
-        <p className="text-ink/60 text-sm">No slides yet.</p>
+        <LoadingState>Loading slides…</LoadingState>
+      ) : shown.length === 0 ? (
+        <EmptyState>{slides.length ? "No slides match." : "No slides yet -- the homepage is showing its default hero."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
-          {slides.map((slide) => {
+          {shown.map((slide, index) => {
             const state = rowState[slide.id];
-            const imageUrl = cloudinaryUrl(slide.cloudinary_public_id, { width: 80 });
             return (
-              <motion.div
+              <ListRow
                 key={slide.id}
-                variants={itemReveal}
-                className="flex items-center justify-between gap-4 bg-white border border-mist rounded-xl px-5 py-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-10 rounded-sm bg-mist overflow-hidden shrink-0">
-                    {imageUrl && <img src={imageUrl} alt="" className="w-full h-full object-cover" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-ink">
-                      {slide.title}
-                      {!slide.is_active && (
-                        <span className="ml-2 text-xs uppercase text-ink/40 border border-mist rounded-full px-2 py-0.5">
-                          Inactive
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-sm text-ink/60">Position {slide.position}</p>
-                    {state && state !== "deleting" && (
-                      <p className="text-sm text-orange-700 mt-1">{state}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => openEdit(slide)}
-                    className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(slide.id)}
-                    disabled={state === "deleting"}
-                    className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
-                  >
-                    {state === "deleting" ? "Deleting…" : "Delete"}
-                  </button>
-                </div>
-              </motion.div>
+                thumb={<Thumb imageId={slide.cloudinary_public_id} name={slide.title} index={index} wide />}
+                title={slide.title}
+                subtitle={slide.subtitle || slide.eyebrow}
+                note={state && state !== "deleting" ? state : null}
+                stats={[
+                  { label: "Position", value: slide.position },
+                  { label: "Button", value: slide.cta_label && slide.cta_link ? slide.cta_label : "None" },
+                ]}
+                badge={<StatusBadge tone={slide.is_active ? "info" : "neutral"}>{slide.is_active ? "Active" : "Hidden"}</StatusBadge>}
+                actions={
+                  <>
+                    <Button onClick={() => openEdit(slide)}>Edit</Button>
+                    <Button variant="danger" onClick={() => handleDelete(slide.id)} disabled={state === "deleting"}>
+                      {state === "deleting" ? "Deleting…" : "Delete"}
+                    </Button>
+                  </>
+                }
+              />
             );
           })}
         </motion.div>

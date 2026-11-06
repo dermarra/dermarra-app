@@ -1,13 +1,46 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import client from "../../api/client";
 import Field from "../../components/admin/Field.jsx";
+import {
+  BackLink,
+  Button,
+  EditorDrawer,
+  EmptyState,
+  ErrorText,
+  LoadingState,
+  PageHeader,
+  Panel,
+  Stat,
+  StatusBadge,
+  inputClass,
+  selectClass,
+  tableClass,
+} from "../../components/admin/Kit.jsx";
 
-const STATUS_LABELS = {
-  in_stock: "In stock",
-  low_stock: "Low stock",
-  out_of_stock: "Out of stock",
+const STATUS = {
+  in_stock: { label: "In stock", tone: "good" },
+  low_stock: { label: "Low stock", tone: "warn" },
+  out_of_stock: { label: "Out of stock", tone: "bad" },
+};
+const BATCH_STATUS = {
+  active: { label: "Active", tone: "good" },
+  depleted: { label: "Used up", tone: "neutral" },
+  expired: { label: "Expired", tone: "warn" },
+  recalled: { label: "Recalled", tone: "warn" },
+};
+const TX_LABELS = {
+  PRODUCTION_RECEIPT: "Production run",
+  SALE: "Sale",
+  RETURN: "Return",
+  DAMAGE: "Damage",
+  EXPIRY: "Expiry write-off",
+  LOSS: "Loss",
+  SAMPLE: "Sample",
+  PROMOTION: "Promotion",
+  INTERNAL_USE: "Internal use",
+  ADJUSTMENT: "Correction",
 };
 
 const ADJUSTMENT_TYPES = [
@@ -38,7 +71,6 @@ function formatKES(cents) {
 
 export default function AdminInventoryDetail() {
   const { variantId } = useParams();
-  const navigate = useNavigate();
 
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -110,8 +142,8 @@ export default function AdminInventoryDetail() {
     }
   };
 
-  if (loading) return <p className="text-ink/60 text-sm">Loading…</p>;
-  if (error) return <p className="text-sm text-orange-700">{error}</p>;
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorText>{error}</ErrorText>;
   if (!detail) return null;
 
   const { variant, batches, transactions } = detail;
@@ -125,328 +157,240 @@ export default function AdminInventoryDetail() {
   );
   const selectedBatch = batches.find((b) => b.id === adjustForm.batch_id);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className="flex flex-col gap-6 max-w-3xl"
-    >
-      <button onClick={() => navigate("/admin/inventory")} className="text-sm text-ink/60 self-start">
-        ← Back to inventory
-      </button>
+  const status = STATUS[variant.stock_status] || STATUS.out_of_stock;
+  const canAdjust = batches.some((b) => b.status === "active" || b.status === "depleted");
+  const setR = (key) => (e) => setReceiveForm({ ...receiveForm, [key]: e.target.value });
+  const setA = (key) => (e) => setAdjustForm({ ...adjustForm, [key]: e.target.value });
+  const closeAdjust = () => {
+    setAdjustOpen(false);
+    setReviewing(false);
+  };
+  const fmt = (n) => Number(n).toLocaleString("en-KE");
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-3xl text-ink">
-            {variant.product_name} — {variant.label}
-          </h2>
-          <p className="text-sm text-ink/60 font-mono">
-            on hand {variant.on_hand} · reserved {variant.reserved} · available {variant.available} · reorder at{" "}
-            {variant.reorder_level}
-          </p>
-        </div>
-        <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1">
-          {STATUS_LABELS[variant.stock_status]}
-        </span>
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }} className="flex flex-col gap-6">
+      <div>
+        <BackLink to="/admin/inventory">Back to inventory</BackLink>
+        <PageHeader
+          title={`${variant.product_name} — ${variant.label}`}
+          description="Log each production run as a batch. Stock always sells from the batch that expires first."
+          actions={
+            <>
+              <Button variant="secondary" size="lg" onClick={() => setAdjustOpen(true)} disabled={!canAdjust}>
+                Adjust stock
+              </Button>
+              <Button variant="primary" size="lg" onClick={() => setReceiveOpen(true)}>
+                + Log production run
+              </Button>
+            </>
+          }
+        />
       </div>
 
-      <section className="border border-mist rounded-sm p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-semibold">Batches</h3>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setReceiveOpen((v) => !v)}
-            className="px-3 py-1.5 rounded-sm bg-blue text-ink font-semibold text-xs"
-          >
-            {receiveOpen ? "Cancel" : "+ Log production run"}
-          </motion.button>
+      <div className="flex flex-wrap items-center gap-6 px-6 py-5 bg-white border border-mist rounded-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4 flex-1 min-w-0">
+          <Stat label="On hand" value={fmt(variant.on_hand)} />
+          <Stat label="Reserved" value={fmt(variant.reserved)} />
+          <Stat label="Available" value={fmt(variant.available)} tone={variant.stock_status !== "in_stock" ? "warn" : undefined} />
+          <Stat label="Reorder at" value={fmt(variant.reorder_level)} />
         </div>
+        <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+      </div>
 
-        <AnimatePresence>
-          {receiveOpen && (
-            <motion.form
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              onSubmit={submitReceive}
-              className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-4 overflow-hidden"
-            >
-              <p className="text-sm text-ink/55">
-                Log each finished production run as its own batch. Stock is sold oldest-expiry first, so expiry dates
-                matter.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Batch number" help="Your lot/batch code printed on the packaging, e.g. AAS-2611-01. Must be unique for this size.">
-                  <input
-                    required
-                    placeholder="e.g. AAS-2611-01"
-                    value={receiveForm.batch_number}
-                    onChange={(e) => setReceiveForm({ ...receiveForm, batch_number: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-mono font-normal text-ink"
-                  />
-                </Field>
-                <Field label="Quantity produced" help="How many sellable units of this size the run made (whole number). Added to stock on hand.">
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="e.g. 50"
-                    value={receiveForm.quantity_produced}
-                    onChange={(e) => setReceiveForm({ ...receiveForm, quantity_produced: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  />
-                </Field>
-                <Field label="Unit production cost (KES)" help="Optional. Your internal cost per unit (ingredients + packaging + labour). Never shown to customers.">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="e.g. 850"
-                    value={receiveForm.unit_cost_kes}
-                    onChange={(e) => setReceiveForm({ ...receiveForm, unit_cost_kes: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  />
-                </Field>
-                <Field label="Expiry date" help="The best-before date on this batch. Leave blank only if the product doesn't expire.">
-                  <input
-                    type="date"
-                    value={receiveForm.expiry_date}
-                    onChange={(e) => setReceiveForm({ ...receiveForm, expiry_date: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  />
-                </Field>
-                <Field label="Production date" help="When the run was made. Leave blank to use today.">
-                  <input
-                    type="date"
-                    value={receiveForm.produced_at}
-                    onChange={(e) => setReceiveForm({ ...receiveForm, produced_at: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  />
-                </Field>
-              </div>
-              <Field label="Notes" help="Optional, e.g. which formula version or who made it.">
-                <textarea
-                  placeholder="e.g. Formula v2, made by Jane"
-                  value={receiveForm.notes}
-                  onChange={(e) => setReceiveForm({ ...receiveForm, notes: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  rows={2}
-                />
-              </Field>
-              {receiveError && <p className="text-sm text-orange-700">{receiveError}</p>}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={receiveBusy}
-                className="self-start px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-              >
-                {receiveBusy ? "Saving…" : "Log production run"}
-              </motion.button>
-            </motion.form>
-          )}
-        </AnimatePresence>
-
+      <Panel title="Batches" description="One per production run, oldest expiry sold first.">
         {batches.length === 0 ? (
-          <p className="text-sm text-ink/60">No batches yet.</p>
+          <EmptyState>No batches yet -- log the first production run.</EmptyState>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className={tableClass}>
               <thead>
-                <tr className="text-left text-ink/50 uppercase tracking-wide">
-                  <th className="py-1.5 pr-3">Batch</th>
-                  <th className="py-1.5 pr-3">Remaining / produced</th>
-                  <th className="py-1.5 pr-3">Unit cost</th>
-                  <th className="py-1.5 pr-3">Expiry</th>
-                  <th className="py-1.5 pr-3">Status</th>
+                <tr>
+                  <th>Batch</th>
+                  <th>Remaining</th>
+                  <th>Unit cost</th>
+                  <th>Expires</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {batches.map((b) => (
-                  <tr key={b.id} className="border-t border-mist">
-                    <td className="py-1.5 pr-3 font-mono">{b.batch_number}</td>
-                    <td className="py-1.5 pr-3">{b.quantity_remaining} / {b.quantity_produced}</td>
-                    <td className="py-1.5 pr-3">{formatKES(b.unit_cost_cents)}</td>
-                    <td className="py-1.5 pr-3">{b.expiry_date || "Non-expiring"}</td>
-                    <td className="py-1.5 pr-3 uppercase">{b.status}</td>
+                  <tr key={b.id}>
+                    <td className="font-semibold">{b.batch_number}</td>
+                    <td className="tabular-nums">
+                      {fmt(b.quantity_remaining)} <span className="text-ink/70">of {fmt(b.quantity_produced)}</span>
+                    </td>
+                    <td className="tabular-nums">{formatKES(b.unit_cost_cents)}</td>
+                    <td>{b.expiry_date || "Doesn't expire"}</td>
+                    <td>
+                      <StatusBadge tone={BATCH_STATUS[b.status]?.tone}>{BATCH_STATUS[b.status]?.label || b.status}</StatusBadge>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </section>
+      </Panel>
 
-      <section className="border border-mist rounded-sm p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-semibold">Adjust stock</h3>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => {
-              setAdjustOpen((v) => !v);
-              setReviewing(false);
-            }}
-            disabled={!batches.some((b) => b.status === "active" || b.status === "depleted")}
-            className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink disabled:opacity-50"
-          >
-            {adjustOpen ? "Cancel" : "+ Manual adjustment"}
-          </motion.button>
-        </div>
-
-        <AnimatePresence>
-          {adjustOpen && !reviewing && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="flex flex-col gap-3 border border-mist rounded-sm p-4 overflow-hidden"
-            >
-              <p className="text-sm text-ink/55">
-                For stock that leaves (or turns up) outside of normal sales -- damaged, expired, given away, or a count
-                correction. Every adjustment is permanently logged with its reason.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Batch" help="The batch the units came from (check the batch number on the packaging).">
-                  <select
-                    value={adjustForm.batch_id}
-                    onChange={(e) => setAdjustForm({ ...adjustForm, batch_id: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  >
-                    <option value="">Select a batch…</option>
-                    {activeBatches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.batch_number} ({b.quantity_remaining} remaining)
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="What happened" help="Pick the closest reason. 'Other correction' is for stocktake differences.">
-                  <select
-                    value={adjustForm.type}
-                    onChange={(e) => setAdjustForm({ ...adjustForm, type: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  >
-                    {ADJUSTMENT_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field
-                  label="Quantity"
-                  help={
-                    adjustForm.type === "ADJUSTMENT"
-                      ? "Signed whole number: negative removes units (e.g. -3), positive adds units found in a count (e.g. 5)."
-                      : "How many units to remove (whole number, e.g. 2). Units reserved for unpaid orders can't be removed."
-                  }
-                >
-                  <input
-                    type="number"
-                    step="1"
-                    placeholder={adjustForm.type === "ADJUSTMENT" ? "e.g. -3 or 5" : "e.g. 2"}
-                    value={adjustForm.quantity}
-                    onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })}
-                    className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  />
-                </Field>
-              </div>
-              <Field label="Reason (required)" help="Explain what happened so the stock history makes sense later, e.g. '2 bottles cracked in transit'.">
-                <textarea
-                  required
-                  placeholder="e.g. 2 bottles cracked in transit"
-                  value={adjustForm.reason}
-                  onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                  className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                  rows={2}
-                />
-              </Field>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                disabled={!adjustForm.batch_id || !adjustForm.quantity || !adjustForm.reason}
-                onClick={() => setReviewing(true)}
-                className="self-start px-4 py-2 rounded-sm border border-ink/30 text-ink text-sm disabled:opacity-50"
-              >
-                Review adjustment
-              </motion.button>
-            </motion.div>
-          )}
-
-          {adjustOpen && reviewing && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="flex flex-col gap-3 border border-orange/60 bg-orange-300/10 rounded-sm p-4"
-            >
-              <h4 className="text-sm font-semibold text-ink">Confirm this adjustment</h4>
-              <p className="text-sm text-ink/80">
-                {ADJUSTMENT_TYPES.find((t) => t.value === adjustForm.type)?.label} of{" "}
-                <span className="font-mono">{adjustForm.quantity}</span> unit(s) on batch{" "}
-                <span className="font-mono">{selectedBatch?.batch_number}</span>.
-              </p>
-              <p className="text-sm text-ink/60">Reason: {adjustForm.reason}</p>
-              {adjustError && <p className="text-sm text-orange-700">{adjustError}</p>}
-              <div className="flex gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={confirmAdjust}
-                  disabled={adjustBusy}
-                  className="px-4 py-2 rounded-sm bg-orange-700 text-bone-light font-semibold text-sm disabled:opacity-50"
-                >
-                  {adjustBusy ? "Applying…" : "Confirm and apply"}
-                </motion.button>
-                <button
-                  type="button"
-                  onClick={() => setReviewing(false)}
-                  className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-                >
-                  Back
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
-
-      <section className="border border-mist rounded-sm p-4">
-        <h3 className="text-xl font-semibold mb-3">Transaction history</h3>
+      <Panel title="Stock history" description="Every movement, permanently logged.">
         {transactions.length === 0 ? (
-          <p className="text-sm text-ink/60">No stock movements yet.</p>
+          <EmptyState>No stock movements yet.</EmptyState>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className={tableClass}>
               <thead>
-                <tr className="text-left text-ink/50 uppercase tracking-wide">
-                  <th className="py-1.5 pr-3">When</th>
-                  <th className="py-1.5 pr-3">Type</th>
-                  <th className="py-1.5 pr-3">Qty</th>
-                  <th className="py-1.5 pr-3">Reason</th>
+                <tr>
+                  <th>When</th>
+                  <th>What</th>
+                  <th>Units</th>
+                  <th>Reason</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((t) => (
-                  <tr key={t.id} className="border-t border-mist">
-                    <td className="py-1.5 pr-3 whitespace-nowrap">{new Date(t.created_at).toLocaleString()}</td>
-                    <td className="py-1.5 pr-3 font-mono">{t.type}</td>
-                    <td className={`py-1.5 pr-3 font-mono ${t.quantity < 0 ? "text-orange-700" : "text-lime-800"}`}>
-                      {t.quantity > 0 ? `+${t.quantity}` : t.quantity}
+                  <tr key={t.id}>
+                    <td className="whitespace-nowrap">
+                      {new Date(t.created_at).toLocaleString("en-KE", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td className="py-1.5 pr-3 text-ink/70">{t.reason || "—"}</td>
+                    <td>{TX_LABELS[t.type] || t.type}</td>
+                    <td className={`font-semibold tabular-nums ${t.quantity < 0 ? "text-orange-700" : "text-lime-800"}`}>
+                      {t.quantity > 0 ? `+${fmt(t.quantity)}` : fmt(t.quantity)}
+                    </td>
+                    <td className="text-ink/80">{t.reason || "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </section>
+      </Panel>
+
+      {/* ---------- Log a production run ---------- */}
+      <EditorDrawer
+        open={receiveOpen}
+        title="Log a production run"
+        description={`Adds a new batch of ${variant.product_name} (${variant.label}) to stock on hand.`}
+        onClose={() => setReceiveOpen(false)}
+        onSubmit={submitReceive}
+        saving={receiveBusy}
+        error={receiveError}
+        submitLabel="Add to stock"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <Field label="Batch number" help="The lot code on the packaging. Unique for this size.">
+            <input required placeholder="e.g. AAS-2611-01" value={receiveForm.batch_number} onChange={setR("batch_number")} className={`${inputClass} uppercase`} />
+          </Field>
+          <Field label="Units made" help="Sellable units of this size.">
+            <input required type="number" min="1" step="1" placeholder="e.g. 50" value={receiveForm.quantity_produced} onChange={setR("quantity_produced")} className={inputClass} />
+          </Field>
+          <Field label="Expiry date" help="Leave blank only if it doesn't expire.">
+            <input type="date" value={receiveForm.expiry_date} onChange={setR("expiry_date")} className={inputClass} />
+          </Field>
+          <Field label="Made on" help="Leave blank for today.">
+            <input type="date" value={receiveForm.produced_at} onChange={setR("produced_at")} className={inputClass} />
+          </Field>
+          <Field label="Cost per unit (optional)" help="Internal only, never shown to customers.">
+            <span className="flex items-center rounded-lg border border-ink/20 bg-white focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/30">
+              <span className="pl-4 text-ink/70">KES</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="850"
+                value={receiveForm.unit_cost_kes}
+                onChange={setR("unit_cost_kes")}
+                className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-base text-ink outline-none"
+              />
+            </span>
+          </Field>
+        </div>
+        <Field label="Notes (optional)" help="e.g. formula version or who made it.">
+          <textarea placeholder="e.g. Formula v2, made by Jane" value={receiveForm.notes} onChange={setR("notes")} className={`${inputClass} min-h-[5rem]`} rows={2} />
+        </Field>
+      </EditorDrawer>
+
+      {/* ---------- Adjust stock (review, then confirm) ---------- */}
+      <EditorDrawer
+        open={adjustOpen}
+        title={reviewing ? "Check this adjustment" : "Adjust stock"}
+        description={
+          reviewing
+            ? "It's permanent and logged with its reason. Go back to change anything."
+            : "For stock that leaves (or turns up) outside normal sales: damage, expiry, samples, or a stocktake correction."
+        }
+        onClose={closeAdjust}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (reviewing) confirmAdjust();
+          else if (adjustForm.batch_id && adjustForm.quantity && adjustForm.reason) setReviewing(true);
+        }}
+        saving={adjustBusy}
+        error={adjustError}
+        submitLabel={reviewing ? "Confirm and apply" : "Review adjustment"}
+      >
+        {reviewing ? (
+          <div className="flex flex-col gap-4">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 p-5 bg-orange-50 border border-orange-200 rounded-lg">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-ink/70">What happened</dt>
+                <dd className="mt-1 text-lg font-semibold">{ADJUSTMENT_TYPES.find((t) => t.value === adjustForm.type)?.label}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-ink/70">Units</dt>
+                <dd className="mt-1 text-lg font-semibold tabular-nums">{adjustForm.quantity}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-ink/70">Batch</dt>
+                <dd className="mt-1 text-lg font-semibold">{selectedBatch?.batch_number}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-ink/70">Reason</dt>
+                <dd className="mt-1">{adjustForm.reason}</dd>
+              </div>
+            </dl>
+            <Button onClick={() => setReviewing(false)} className="self-start">
+              ← Back to edit
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <Field label="Batch" help="Check the batch number on the packaging.">
+                <select value={adjustForm.batch_id} onChange={setA("batch_id")} className={selectClass} required>
+                  <option value="">Choose a batch…</option>
+                  {activeBatches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.batch_number} ({b.quantity_remaining} left)
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="What happened" help="“Other correction” is for stocktake differences.">
+                <select value={adjustForm.type} onChange={setA("type")} className={selectClass}>
+                  {ADJUSTMENT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <Field
+              label="Units"
+              help={
+                adjustForm.type === "ADJUSTMENT"
+                  ? "Negative removes (e.g. -3), positive adds units found in a count (e.g. 5)."
+                  : "How many to remove. Units held for unpaid orders can't be removed."
+              }
+            >
+              <input required type="number" step="1" placeholder={adjustForm.type === "ADJUSTMENT" ? "-3 or 5" : "2"} value={adjustForm.quantity} onChange={setA("quantity")} className={inputClass} />
+            </Field>
+            <Field label="Reason" help="So the history makes sense later.">
+              <textarea required placeholder="e.g. 2 bottles cracked in transit" value={adjustForm.reason} onChange={setA("reason")} className={`${inputClass} min-h-[5rem]`} rows={2} />
+            </Field>
+          </>
+        )}
+      </EditorDrawer>
     </motion.div>
   );
 }

@@ -2,9 +2,9 @@
  * customer and admin order-detail pages. Without the discount row, a coupon
  * order's line items didn't add up to its total. */
 export default function OrderTotals({ order }) {
-  const money = (cents) => `${order.currency} ${(cents / 100).toFixed(0)}`;
+  const money = (cents) => `${order.currency} ${Math.round(cents / 100).toLocaleString("en-KE")}`;
   return (
-    <div className="mt-3 pt-3 border-t border-mist flex flex-col gap-1 text-sm">
+    <div className="mt-3 pt-4 border-t border-mist flex flex-col gap-1.5">
       <div className="flex justify-between text-ink/70">
         <span>Subtotal</span>
         <span>{money(order.subtotal_cents)}</span>

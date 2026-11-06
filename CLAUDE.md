@@ -241,6 +241,23 @@
   2026-11-06): Safaricom's ResultDesc for the latest failed attempt, set by
   `mark_order_failed(reason=...)` from the callback/poll/admin refresh,
   cleared on retry and on success; shown on checkout and order pages.
+- **Admin panel kit (owner-approved 2026-11-06, "Dermarra Admin Panel
+  System" canvas)**: every admin page is built from
+  `components/admin/Kit.jsx` -- `PageHeader` (title + one-line purpose +
+  actions), `Toolbar`/`FilterTabs` (with counts)/`SearchBox`, `ListRow`
+  (56px `Thumb` -- photo or initials on a brand tint -- title, sub-line,
+  `Stat` columns, one `StatusBadge`, actions in the order main action ->
+  Edit -> Delete), `Button` (primary/secondary/quiet/danger; `lg` 48px in
+  headers, `md` 40px in rows; 15px semibold), `Panel` + `tableClass` on
+  detail pages, `BackLink`. **Create/edit forms open in `EditorDrawer`**
+  (side panel, fixed Cancel/Save footer), never inline in the list; use
+  `FormSection`, `inputClass`/`selectClass`, `Toggle` (not bare checkboxes),
+  `ImageUploadField` (drop zone + preview; `removable` where optional).
+  One radius everywhere: 8px. Grey text is ink/70, never fainter.
+  Sidebar group labels wear their brand colour (Sales orange, Catalogue
+  lime, Storefront blue, People gold); links are white. Order status names
+  live in `lib/orderStatus.js`. Don't hand-roll a header, row, badge or
+  button on an admin page -- extend the kit.
 - Admin forms: every field is wrapped in `components/admin/Field.jsx`
   (label + always-visible one-line hint -- not hover tooltips, which don't
   work on touch). Keep that for any new admin field. **Never nest a

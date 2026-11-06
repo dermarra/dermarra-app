@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import client, { cloudinaryUrl } from "../../api/client";
+import { motion } from "framer-motion";
+import client from "../../api/client";
 import Field from "../../components/admin/Field.jsx";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
-import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { containerReveal } from "../../components/Reveal.jsx";
+import { Button, EditorDrawer, ListRow, LoadingState, PageHeader, Thumb, inputClass } from "../../components/admin/Kit.jsx";
 
 export default function AdminStepGroups() {
   const [groups, setGroups] = useState([]);
@@ -48,130 +49,64 @@ export default function AdminStepGroups() {
     }
   };
 
+  const STEP_TYPE_NAMES = { cleanser: "Cleansers", serum: "Serums", barrier_cream: "Barrier creams", spf: "SPF" };
+  const editing = groups.find((g) => g.id === editingId);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-    >
-      <h2 className="font-display text-3xl text-ink mb-1">Shop by Step</h2>
-      <p className="text-sm text-ink/60 mb-4">
-        The 4 fixed steps shown on the homepage. Each maps to a real product step type
-        (Prep → Cleanser, Treat → Serum, Seal → Barrier cream, Protect → SPF) — only the
-        label, description, and photo are editable here.
-      </p>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
+      <PageHeader
+        title="Shop by Step"
+        description="The four fixed steps on the homepage. You can rename them and change their wording and photo; they can't be added or removed."
+      />
+
+      <EditorDrawer
+        open={!!editingId}
+        title={editing ? `Edit ${editing.label}` : "Edit step"}
+        description={editing ? `Shows ${STEP_TYPE_NAMES[editing.step_type] || editing.step_type} on the homepage and its shop page.` : undefined}
+        onClose={() => setEditingId(null)}
+        onSubmit={handleSubmit}
+        saving={submitting}
+        error={error}
+        submitLabel="Save changes"
+      >
+        <Field label="Name" help="e.g. Step 01: Prep">
+          <input required placeholder="e.g. Step 02: Treat" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className={inputClass} />
+        </Field>
+        <Field label="Description" help="One line on what this step does. Leave blank for the default wording.">
+          <textarea
+            placeholder="e.g. Actives dosed at the concentration that actually changes skin."
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className={`${inputClass} min-h-[5rem]`}
+            rows={2}
+          />
+        </Field>
+        <Field label="Photo" help="Square. Used on the homepage card and the page banner.">
+          <ImageUploadField
+            value={form.cloudinary_public_id}
+            onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
+            folder="derma-skincare/step-groups"
+            aspect={1}
+            removable
+            hint="Square photo, at least 800 × 800px"
+          />
+        </Field>
+      </EditorDrawer>
 
       {loading ? (
-        <p className="text-ink/60 text-sm">Loading…</p>
+        <LoadingState />
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
-          {groups.map((group) => {
-            const imageUrl = cloudinaryUrl(group.cloudinary_public_id, { width: 120 });
-            const isEditing = editingId === group.id;
-            return (
-              <motion.div
-                key={group.id}
-                variants={itemReveal}
-                className="border border-mist rounded-sm bg-bone-light p-4"
-              >
-                {isEditing ? (
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                    <p className="text-xs font-mono uppercase tracking-widest text-lime-800">
-                      {group.key} · maps to step_type &ldquo;{group.step_type}&rdquo;
-                    </p>
-                    <p className="text-sm text-ink/55 -mt-2">
-                      These four steps are fixed (they map to each product&apos;s &quot;Routine step&quot;), so they can be
-                      renamed and re-described but not added or removed.
-                    </p>
-                    <Field
-                      label="Label"
-                      help="The step's display name in the homepage 'Shop by Step' section, e.g. Prep, Treat, Seal, Protect."
-                    >
-                      <input
-                        required
-                        placeholder="e.g. Treat"
-                        value={form.label}
-                        onChange={(e) => setForm({ ...form, label: e.target.value })}
-                        className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                      />
-                    </Field>
-                    <Field
-                      label="Description"
-                      help="One line on what this step does, shown under the label. Leave blank to use the default wording."
-                    >
-                      <textarea
-                        placeholder="e.g. Actives dosed at the concentration that actually changes skin."
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                        className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                        rows={2}
-                      />
-                    </Field>
-                    <div>
-                      <p className="text-sm font-semibold text-ink/80">Photo</p>
-                      <p className="text-sm text-ink/55 mb-2">Square image for this step&apos;s card and shop-page banner.</p>
-                      <ImageUploadField
-                        value={form.cloudinary_public_id}
-                        onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
-                        folder="derma-skincare/step-groups"
-                        aspect={1}
-                      />
-                    </div>
-
-                    <AnimatePresence>
-                      {error && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="text-sm text-orange-700"
-                        >
-                          {error}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-
-                    <div className="flex gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        type="submit"
-                        disabled={submitting}
-                        className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-                      >
-                        {submitting ? "Saving…" : "Save"}
-                      </motion.button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                        className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-sm bg-mist overflow-hidden shrink-0">
-                      {imageUrl && <img src={imageUrl} alt="" className="w-full h-full object-cover" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-ink">{group.label}</p>
-                      <p className="text-sm text-ink/60">
-                        {group.description || "No description yet."}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => openEdit(group)}
-                      className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink shrink-0"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+          {groups.map((group, index) => (
+            <ListRow
+              key={group.id}
+              thumb={<Thumb imageId={group.cloudinary_public_id} name={group.label} index={index} />}
+              title={group.label}
+              subtitle={group.description || "Using the default wording."}
+              stats={[{ label: "Shows", value: STEP_TYPE_NAMES[group.step_type] || group.step_type }]}
+              actions={<Button onClick={() => openEdit(group)}>Edit</Button>}
+            />
+          ))}
         </motion.div>
       )}
     </motion.div>

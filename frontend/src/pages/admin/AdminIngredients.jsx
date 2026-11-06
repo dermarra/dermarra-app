@@ -1,11 +1,26 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import client, { cloudinaryUrl } from "../../api/client";
+import { motion } from "framer-motion";
+import client from "../../api/client";
 import NameSlugFields from "../../components/NameSlugFields.jsx";
 import Field from "../../components/admin/Field.jsx";
 import { finalizeSlug } from "../../lib/slug.js";
 import ImageUploadField from "../../components/ImageUploadField.jsx";
-import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { containerReveal } from "../../components/Reveal.jsx";
+import {
+  Button,
+  EditorDrawer,
+  EmptyState,
+  FilterTabs,
+  ListRow,
+  LoadingState,
+  PageHeader,
+  SearchBox,
+  StatusBadge,
+  Thumb,
+  Toolbar,
+  inputClass,
+  matches,
+} from "../../components/admin/Kit.jsx";
 
 const emptyForm = { name: "", slug: "", description: "", cloudinary_public_id: null };
 
@@ -17,6 +32,8 @@ export default function AdminIngredients() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [rowState, setRowState] = useState({});
+  const [query, setQuery] = useState("");
+  const [photoFilter, setPhotoFilter] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -78,141 +95,101 @@ export default function AdminIngredients() {
     }
   };
 
+  const withPhoto = ingredients.filter((i) => i.cloudinary_public_id).length;
+  const shown = ingredients.filter(
+    (i) =>
+      (photoFilter === "" || (photoFilter === "with" ? i.cloudinary_public_id : !i.cloudinary_public_id)) &&
+      matches(query, i.name, i.slug, i.description)
+  );
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h2 className="font-display text-3xl text-ink">Ingredients</h2>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={openCreate}
-          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
-        >
-          + Add ingredient
-        </motion.button>
-      </div>
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
+      <PageHeader
+        title="Ingredients"
+        description="Active ingredients shoppers can browse by. Each one gets its own page and a homepage card."
+        actions={
+          <Button variant="primary" size="lg" onClick={openCreate}>
+            + Add ingredient
+          </Button>
+        }
+      >
+        <Toolbar>
+          <FilterTabs
+            value={photoFilter}
+            onChange={setPhotoFilter}
+            options={[
+              { value: "", label: "All", count: ingredients.length },
+              { value: "with", label: "With photo", count: withPhoto },
+              { value: "without", label: "No photo", count: ingredients.length - withPhoto, countTone: "warn" },
+            ]}
+          />
+          <SearchBox value={query} onChange={setQuery} placeholder="Search ingredients" />
+        </Toolbar>
+      </PageHeader>
 
-      <AnimatePresence>
-        {editingId && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
-          >
-            <h3 className="font-semibold text-xl text-ink">
-              {editingId === "new" ? "New ingredient" : "Edit ingredient"}
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <NameSlugFields
-                form={form}
-                setForm={setForm}
-                urlPrefix="/shop/ingredient/"
-                namePlaceholder="e.g. Niacinamide"
-                nameHelp="The ingredient's common name, e.g. Niacinamide or Tranexamic Acid -- no strengths here (those go in a product's Key actives)."
-              />
-            </div>
-
-            <Field
-              label="Description"
-              help="One or two sentences on what this ingredient does for skin, e.g. 'Fades dark spots and evens tone.' Shown on its Shop by Ingredient page."
-            >
-              <textarea
-                placeholder="e.g. A gentle brightener that fades dark spots and evens skin tone."
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-                rows={2}
-              />
-            </Field>
-
-            <div>
-              <p className="text-sm font-semibold text-ink/80">Cover photo</p>
-              <p className="text-sm text-ink/55 mb-2">
-                Square image used on the homepage &quot;Shop by ingredient&quot; section and this ingredient&apos;s page banner.
-              </p>
-              <ImageUploadField
-                value={form.cloudinary_public_id}
-                onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
-                folder="derma-skincare/ingredients"
-                aspect={1}
-              />
-            </div>
-
-            {error && <p className="text-sm text-orange-700">{error}</p>}
-
-            <div className="flex gap-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-              >
-                {submitting ? "Saving…" : "Save"}
-              </motion.button>
-              <button
-                type="button"
-                onClick={() => setEditingId(null)}
-                className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
+      <EditorDrawer
+        open={!!editingId}
+        title={editingId === "new" ? "New ingredient" : "Edit ingredient"}
+        description="Shown on the homepage “Shop by ingredient” cards and the ingredient’s own page."
+        onClose={() => setEditingId(null)}
+        onSubmit={handleSubmit}
+        saving={submitting}
+        error={error}
+        submitLabel={editingId === "new" ? "Add ingredient" : "Save changes"}
+      >
+        <NameSlugFields
+          form={form}
+          setForm={setForm}
+          urlPrefix="/shop/ingredient/"
+          namePlaceholder="e.g. Niacinamide"
+          nameHelp="Its common name. Strengths (e.g. 10%) go on the product instead."
+        />
+        <Field label="Description" help="One or two sentences on what it does for skin.">
+          <textarea
+            placeholder="e.g. A gentle brightener that fades dark spots and evens skin tone."
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className={`${inputClass} min-h-[6rem]`}
+            rows={3}
+          />
+        </Field>
+        <Field label="Cover photo" help="Square. Used on the homepage card and as the page banner.">
+          <ImageUploadField
+            value={form.cloudinary_public_id}
+            onChange={(publicId) => setForm({ ...form, cloudinary_public_id: publicId })}
+            folder="derma-skincare/ingredients"
+            aspect={1}
+            removable
+            hint="Square photo, at least 800 × 800px"
+          />
+        </Field>
+      </EditorDrawer>
 
       {loading ? (
-        <p className="text-ink/60 text-sm">Loading ingredients…</p>
-      ) : ingredients.length === 0 ? (
-        <p className="text-ink/60 text-sm">No ingredients yet.</p>
+        <LoadingState>Loading ingredients…</LoadingState>
+      ) : shown.length === 0 ? (
+        <EmptyState>{ingredients.length ? "No ingredients match." : "No ingredients yet -- add the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
-          {ingredients.map((ingredient) => {
+          {shown.map((ingredient, index) => {
             const state = rowState[ingredient.id];
-            const imageUrl = cloudinaryUrl(ingredient.cloudinary_public_id, { width: 80 });
             return (
-              <motion.div
+              <ListRow
                 key={ingredient.id}
-                variants={itemReveal}
-                className="flex items-center justify-between gap-4 bg-white border border-mist rounded-xl px-5 py-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-lg bg-mist overflow-hidden shrink-0">
-                    {imageUrl && <img src={imageUrl} alt="" className="w-full h-full object-cover" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{ingredient.name}</p>
-                    <p className="text-sm text-ink/60">{ingredient.slug}</p>
-                    {state && state !== "deleting" && (
-                      <p className="text-sm text-orange-700 mt-1">{state}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => openEdit(ingredient)}
-                    className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(ingredient.id)}
-                    disabled={state === "deleting"}
-                    className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
-                  >
-                    {state === "deleting" ? "Deleting…" : "Delete"}
-                  </button>
-                </div>
-              </motion.div>
+                thumb={<Thumb imageId={ingredient.cloudinary_public_id} name={ingredient.name} index={index} />}
+                title={ingredient.name}
+                subtitle={ingredient.description || `/shop/ingredient/${ingredient.slug}`}
+                note={state && state !== "deleting" ? state : null}
+                badge={!ingredient.cloudinary_public_id && <StatusBadge tone="warn">No photo</StatusBadge>}
+                actions={
+                  <>
+                    <Button onClick={() => openEdit(ingredient)}>Edit</Button>
+                    <Button variant="danger" onClick={() => handleDelete(ingredient.id)} disabled={state === "deleting"}>
+                      {state === "deleting" ? "Deleting…" : "Delete"}
+                    </Button>
+                  </>
+                }
+              />
             );
           })}
         </motion.div>

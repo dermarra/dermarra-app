@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   DndContext,
   PointerSensor,
@@ -20,7 +20,24 @@ import client, { cloudinaryUrl } from "../../api/client";
 import NameSlugFields from "../../components/NameSlugFields.jsx";
 import Field from "../../components/admin/Field.jsx";
 import { finalizeSlug } from "../../lib/slug.js";
-import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { containerReveal } from "../../components/Reveal.jsx";
+import {
+  Button,
+  EditorDrawer,
+  EmptyState,
+  FilterTabs,
+  FormSection,
+  ListRow,
+  LoadingState,
+  PageHeader,
+  SearchBox,
+  StatusBadge,
+  Thumb,
+  Toggle,
+  Toolbar,
+  inputClass,
+  selectClass,
+} from "../../components/admin/Kit.jsx";
 import { getCroppedBlob } from "../../lib/imageCrop.js";
 
 // The sortable image gallery below (SortableImageTile) deliberately stays
@@ -37,7 +54,7 @@ const STEP_LABELS = {
 };
 
 const STOCK_FILTERS = [
-  { value: "", label: "All stock" },
+  { value: "", label: "Any stock" },
   { value: "in_stock", label: "In stock" },
   { value: "out_of_stock", label: "Out of stock" },
 ];
@@ -54,15 +71,6 @@ const emptyForm = {
   ingredient_ids: [],
   images: [],
 };
-
-function StockBadge({ product }) {
-  const cls = product.in_stock ? "text-lime-800 border-lime/30" : "text-orange-700 border-orange-700/30";
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border ${cls}`}>
-      {product.in_stock ? "In stock" : "Out of stock"}
-    </span>
-  );
-}
 
 // M-Pesa only charges whole shillings, and a blank field must never save as
 // KES 0 (Number("") === 0) -- returns cents, or null if invalid.
@@ -126,7 +134,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
 
   return (
     <div
-      className="flex flex-col gap-1 border border-mist rounded-sm p-2"
+      className="flex flex-col gap-4 p-5 bg-white border border-mist rounded-lg"
       onKeyDown={(e) => {
         // These inputs sit inside the product <form>: Enter would otherwise
         // submit the whole product (closing the editor, edit lost).
@@ -136,70 +144,58 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
         }
       }}
     >
-      <div className="flex flex-wrap items-end gap-2">
-        <Field label="Size label">
-          <input
-            value={form.label}
-            onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-            placeholder="e.g. 30ml"
-            className="border border-mist rounded-sm px-2 py-1 text-sm w-28 font-normal"
-          />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Field label="Size">
+          <input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="e.g. 30ml" className={inputClass} />
         </Field>
         <Field label="SKU">
           <input
             value={form.sku}
             onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))}
             placeholder="e.g. AAS-30ML"
-            className="border border-mist rounded-sm px-2 py-1 text-sm w-32 font-mono font-normal"
+            className={`${inputClass} uppercase`}
           />
         </Field>
-        <Field label="Price (KES)">
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={form.price_kes}
-            onChange={(e) => setForm((f) => ({ ...f, price_kes: e.target.value }))}
-            placeholder="3200"
-            className="border border-mist rounded-sm px-2 py-1 text-sm w-24 font-normal"
-          />
+        <Field label="Price">
+          <KesInput value={form.price_kes} onChange={(v) => setForm((f) => ({ ...f, price_kes: v }))} />
         </Field>
-        <label className="flex items-center gap-1 text-sm pb-1.5" title="Untick to stop selling this size without deleting it.">
-          <input
-            type="checkbox"
-            checked={form.is_active}
-            onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-          />
-          On sale
-        </label>
-        <Link
-          to={`/admin/inventory/${variant.id}`}
-          className="text-sm text-ink/60 underline decoration-dotted pb-1.5"
-          title="Receive production batches and adjust stock for this size"
-        >
-          Manage stock ({variant.available ?? 0} available) →
-        </Link>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving || !dirty}
-          title={dirty ? "Save changes to this size" : "Change something first"}
-          className="px-3 py-1 rounded-sm bg-blue text-ink text-xs font-semibold disabled:opacity-50"
-        >
-          {saving ? "Saving…" : "Save"}
-        </button>
-        <button
-          type="button"
-          onClick={remove}
-          disabled={saving}
-          className="px-3 py-1 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
-        >
-          Delete
-        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Toggle checked={form.is_active} onChange={(v) => setForm((f) => ({ ...f, is_active: v }))} label="On sale" />
+          <Link to={`/admin/inventory/${variant.id}`} className="text-sm font-semibold text-blue-700 underline underline-offset-2">
+            {variant.available ?? 0} available · Manage stock
+          </Link>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="primary" onClick={save} disabled={saving || !dirty}>
+            {saving ? "Saving…" : dirty ? "Save size" : "Saved"}
+          </Button>
+          <Button variant="danger" onClick={remove} disabled={saving}>
+            Delete
+          </Button>
+        </div>
       </div>
       {error && <p className="text-sm text-orange-700">{error}</p>}
     </div>
+  );
+}
+
+/** Whole-shilling price input with "KES" shown inside the box. */
+function KesInput({ value, onChange, placeholder = "3200" }) {
+  return (
+    <span className="flex items-center rounded-lg border border-ink/20 bg-white focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/30">
+      <span className="pl-4 text-ink/70">KES</span>
+      <input
+        type="number"
+        min="1"
+        step="1"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-base text-ink outline-none"
+      />
+    </span>
   );
 }
 
@@ -217,34 +213,32 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative border rounded-sm overflow-hidden ${
-        image.is_primary ? "border-blue-600" : "border-mist"
-      } ${isDragging ? "opacity-50 z-10" : ""}`}
+      className={`relative flex flex-col bg-white border rounded-lg overflow-hidden ${
+        image.is_primary ? "border-blue ring-2 ring-blue/30" : "border-mist"
+      } ${isDragging ? "opacity-60 z-10 shadow-lg" : ""}`}
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
-        <img src={url} alt="" className="w-full h-24 object-cover" />
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder">
+        <img src={url} alt="" className="w-full aspect-square object-cover bg-mist" />
       </div>
       {image.is_primary && (
-        <span className="absolute top-1 left-1 text-xs font-semibold bg-blue text-ink px-1.5 py-0.5 rounded-sm">
-          Primary
-        </span>
+        <span className="absolute top-2 left-2 px-2 py-1 rounded-md bg-blue text-ink text-xs font-semibold leading-none">Main photo</span>
       )}
-      <div className="flex">
+      <div className="flex border-t border-mist">
         {!image.is_primary && (
           <button
             type="button"
             onClick={() => onSetPrimary(image.id)}
             disabled={busy}
-            className="flex-1 text-sm py-1 border-t border-mist text-ink/70 disabled:opacity-50"
+            className="flex-1 h-10 text-sm font-semibold text-ink hover:bg-blue-50 disabled:opacity-50"
           >
-            Set primary
+            Make main
           </button>
         )}
         <button
           type="button"
           onClick={() => onDelete(image.id)}
           disabled={busy}
-          className="flex-1 text-sm py-1 border-t border-mist text-orange-700 disabled:opacity-50"
+          className="flex-1 h-10 text-sm font-semibold text-orange-700 hover:bg-orange-50 disabled:opacity-50 border-l border-mist first:border-l-0"
         >
           Delete
         </button>
@@ -646,516 +640,336 @@ export default function AdminProducts() {
     return sorted;
   }, [products, search, stepTypeFilter, stockFilter, sortKey, sortDir]);
 
-  const toggleSort = (key) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  };
 
-  const sortIndicator = (key) => (sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "");
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+  const STEP_NAMES = { cleanser: "Cleansers", serum: "Serums", barrier_cream: "Barrier creams", spf: "SPF" };
+  const onHand = (p) => (p.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0);
+  const productStatus = (p) =>
+    !p.is_active
+      ? { label: "Hidden", tone: "neutral" }
+      : !(p.variants || []).length
+      ? { label: "No sizes", tone: "warn" }
+      : p.in_stock
+      ? { label: "In stock", tone: "good" }
+      : { label: "Out of stock", tone: "bad" };
+  const chip = (selected) =>
+    `h-10 px-4 rounded-lg border text-[15px] font-semibold transition-colors ${
+      selected ? "bg-ink border-ink text-white" : "bg-white border-ink/20 text-ink hover:border-ink"
+    }`;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h2 className="font-display text-3xl text-ink">Products</h2>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={openCreate}
-          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
-        >
-          + Add product
-        </motion.button>
-      </div>
-
-      {savedNotice && (
-        <p className="mb-4 text-sm text-lime-800 border border-lime/40 rounded-sm px-3 py-2">{savedNotice}</p>
-      )}
-
-      <AnimatePresence>
-      {editingId && (
-        <motion.form
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-3 border border-mist rounded-sm p-4 mb-6 bg-bone-light overflow-hidden"
-        >
-          <h3 className="font-semibold text-xl">
-            {editingId === "new" ? "New product" : "Edit product"}
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <NameSlugFields
-              form={form}
-              setForm={setForm}
-              urlPrefix="/shop/"
-              namePlaceholder="e.g. Anti Ageing Serum"
-              nameHelp="The product name customers see, e.g. Anti Ageing Serum. Don't include the size -- sizes are added below."
-            />
-            <Field
-              label="Routine step"
-              help="Which step of the routine this product is: cleanser (prep), serum (treat), barrier cream (seal) or SPF (protect). Decides where it appears under Shop by Step."
-            >
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }}>
+      <PageHeader
+        title="Products"
+        description="Everything in the shop. Each product has one or more sizes, each priced and stocked separately."
+        actions={
+          <Button variant="primary" size="lg" onClick={openCreate}>
+            + Add product
+          </Button>
+        }
+      >
+        <Toolbar>
+          <FilterTabs
+            value={stepTypeFilter}
+            onChange={setStepTypeFilter}
+            label="Routine step"
+            options={[
+              { value: "", label: "All", count: products.length },
+              ...STEP_TYPES.map((t) => ({ value: t, label: STEP_NAMES[t], count: products.filter((p) => p.step_type === t).length })),
+            ]}
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="w-44">
+              <span className="sr-only">Stock</span>
+              <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)} className={`${selectClass} h-12`}>
+                {STOCK_FILTERS.map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="w-48">
+              <span className="sr-only">Sort by</span>
               <select
-                value={form.step_type}
-                onChange={(e) => setForm({ ...form, step_type: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+                value={`${sortKey}:${sortDir}`}
+                onChange={(e) => {
+                  const [k, d] = e.target.value.split(":");
+                  setSortKey(k);
+                  setSortDir(d);
+                }}
+                className={`${selectClass} h-12`}
               >
+                <option value="name:asc">Name A–Z</option>
+                <option value="name:desc">Name Z–A</option>
+                <option value="price:asc">Price: low to high</option>
+                <option value="price:desc">Price: high to low</option>
+                <option value="stock:asc">Stock: lowest first</option>
+                <option value="stock:desc">Stock: highest first</option>
+                <option value="status:asc">Hidden first</option>
+              </select>
+            </label>
+            <SearchBox value={search} onChange={setSearch} placeholder="Search products" />
+          </div>
+        </Toolbar>
+      </PageHeader>
+
+      {savedNotice && <p className="mb-5 px-4 py-3 rounded-lg bg-lime-100 text-lime-900 font-medium">{savedNotice}</p>}
+
+      <EditorDrawer
+        open={!!editingId}
+        wide
+        title={editingId === "new" ? "New product" : `Edit ${form.name || "product"}`}
+        description={editingId === "new" ? "Save it first, then add its sizes and photos." : "Sizes and photos save as you change them; the rest saves with the button below."}
+        onClose={() => setEditingId(null)}
+        onSubmit={handleSubmit}
+        saving={submitting}
+        error={error}
+        submitLabel={editingId === "new" ? "Save and add sizes" : "Save changes"}
+      >
+        <FormSection title="Basics">
+          <NameSlugFields
+            form={form}
+            setForm={setForm}
+            urlPrefix="/shop/"
+            namePlaceholder="e.g. Anti Ageing Serum"
+            nameHelp="Without the size -- sizes are added below."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="Routine step" help="Decides where it shows under Shop by Step.">
+              <select value={form.step_type} onChange={set("step_type")} className={selectClass}>
                 {STEP_TYPES.map((t) => (
-                  <option key={t} value={t}>{STEP_LABELS[t] || t}</option>
+                  <option key={t} value={t}>
+                    {STEP_LABELS[t] || t}
+                  </option>
                 ))}
               </select>
             </Field>
-            <Field
-              label="Key actives"
-              help="The headline active ingredients with strengths, shown in small caps on the product card, e.g. 10% Niacinamide · 2% Retinaldehyde."
-            >
-              <input
-                placeholder="e.g. 0.1% Retinaldehyde, Copper Peptides"
-                value={form.key_actives}
-                onChange={(e) => setForm({ ...form, key_actives: e.target.value })}
-                className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              />
+            <Field label="Key actives" help="With strengths, shown on the product card.">
+              <input placeholder="e.g. 0.1% Retinaldehyde, Copper Peptides" value={form.key_actives} onChange={set("key_actives")} className={inputClass} />
             </Field>
           </div>
-
-          <Field
-            label="Short description"
-            help="One sentence under the product name on its page, e.g. 'Smooths fine lines and firms skin.' Keep it under ~120 characters."
-          >
+          <Field label="Short description" help="One sentence under the name, under ~120 characters.">
             <textarea
               placeholder="e.g. Smooths fine lines and firms skin overnight."
               value={form.short_description}
-              onChange={(e) => setForm({ ...form, short_description: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
+              onChange={set("short_description")}
+              className={`${inputClass} min-h-[5rem]`}
               rows={2}
             />
           </Field>
-
-          <Field
-            label="Full description"
-            help="The detailed write-up on the product page: what it does, who it's for, how to use it. Line breaks are kept."
-          >
+          <Field label="Full description" help="What it does, who it's for, how to use it. Line breaks are kept.">
             <textarea
               placeholder="What it does, who it's for, how and when to apply it…"
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="border border-mist rounded-sm px-3 py-2 text-sm font-normal text-ink"
-              rows={5}
+              onChange={set("description")}
+              className={`${inputClass} min-h-[9rem]`}
+              rows={6}
             />
           </Field>
+        </FormSection>
 
-          <div>
-            <p className="text-sm font-semibold text-ink/80">Skin concerns</p>
-            <p className="text-sm text-ink/55 mb-2">
-              Tap every concern this product helps with -- it will be listed on that concern&apos;s shop page.
-              Manage the list under Admin → Concerns.
-            </p>
+        <FormSection title="Where it's listed">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-semibold text-ink">Skin concerns it helps with</p>
             <div className="flex flex-wrap gap-2">
               {concerns.map((c) => (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => toggleConcern(c.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs border ${
-                    form.skin_concern_ids.includes(c.id)
-                      ? "bg-ink text-bone-light border-ink"
-                      : "border-mist text-ink/70"
-                  }`}
-                >
-                  {c.name}
+                <button type="button" key={c.id} onClick={() => toggleConcern(c.id)} aria-pressed={form.skin_concern_ids.includes(c.id)} className={chip(form.skin_concern_ids.includes(c.id))}>
+                  {c.name.trim()}
                 </button>
               ))}
             </div>
           </div>
-
-          <div>
-            <p className="text-sm font-semibold text-ink/80">Ingredients</p>
-            <p className="text-sm text-ink/55 mb-2">
-              Tap the key ingredients it contains, so it shows under Shop by Ingredient. Manage the list under
-              Admin → Ingredients.
-            </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-semibold text-ink">Key ingredients it contains</p>
             <div className="flex flex-wrap gap-2">
               {ingredients.map((i) => (
-                <button
-                  type="button"
-                  key={i.id}
-                  onClick={() => toggleIngredient(i.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs border ${
-                    form.ingredient_ids.includes(i.id)
-                      ? "bg-ink text-bone-light border-ink"
-                      : "border-mist text-ink/70"
-                  }`}
-                >
+                <button type="button" key={i.id} onClick={() => toggleIngredient(i.id)} aria-pressed={form.ingredient_ids.includes(i.id)} className={chip(form.ingredient_ids.includes(i.id))}>
                   {i.name}
                 </button>
               ))}
             </div>
           </div>
+          <Toggle
+            checked={form.is_active}
+            onChange={(v) => setForm({ ...form, is_active: v })}
+            label="Show in the shop"
+            help="Turn off to hide it; orders and stock records are kept."
+          />
+        </FormSection>
 
-          <div>
-            <p className="text-sm font-semibold text-ink/80">Sizes &amp; prices</p>
-            <p className="text-sm text-ink/55 mb-2">
-              Each size is sold, priced and stocked separately. A product needs at least one active size to
-              appear in the shop. After adding a size, use &quot;Manage stock&quot; to receive a production batch.
-            </p>
-            {editingId === "new" ? (
-              <p className="text-sm text-ink/60">Save the product first, then add sizes.</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {(currentProduct()?.variants || []).length === 0 && (
-                  <p className="text-xs text-orange-700 border border-orange-700/40 rounded-sm px-3 py-2">
-                    This product has no sizes yet, so customers can&apos;t see or buy it. Add at least one size
-                    (label, SKU and price) below, then receive stock for it under Inventory.
-                  </p>
-                )}
-                {(currentProduct()?.variants || []).map((v) => (
-                  <VariantRow
-                    key={v.id}
-                    productId={editingId}
-                    variant={v}
-                    onSaved={handleVariantSaved}
-                    onDeleted={handleVariantDeleted}
-                  />
-                ))}
-                {/* Not a <form>: this sits inside the product <form>, and a nested
-                    form is ignored by browsers -- "+ Add size" used to submit the
-                    product form instead (saved + closed the editor, size lost). */}
-                <div
-                  className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_8rem_auto] gap-2 items-start border border-dashed border-mist rounded-sm p-2"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.target.tagName === "INPUT") {
-                      e.preventDefault();
-                      handleAddVariant(e);
-                    }
-                  }}
-                >
-                  <Field label="Size label" help="What the customer picks, e.g. 30ml, 50ml, Travel size.">
-                    <input
-                      value={newVariantForm.label}
-                      onChange={(e) => setNewVariantForm((f) => ({ ...f, label: e.target.value }))}
-                      placeholder="e.g. 30ml"
-                      className="border border-mist rounded-sm px-2 py-1.5 text-sm font-normal"
-                    />
+        <FormSection title="Sizes and prices">
+          {editingId === "new" ? (
+            <p className="text-ink/70">Save the product first, then add its sizes here.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {(currentProduct()?.variants || []).length === 0 && (
+                <p className="px-4 py-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800">
+                  No sizes yet, so customers can&apos;t see or buy it. Add one below, then receive stock under Inventory.
+                </p>
+              )}
+              {(currentProduct()?.variants || []).map((v) => (
+                <VariantRow key={v.id} productId={editingId} variant={v} onSaved={handleVariantSaved} onDeleted={handleVariantDeleted} />
+              ))}
+              {/* Not a <form>: this sits inside the product <form>, and a nested
+                  form is ignored by browsers -- "+ Add size" used to submit the
+                  product form instead (saved + closed the editor, size lost). */}
+              <div
+                className="flex flex-col gap-4 p-5 border-2 border-dashed border-ink/20 rounded-lg"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.target.tagName === "INPUT") {
+                    e.preventDefault();
+                    handleAddVariant(e);
+                  }
+                }}
+              >
+                <p className="text-sm font-semibold text-ink">Add a size</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label="Size" help="e.g. 30ml or Travel size">
+                    <input value={newVariantForm.label} onChange={(e) => setNewVariantForm((f) => ({ ...f, label: e.target.value }))} placeholder="e.g. 30ml" className={inputClass} />
                   </Field>
-                  <Field label="SKU" help="Your unique stock code for this size, e.g. AAS-30ML. Never reuse one.">
+                  <Field label="SKU" help="Unique stock code, never reused">
                     <input
                       value={newVariantForm.sku}
                       onChange={(e) => setNewVariantForm((f) => ({ ...f, sku: e.target.value.toUpperCase() }))}
                       placeholder="e.g. AAS-30ML"
-                      className="border border-mist rounded-sm px-2 py-1.5 text-sm font-mono font-normal"
+                      className={`${inputClass} uppercase`}
                     />
                   </Field>
-                  <Field label="Price (KES)" help="Whole shillings, e.g. 3200.">
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={newVariantForm.price_kes}
-                      onChange={(e) => setNewVariantForm((f) => ({ ...f, price_kes: e.target.value }))}
-                      placeholder="3200"
-                      className="border border-mist rounded-sm px-2 py-1.5 text-sm font-normal"
-                    />
+                  <Field label="Price" help="Whole shillings">
+                    <KesInput value={newVariantForm.price_kes} onChange={(v) => setNewVariantForm((f) => ({ ...f, price_kes: v }))} />
                   </Field>
-                  <button
-                    type="button"
-                    onClick={handleAddVariant}
-                    disabled={addingVariant}
-                    className="sm:mt-5 px-3 py-2 rounded-sm bg-blue text-ink text-xs font-semibold disabled:opacity-50"
-                  >
-                    {addingVariant ? "Adding…" : "+ Add size"}
-                  </button>
                 </div>
-                {newVariantError && <p className="text-sm text-orange-700">{newVariantError}</p>}
+                <div className="flex items-center gap-4">
+                  <Button variant="secondary" onClick={handleAddVariant} disabled={addingVariant}>
+                    {addingVariant ? "Adding…" : "+ Add size"}
+                  </Button>
+                  {newVariantError && <p className="text-sm text-orange-700">{newVariantError}</p>}
+                </div>
               </div>
-            )}
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold text-ink/80">Images</p>
-            <p className="text-sm text-ink/55 mb-2">
-              Square product photos (you&apos;ll be asked to crop). The &quot;Primary&quot; one is used on shop cards;
-              drag to reorder the gallery. All sizes share these photos.
-            </p>
-            {editingId === "new" ? (
-              <p className="text-sm text-ink/60">Save the product first, then add images.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {form.images.length > 0 && (
-                  <DndContext
-                    sensors={dndSensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleGalleryDragEnd}
-                  >
-                    <SortableContext items={form.images.map((i) => i.id)} strategy={rectSortingStrategy}>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {form.images.map((image) => (
-                          <SortableImageTile
-                            key={image.id}
-                            image={image}
-                            onSetPrimary={handleSetPrimary}
-                            onDelete={handleDeleteImage}
-                            busy={imageBusy}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                )}
-
-                {cropFile ? (
-                  <div className="border border-mist rounded-sm p-3">
-                    <div className="relative w-full h-56 bg-ink/5">
-                      <Cropper
-                        image={cropImageSrc}
-                        crop={crop}
-                        zoom={zoom}
-                        aspect={1}
-                        onCropChange={setCrop}
-                        onZoomChange={setZoom}
-                        onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
-                      />
-                    </div>
-                    <input
-                      type="range"
-                      min={1}
-                      max={3}
-                      step={0.1}
-                      value={zoom}
-                      onChange={(e) => setZoom(Number(e.target.value))}
-                      className="w-full mt-2"
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        type="button"
-                        onClick={confirmCrop}
-                        disabled={imageBusy}
-                        className="px-3 py-1.5 rounded-sm bg-blue text-ink text-xs font-semibold disabled:opacity-50"
-                      >
-                        {imageBusy ? "Uploading…" : "Confirm crop & upload"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelCrop}
-                        className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleSelectFile}
-                    className="text-sm text-ink/70"
-                  />
-                )}
-                {imageError && <p className="text-sm text-orange-700">{imageError}</p>}
-              </div>
-            )}
-          </div>
-
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={form.is_active}
-              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-            />
-            <span>
-              Active (visible in shop)
-              <span className="block text-sm text-ink/55">
-                Untick to hide the product without deleting it -- order history and stock records are kept.
-              </span>
-            </span>
-          </label>
-
-          {error && <p className="text-sm text-orange-700">{error}</p>}
-
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
-            >
-              {submitting ? "Saving…" : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditingId(null)}
-              className="px-4 py-2 rounded-sm border border-mist text-ink/70 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </motion.form>
-      )}
-      </AnimatePresence>
-
-      <div className="flex flex-col sm:flex-row gap-2 mb-3">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name…"
-          className="border border-mist rounded-sm px-3 py-2 text-sm sm:w-64"
-        />
-        <div className="flex gap-2 overflow-x-auto">
-          {[{ value: "", label: "All types" }, ...STEP_TYPES.map((t) => ({ value: t, label: t }))].map(
-            (f) => (
-              <button
-                key={f.value}
-                onClick={() => setStepTypeFilter(f.value)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs border ${
-                  stepTypeFilter === f.value ? "bg-ink text-bone-light border-ink" : "border-mist text-ink/70"
-                }`}
-              >
-                {f.label}
-              </button>
-            )
+            </div>
           )}
-        </div>
-        <div className="flex gap-2 overflow-x-auto">
-          {STOCK_FILTERS.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setStockFilter(f.value)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs border ${
-                stockFilter === f.value ? "bg-ink text-bone-light border-ink" : "border-mist text-ink/70"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        </FormSection>
+
+        <FormSection title="Photos">
+          {editingId === "new" ? (
+            <p className="text-ink/70">Save the product first, then add photos here.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="-mt-2 text-sm text-ink/70">Square photos, shared by every size. The main photo is used on shop cards; drag to reorder.</p>
+              {cropFile ? (
+                <div className="flex flex-col gap-3 max-w-md">
+                  <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-ink/5">
+                    <Cropper
+                      image={cropImageSrc}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
+                    />
+                  </div>
+                  <label className="flex items-center gap-3 text-sm text-ink/70">
+                    Zoom
+                    <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-blue" />
+                  </label>
+                  <div className="flex gap-2">
+                    <Button variant="primary" onClick={confirmCrop} disabled={imageBusy}>
+                      {imageBusy ? "Uploading…" : "Use this crop"}
+                    </Button>
+                    <Button onClick={cancelCrop}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleGalleryDragEnd}>
+                  <SortableContext items={form.images.map((i) => i.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {form.images.map((image) => (
+                        <SortableImageTile key={image.id} image={image} onSetPrimary={handleSetPrimary} onDelete={handleDeleteImage} busy={imageBusy} />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={imageBusy}
+                        className="flex flex-col items-center justify-center gap-2 aspect-square rounded-lg border-2 border-dashed border-ink/25 bg-bone-light text-center hover:border-blue hover:bg-blue-50 transition-colors"
+                      >
+                        <span className="text-3xl leading-none text-ink/70">+</span>
+                        <span className="text-sm font-semibold">Add photo</span>
+                      </button>
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleSelectFile} className="sr-only" tabIndex={-1} />
+              {imageError && <p className="text-sm text-orange-700">{imageError}</p>}
+            </div>
+          )}
+        </FormSection>
+      </EditorDrawer>
 
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 mb-3 px-4 py-2 border border-mist rounded-sm bg-bone-light">
-          <span className="text-sm text-ink/70">{selectedIds.size} selected</span>
-          <button
-            onClick={() => bulkSetActive(true)}
-            disabled={bulkBusy}
-            className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink disabled:opacity-50"
-          >
-            Activate
-          </button>
-          <button
-            onClick={() => bulkSetActive(false)}
-            disabled={bulkBusy}
-            className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink disabled:opacity-50"
-          >
-            Deactivate
-          </button>
+        <div className="flex flex-wrap items-center gap-3 mb-4 px-5 py-3 bg-ink text-white rounded-lg">
+          <span className="font-semibold">{selectedIds.size} selected</span>
+          <span className="flex-1" />
+          <Button variant="quiet" onClick={() => bulkSetActive(true)} disabled={bulkBusy}>
+            Show in shop
+          </Button>
+          <Button variant="quiet" onClick={() => bulkSetActive(false)} disabled={bulkBusy}>
+            Hide from shop
+          </Button>
         </div>
       )}
 
       {loading ? (
-        <p className="text-ink/60 text-sm">Loading products…</p>
+        <LoadingState>Loading products…</LoadingState>
       ) : visibleProducts.length === 0 ? (
-        <p className="text-ink/60 text-sm">No products match this filter.</p>
+        <EmptyState>{products.length ? "No products match." : "No products yet -- add the first one."}</EmptyState>
       ) : (
-        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-mist text-left text-xs text-ink/60 uppercase tracking-wide">
-                <th className="py-2 pr-2 w-8"></th>
-                <th className="py-2 pr-2 w-14"></th>
-                <th className="py-2 pr-2 cursor-pointer select-none" onClick={() => toggleSort("name")}>
-                  Name{sortIndicator("name")}
-                </th>
-                <th className="py-2 pr-2 cursor-pointer select-none" onClick={() => toggleSort("price")}>
-                  Price{sortIndicator("price")}
-                </th>
-                <th className="py-2 pr-2 cursor-pointer select-none" onClick={() => toggleSort("stock")}>
-                  Stock{sortIndicator("stock")}
-                </th>
-                <th className="py-2 pr-2 cursor-pointer select-none" onClick={() => toggleSort("status")}>
-                  Status{sortIndicator("status")}
-                </th>
-                <th className="py-2 pr-2"></th>
-              </tr>
-            </thead>
-            <motion.tbody key={`${sortKey}-${sortDir}`} initial="hidden" animate="show" variants={containerReveal}>
-              {visibleProducts.map((product) => {
-                const state = rowState[product.id];
-                const thumbUrl = cloudinaryUrl(product.cloudinary_public_id, { width: 80 });
-                return (
-                  <motion.tr key={product.id} variants={itemReveal} className="border-b border-mist align-top">
-                    <td className="py-2 pr-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(product.id)}
-                        onChange={() => toggleSelected(product.id)}
-                      />
-                    </td>
-                    <td className="py-2 pr-2">
-                      <div className="w-10 h-10 rounded-sm bg-mist overflow-hidden">
-                        {thumbUrl && <img src={thumbUrl} alt="" className="w-full h-full object-cover" />}
-                      </div>
-                    </td>
-                    <td className="py-2 pr-2">
-                      <p className="font-semibold text-ink">{product.name}</p>
-                      <p className="text-sm text-ink/60">{product.step_type}</p>
-                      {state && state !== "saving" && state !== "deleting" && (
-                        <p className="text-sm text-orange-700 mt-1">{state}</p>
-                      )}
-                    </td>
-                    <td className="py-2 pr-2">
-                      {product.price_from_cents == null ? (
-                        <span className="text-ink/40">No sizes yet</span>
-                      ) : (
-                        <>
-                          {product.variants?.length > 1 ? "From " : ""}
-                          KES {(product.price_from_cents / 100).toFixed(0)}
-                        </>
-                      )}
-                    </td>
-                    <td className="py-2 pr-2">
-                      <button
-                        onClick={() => openEdit(product)}
-                        className="text-ink hover:text-blue-700 underline decoration-dotted"
-                      >
-                        {(product.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0)}
-                      </button>
-                      <div><StockBadge product={product} /></div>
-                    </td>
-                    <td className="py-2 pr-2 text-sm text-ink/60">
-                      {product.is_active ? "Active" : "Inactive"}
-                    </td>
-                    <td className="py-2 pr-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openEdit(product)}
-                          className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          disabled={state === "deleting"}
-                          className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
-                        >
-                          {state === "deleting" ? "Deleting…" : "Delete"}
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </motion.tbody>
-          </table>
-        </div>
+        <motion.div key={`${sortKey}-${sortDir}`} initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
+          {visibleProducts.map((product, index) => {
+            const state = rowState[product.id];
+            const status = productStatus(product);
+            const sizes = (product.variants || []).length;
+            return (
+              <ListRow
+                key={product.id}
+                thumb={
+                  <span className="flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(product.id)}
+                      onChange={() => toggleSelected(product.id)}
+                      aria-label={`Select ${product.name}`}
+                      className="w-5 h-5 rounded accent-blue"
+                    />
+                    <Thumb imageId={product.cloudinary_public_id} name={product.name} index={index} />
+                  </span>
+                }
+                title={product.name}
+                subtitle={STEP_LABELS[product.step_type] || product.step_type}
+                note={state && state !== "saving" && state !== "deleting" ? state : null}
+                stats={[
+                  {
+                    label: sizes > 1 ? "Price from" : "Price",
+                    value: product.price_from_cents == null ? "—" : `KES ${Math.round(product.price_from_cents / 100).toLocaleString("en-KE")}`,
+                  },
+                  { label: "Sizes", value: sizes, tone: sizes === 0 ? "warn" : undefined },
+                  { label: "On hand", value: onHand(product).toLocaleString("en-KE") },
+                ]}
+                badge={<StatusBadge tone={status.tone}>{status.label}</StatusBadge>}
+                actions={
+                  <>
+                    <Button onClick={() => openEdit(product)}>Edit</Button>
+                    <Button variant="danger" onClick={() => handleDelete(product.id)} disabled={state === "deleting"}>
+                      {state === "deleting" ? "Deleting…" : "Delete"}
+                    </Button>
+                  </>
+                }
+              />
+            );
+          })}
+        </motion.div>
       )}
     </motion.div>
   );
