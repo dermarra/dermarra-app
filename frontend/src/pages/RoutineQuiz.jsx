@@ -19,7 +19,7 @@ const SKIN_TYPES = [
 function ProgressLabel({ step }) {
   if (step !== "concern" && step !== "skin_type") return null;
   return (
-    <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+    <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
       {step === "concern" ? "Step 1 of 2" : "Step 2 of 2"}
     </p>
   );
@@ -93,7 +93,7 @@ export default function RoutineQuiz() {
         <ProgressLabel step={step} />
         {step === "concern" && (
           <>
-            <h1 className="font-display text-2xl sm:text-3xl text-ink">
+            <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink">
               What are you noticing on your skin?
             </h1>
             <p className="text-ink/60 text-sm mt-1">Pick whichever sounds closest.</p>
@@ -101,7 +101,7 @@ export default function RoutineQuiz() {
         )}
         {step === "skin_type" && (
           <>
-            <h1 className="font-display text-2xl sm:text-3xl text-ink">
+            <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink">
               What&apos;s your skin type?
             </h1>
             <p className="text-ink/60 text-sm mt-1">
@@ -229,7 +229,7 @@ export default function RoutineQuiz() {
                     )}
                   </div>
                   <div>
-                    <h2 className="font-display text-xl text-ink">{routine.name}</h2>
+                    <h2 className="font-display font-extrabold text-2xl text-ink">{routine.name}</h2>
                     {routine.tagline && <p className="text-ink/60 text-sm mt-1">{routine.tagline}</p>}
                   </div>
                 </div>

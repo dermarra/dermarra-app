@@ -13,6 +13,13 @@ const AUTO_ADVANCE_MS = 6000;
 export default function HeroCarousel({ slides }) {
   const [index, setIndex] = useState(0);
 
+  // Lets the Navbar know a full-bleed hero is on the page, so it can float
+  // transparently over it (see Navbar.jsx) and turn solid once scrolled past.
+  useEffect(() => {
+    window.dispatchEvent(new Event("hero:change"));
+    return () => window.dispatchEvent(new Event("hero:change"));
+  }, []);
+
   useEffect(() => {
     if (slides.length < 2) return;
     const timer = setInterval(() => setIndex((i) => (i + 1) % slides.length), AUTO_ADVANCE_MS);
@@ -26,7 +33,8 @@ export default function HeroCarousel({ slides }) {
   const goTo = (i) => setIndex(((i % slides.length) + slides.length) % slides.length);
 
   return (
-    <section className="relative h-[calc(100vh-4.25rem)] min-h-[420px] overflow-hidden bg-ink">
+    // Full viewport height: the navbar floats over the top of it.
+    <section id="site-hero" className="relative h-[100svh] min-h-[520px] overflow-hidden bg-ink">
       <AnimatePresence mode="wait">
         {imageUrl && (
           <motion.img
@@ -44,7 +52,7 @@ export default function HeroCarousel({ slides }) {
       {/* Solid scrim (no gradients in the brand system) keeps white text readable on any photo. */}
       <div className="absolute inset-0 bg-ink/55" />
 
-      <div className="relative z-10 h-full flex flex-col justify-end sm:justify-center mx-auto max-w-6xl px-4 pb-16 sm:pb-0">
+      <div className="relative z-10 h-full flex flex-col justify-end sm:justify-center mx-auto max-w-6xl px-4 pt-32 pb-20 sm:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
@@ -54,23 +62,23 @@ export default function HeroCarousel({ slides }) {
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
             {slide.eyebrow && (
-              <p className="font-mono text-xs tracking-widest text-orange-700 uppercase mb-3">{slide.eyebrow}</p>
+              <p className="text-sm sm:text-base font-extrabold tracking-[0.18em] text-orange uppercase mb-4">{slide.eyebrow}</p>
             )}
-            <h1 className="font-display text-3xl sm:text-5xl leading-tight text-bone-light max-w-2xl">
+            <h1 className="font-display font-black text-4xl sm:text-6xl lg:text-7xl leading-[1.05] text-white max-w-3xl">
               {slide.title}
             </h1>
             {slide.subtitle && (
-              <p className="mt-4 text-bone-light/80 max-w-xl">{slide.subtitle}</p>
+              <p className="mt-5 text-lg sm:text-xl font-medium text-white max-w-xl">{slide.subtitle}</p>
             )}
             {slide.cta_label && slide.cta_link && (
               <motion.div
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-block mt-6"
+                className="inline-block mt-8"
               >
                 <Link
                   to={slide.cta_link}
-                  className="block px-5 py-3 rounded-full bg-orange text-ink text-sm font-bold hover:bg-orange-400 transition-colors"
+                  className="block px-8 py-4 rounded-full bg-orange text-ink text-base sm:text-lg font-extrabold hover:bg-orange-400 transition-colors"
                 >
                   {slide.cta_label}
                 </Link>

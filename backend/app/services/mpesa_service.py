@@ -141,6 +141,17 @@ def query_stk_status(checkout_request_id):
 PENDING_ERROR_CODE = "500.001.1001"
 
 
+# ResultCodes that mean "not finished yet", not a failure. Daraja's query API
+# returns 4999 ("The transaction is still under processing") while the
+# customer is still on the PIN prompt -- treating it as a failure marked a
+# live payment as failed mid-PIN (seen 2026-11-06).
+PENDING_RESULT_CODES = {"4999"}
+
+
+def is_pending(result_code):
+    return result_code is not None and str(result_code) in PENDING_RESULT_CODES
+
+
 def is_success(result_code):
     """Callback sends ResultCode as an int, the query endpoint as a string."""
     return result_code is not None and str(result_code) == "0"

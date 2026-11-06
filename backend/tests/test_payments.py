@@ -295,3 +295,25 @@ def test_failure_callback_records_safaricoms_reason(app, stocked_order, test_use
     payment_service.mark_order_paid(refreshed)
     db.session.commit()
     assert _order(order.id).payment_failure_reason is None, "a later success clears the old reason"
+
+
+def test_still_processing_code_is_not_a_failure(app, stocked_order, monkeypatch, test_user):
+    """Daraja's query returns ResultCode 4999 ("still under processing")
+    while the customer is on the PIN prompt -- it must stay pending, not be
+    marked failed (this marked a live payment failed mid-PIN)."""
+    variant, order = stocked_order()
+    _in_flight(order, "__TEST__4999")
+    monkeypatch.setattr(
+        mpesa_service, "query_stk_status",
+        lambda cid: {"ResultCode": "4999", "ResultDesc": "The transaction is still under processing"},
+    )
+    payment_service._last_daraja_check.pop(order.id, None)
+
+    token = create_access_token(identity=test_user.id)
+    resp = app.test_client().get(
+        f"/api/payments/mpesa/status/{order.id}", headers={"Authorization": f"Bearer {token}"}
+    )
+    assert resp.get_json()["status"] == "payment_pending"
+    refreshed = _order(order.id)
+    assert refreshed.status == "payment_pending" and refreshed.payment_failure_reason is None
+    assert _inv(variant.id).reserved == 2, "the stock hold must survive a still-processing answer"

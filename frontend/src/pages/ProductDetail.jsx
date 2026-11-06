@@ -148,7 +148,7 @@ export default function ProductDetail() {
               {product.key_actives}
             </span>
           )}
-          <h1 className="font-display text-2xl mt-1 text-ink">{product.name}</h1>
+          <h1 className="font-display font-extrabold text-3xl mt-1 text-ink">{product.name}</h1>
           <p className="text-ink/70 mt-2">{product.short_description}</p>
           <p className="text-xl font-semibold mt-4 text-ink">KES {price}</p>
           {selectedVariant?.stock_status === "low_stock" && (
@@ -234,7 +234,7 @@ export default function ProductDetail() {
           variants={containerReveal}
           className="mt-16 pt-10 border-t border-mist"
         >
-          <motion.h2 variants={itemReveal} className="font-display text-xl text-ink mb-6">
+          <motion.h2 variants={itemReveal} className="font-display font-extrabold text-2xl text-ink mb-6">
             You may also like
           </motion.h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

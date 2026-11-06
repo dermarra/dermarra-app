@@ -37,10 +37,10 @@ export default function Shop() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+        <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
           The full system
         </p>
-        <h1 className="font-display text-2xl sm:text-3xl text-ink mb-6">Shop all products</h1>
+        <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-6">Shop all products</h1>
       </motion.div>
 
       <div className="flex gap-2 overflow-x-auto pb-4 mb-2 -mx-4 px-4 sm:mx-0 sm:px-0">

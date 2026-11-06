@@ -134,10 +134,10 @@ export default function ConcernShop() {
           <Breadcrumbs
             items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: concern.name }]}
           />
-          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Shop by concern
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl text-ink max-w-lg">{concern.name}</h1>
+          <h1 className="font-display font-black text-4xl sm:text-6xl text-ink max-w-lg">{concern.name}</h1>
           {concern.description && (
             <p className="text-ink/70 mt-3 max-w-md">{concern.description}</p>
           )}
@@ -154,7 +154,7 @@ export default function ConcernShop() {
       <div className="mx-auto max-w-6xl px-4 py-6">
         {routines.length > 0 && (
           <div className="mb-10">
-            <h2 className="font-display text-xl text-ink mb-4">Routines for {concern.name.toLowerCase()}</h2>
+            <h2 className="font-display font-extrabold text-2xl text-ink mb-4">Routines for {concern.name.toLowerCase()}</h2>
             <div className="flex flex-col gap-4">
               {routines.map((routine) => {
                 const routineImageUrl = cloudinaryUrl(routine.cloudinary_public_id, { width: 160 });
@@ -207,7 +207,7 @@ export default function ConcernShop() {
           </div>
         )}
 
-        <h2 className="font-display text-xl text-ink mb-4">Products</h2>
+        <h2 className="font-display font-extrabold text-2xl text-ink mb-4">Products</h2>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">

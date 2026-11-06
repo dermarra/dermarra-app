@@ -21,7 +21,7 @@ export default class ErrorBoundary extends Component {
     if (!this.state.hasError) return this.props.children;
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="font-display text-2xl text-ink mb-2">Something went wrong</h1>
+        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Something went wrong</h1>
         <p className="text-ink/70 text-sm">This page hit an unexpected error. Reloading usually fixes it.</p>
         <div className="mt-6 flex justify-center gap-3">
           <button

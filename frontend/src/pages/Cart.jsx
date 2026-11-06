@@ -80,7 +80,7 @@ export default function Cart() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="font-display text-2xl sm:text-3xl text-ink mb-4"
+        className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-4"
       >
         Your cart
       </motion.h1>

@@ -51,10 +51,10 @@ export default function ResetPassword() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Reset password
           </p>
-          <h1 className="font-display text-2xl sm:text-3xl text-ink mb-8">Choose a new password</h1>
+          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-8">Choose a new password</h1>
 
           {!token ? (
             <p className="text-sm text-orange-700">

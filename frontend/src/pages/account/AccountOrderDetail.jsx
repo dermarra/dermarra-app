@@ -36,7 +36,7 @@ export default function AccountOrderDetail() {
       </button>
 
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl text-ink">Order #{order.id.slice(0, 8)}</h2>
+        <h2 className="font-display font-extrabold text-2xl text-ink">Order #{order.id.slice(0, 8)}</h2>
         <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1 text-ink/70">
           {order.status.replace("_", " ")}
         </span>

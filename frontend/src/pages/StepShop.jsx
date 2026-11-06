@@ -99,10 +99,10 @@ export default function StepShop() {
           <Breadcrumbs
             items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: group.label }]}
           />
-          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Shop by step
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl text-ink max-w-lg">{group.label}</h1>
+          <h1 className="font-display font-black text-4xl sm:text-6xl text-ink max-w-lg">{group.label}</h1>
           {group.description && (
             <p className="text-ink/70 mt-3 max-w-md">{group.description}</p>
           )}

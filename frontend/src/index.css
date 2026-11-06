@@ -13,7 +13,7 @@
   h2,
   h3 {
     /* Montserrat headings: bold and slightly tight, Gotham-style. */
-    @apply font-display font-bold tracking-tight;
+    @apply font-display font-extrabold tracking-tight;
   }
   :focus-visible {
     outline: 2px solid theme("colors.blue.DEFAULT");

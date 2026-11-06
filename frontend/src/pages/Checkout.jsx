@@ -197,7 +197,7 @@ export default function Checkout() {
         >
           <CheckIcon className="w-7 h-7 text-bone-light" />
         </motion.div>
-        <h1 className="font-display text-2xl text-ink mb-2">Payment received</h1>
+        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Payment received</h1>
         <p className="text-ink/70">
           M-Pesa receipt: <span className="font-mono">{order?.mpesa_receipt_number}</span>
         </p>
@@ -221,7 +221,7 @@ export default function Checkout() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="mx-auto max-w-lg px-4 py-10 text-center"
       >
-        <h1 className="font-display text-2xl text-ink mb-2">Check your phone</h1>
+        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Check your phone</h1>
         <p className="text-ink/70">
           We sent an M-Pesa prompt to <span className="font-mono">{shipping.phone}</span>. Enter your
           PIN to complete the payment of <span className="font-semibold">KES {((order?.total_cents ?? total) / 100).toFixed(0)}</span>.
@@ -247,7 +247,7 @@ export default function Checkout() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="mx-auto max-w-lg px-4 py-10 text-center"
       >
-        <h1 className="font-display text-2xl text-ink mb-2">Payment didn&apos;t go through</h1>
+        <h1 className="font-display font-extrabold text-3xl text-ink mb-2">Payment didn&apos;t go through</h1>
         <p className="text-ink/70">
           {failureReason || "The M-Pesa transaction was cancelled or failed."} Your order is saved -- you can
           retry the payment now.
@@ -288,10 +288,10 @@ export default function Checkout() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="mx-auto max-w-lg px-4 py-6 pb-32 sm:pb-6"
     >
-      <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+      <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
         Almost there
       </p>
-      <h1 className="font-display text-2xl sm:text-3xl text-ink mb-4">Checkout</h1>
+      <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-4">Checkout</h1>
 
       <div className="rounded-sm border border-mist bg-bone-light p-4 mb-6 text-sm">
         <div className="flex justify-between text-ink/70"><span>Subtotal ({cart.items.length} item{cart.items.length !== 1 ? "s" : ""})</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>

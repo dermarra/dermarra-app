@@ -23,7 +23,7 @@ function Card({ eyebrow, title, children }) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="border border-mist rounded-sm bg-bone-light p-5"
     >
-      <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-1">{eyebrow}</p>
+      <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-1">{eyebrow}</p>
       <h2 className="font-display text-lg text-ink mb-4">{title}</h2>
       {children}
     </motion.section>

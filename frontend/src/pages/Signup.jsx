@@ -49,10 +49,10 @@ export default function Signup() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
+          <p className="text-sm font-extrabold tracking-[0.18em] text-lime-800 uppercase mb-2">
             Join Dermarra
           </p>
-          <h1 className="font-display text-2xl sm:text-3xl text-ink mb-8">Create your account</h1>
+          <h1 className="font-display font-extrabold text-3xl sm:text-5xl text-ink mb-8">Create your account</h1>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <label className="relative block">

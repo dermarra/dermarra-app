@@ -93,7 +93,7 @@ def apply_daraja_result(order, result_code, receipt_number=None, result_desc=Non
     """Applies a Daraja ResultCode (int from the callback, str from the
     query API), recording Safaricom's ResultDesc as the failure reason.
     Returns "paid", "failed" or None (still pending/unknown)."""
-    if result_code is None:
+    if result_code is None or mpesa_service.is_pending(result_code):
         return None
     if mpesa_service.is_success(result_code):
         mark_order_paid(order, receipt_number)

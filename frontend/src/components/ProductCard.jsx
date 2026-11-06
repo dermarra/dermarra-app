@@ -97,14 +97,14 @@ export default function ProductCard({ product }) {
             </span>
           )}
         </div>
-        <div className="p-3 flex flex-col gap-1">
+        <div className="p-4 flex flex-col gap-1.5">
           {product.key_actives && (
-            <span className="font-mono text-[10px] tracking-wide text-lime-800 uppercase">
+            <span className="font-mono text-xs font-medium tracking-wide text-lime-800 uppercase">
               {product.key_actives}
             </span>
           )}
-          <h3 className="text-sm font-semibold text-ink leading-snug">{product.name}</h3>
-          <span className="text-sm text-ink/80">{price ? `From KES ${price}` : "Currently unavailable"}</span>
+          <h3 className="text-lg font-extrabold text-ink leading-snug">{product.name}</h3>
+          <span className="text-base font-bold text-ink">{price ? `From KES ${price}` : "Currently unavailable"}</span>
         </div>
       </Link>
 
@@ -112,7 +112,7 @@ export default function ProductCard({ product }) {
         type="button"
         onClick={handleAdd}
         disabled={!product.in_stock || !product.default_variant_id || status === "adding"}
-        className={`w-full py-2.5 text-xs font-semibold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
+        className={`w-full py-3.5 text-sm font-extrabold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
           status === "added"
             ? "bg-lime text-ink border-lime"
             : status === "error"
