@@ -6,6 +6,8 @@ import Logo from "../../components/Logo.jsx";
 import BrandStripe from "../../components/BrandStripe.jsx";
 import {
   BoxIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   DirectionsIcon,
   DropletIcon,
   GridIcon,
@@ -54,37 +56,81 @@ const NAV = [
 
 const ALL_ITEMS = NAV.flatMap((g) => g.items);
 
+const COLLAPSE_KEY = "dermarra.admin.sidebarCollapsed";
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const initial = (user) => (user.full_name || user.email || "?").trim().charAt(0).toUpperCase();
+
 /** Brand-black sidebar: white logo, white text, active item = solid brand
- * blue with brand-black text (white on blue is only 3.1:1). */
-function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false }) {
+ * blue with brand-black text (white on blue is only 3.1:1).
+ *
+ * Desktop can collapse it to an icon rail (`collapsed`): labels stay in the
+ * DOM as sr-only text (so links keep their accessible names) and show as a
+ * tooltip on hover / keyboard focus. The tooltip is position:fixed because
+ * the nav's overflow-y scroll area would clip an absolutely-positioned one. */
+function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false, collapsed = false }) {
+  const [tip, setTip] = useState(null); // { label, top }
+  const showTip = (text) => (e) => {
+    if (!collapsed) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ label: text, top: r.top + r.height / 2 });
+  };
+  const hideTip = () => setTip(null);
+  const tipProps = (text) => ({
+    onMouseEnter: showTip(text),
+    onMouseLeave: hideTip,
+    onFocus: showTip(text),
+    onBlur: hideTip,
+  });
+  const row = `flex items-center gap-3 rounded-md py-2 text-sm font-semibold transition-colors ${
+    collapsed ? "justify-center px-0" : "px-3"
+  }`;
+  const label = (text) => <span className={collapsed ? "sr-only" : "truncate"}>{text}</span>;
+
   return (
     <div className="flex flex-col h-full bg-ink text-white">
       <BrandStripe className="h-1.5" />
-      <div className="px-6 pt-7 pb-6">
+      <div className={`pt-7 pb-6 ${collapsed ? "flex flex-col items-center" : "px-6"}`}>
         <Link to="/admin/dashboard" onClick={onNavigate} aria-label="Admin dashboard">
-          <Logo variant="light" className="h-9" />
+          <Logo variant="light" iconOnly={collapsed} className="h-9" />
         </Link>
-        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-blue">Admin</p>
+        <p className={`mt-3 text-xs font-bold uppercase tracking-widest text-blue ${collapsed ? "sr-only" : ""}`}>Admin</p>
       </div>
 
-      <nav aria-label="Admin sections" className="flex-1 overflow-y-auto px-4 pb-6">
-        {NAV.map((group) => (
+      <nav
+        aria-label="Admin sections"
+        onScroll={hideTip}
+        className={`flex-1 overflow-y-auto overflow-x-hidden pb-6 ${collapsed ? "px-3" : "px-4"}`}
+      >
+        {NAV.map((group, gi) => (
           <div key={group.title} className="mb-4">
-            <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-white/50">{group.title}</p>
+            {collapsed ? (
+              <>
+                {gi > 0 && <div aria-hidden="true" className="h-px bg-white/10 mx-2 mb-4" />}
+                <p className="sr-only">{group.title}</p>
+              </>
+            ) : (
+              <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-white/50">{group.title}</p>
+            )}
             <ul className="flex flex-col gap-0.5">
-              {group.items.map(({ to, label, Icon }) => (
+              {group.items.map(({ to, label: text, Icon }) => (
                 <li key={to}>
                   <NavLink
                     to={to}
                     onClick={onNavigate}
+                    {...tipProps(text)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
-                        isActive ? "bg-blue text-ink" : "text-white/80 hover:bg-white/10 hover:text-white"
-                      }`
+                      `${row} ${isActive ? "bg-blue text-ink" : "text-white/80 hover:bg-white/10 hover:text-white"}`
                     }
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" />
-                    {label}
+                    {label(text)}
                   </NavLink>
                 </li>
               ))}
@@ -96,33 +142,44 @@ function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false }) {
       <div className="border-t border-white/10 p-3 flex flex-col gap-0.5">
         {/* Desktop has "View store" in the top bar; the drawer needs its own. */}
         {inDrawer && (
-          <Link
-            to="/"
-            onClick={onNavigate}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white"
-          >
+          <Link to="/" onClick={onNavigate} className={`${row} text-white/80 hover:bg-white/10 hover:text-white`}>
             <StoreIcon className="w-[18px] h-[18px]" /> View store
           </Link>
         )}
         <button
           type="button"
           onClick={onSignOut}
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white text-left"
+          {...tipProps("Sign out")}
+          className={`${row} text-white/80 hover:bg-white/10 hover:text-white text-left`}
         >
-          <LogOutIcon className="w-[18px] h-[18px]" /> Sign out
+          <LogOutIcon className="w-[18px] h-[18px] shrink-0" />
+          {label("Sign out")}
         </button>
         {user && (
-          <div className="flex items-center gap-3 px-3 pt-3">
+          <div
+            className={`flex items-center gap-3 pt-3 ${collapsed ? "justify-center" : "px-3"}`}
+            {...(collapsed ? tipProps(user.full_name || user.email) : {})}
+          >
             <span className="w-8 h-8 rounded-full bg-lime text-ink text-sm font-bold flex items-center justify-center shrink-0">
-              {(user.full_name || user.email || "?").trim().charAt(0).toUpperCase()}
+              {initial(user)}
             </span>
-            <span className="min-w-0">
+            <span className={collapsed ? "sr-only" : "min-w-0"}>
               <span className="block text-sm font-semibold truncate">{user.full_name}</span>
               <span className="block text-sm text-white/60 truncate">{user.email}</span>
             </span>
           </div>
         )}
       </div>
+
+      {collapsed && tip && (
+        <div
+          aria-hidden="true"
+          style={{ top: tip.top }}
+          className="fixed z-50 left-[5.5rem] -translate-y-1/2 px-3 py-1.5 rounded-md bg-ink text-white text-xs font-semibold shadow-lg ring-1 ring-white/10 whitespace-nowrap pointer-events-none"
+        >
+          {tip.label}
+        </div>
+      )}
     </div>
   );
 }
@@ -132,6 +189,16 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(COLLAPSE_KEY, c ? "0" : "1");
+      } catch {
+        // private mode etc. -- the toggle still works for this visit
+      }
+      return !c;
+    });
 
   useEffect(() => setDrawerOpen(false), [location.pathname]);
 
@@ -146,10 +213,12 @@ export default function AdminLayout() {
   const today = new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-screen bg-blue-50 lg:pl-64">
+    <div className={`min-h-screen bg-blue-50 transition-[padding] duration-200 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block fixed inset-y-0 left-0 w-64 z-30">
-        <SidebarContent user={user} onSignOut={signOut} />
+      <aside
+        className={`hidden lg:block fixed inset-y-0 left-0 z-30 transition-[width] duration-200 ${collapsed ? "w-20" : "w-64"}`}
+      >
+        <SidebarContent user={user} onSignOut={signOut} collapsed={collapsed} />
       </aside>
 
       {/* Mobile drawer */}
@@ -196,6 +265,16 @@ export default function AdminLayout() {
             >
               <MenuIcon className="w-5 h-5" />
             </button>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? "Expand menu" : "Collapse menu to icons"}
+              aria-expanded={!collapsed}
+              title={collapsed ? "Expand menu" : "Collapse menu"}
+              className="hidden lg:flex w-10 h-10 -ml-2 rounded-md items-center justify-center text-ink hover:bg-blue-50"
+            >
+              {collapsed ? <ChevronRightIcon className="w-4 h-4" /> : <ChevronLeftIcon className="w-4 h-4" />}
+            </button>
             <Logo iconOnly className="h-7 lg:hidden" />
             {/* The page itself shows its heading (with its actions), so the
                 bar doesn't repeat it -- just today's date. */}
@@ -214,7 +293,7 @@ export default function AdminLayout() {
                 title={user.email}
                 className="w-9 h-9 rounded-full bg-lime text-ink text-sm font-bold flex items-center justify-center"
               >
-                {(user.full_name || user.email || "?").trim().charAt(0).toUpperCase()}
+                {initial(user)}
               </span>
             )}
           </div>
