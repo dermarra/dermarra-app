@@ -292,7 +292,7 @@ export default function AdminInventoryDetail() {
               setReviewing(false);
             }}
             disabled={!batches.some((b) => b.status === "active" || b.status === "depleted")}
-            className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink disabled:opacity-50"
           >
             {adjustOpen ? "Cancel" : "+ Manual adjustment"}
           </motion.button>

@@ -56,21 +56,21 @@ const ALL_ITEMS = NAV.flatMap((g) => g.items);
 
 /** Brand-black sidebar: white logo, white text, active item = solid brand
  * blue with brand-black text (white on blue is only 3.1:1). */
-function SidebarContent({ onNavigate, onSignOut, user }) {
+function SidebarContent({ onNavigate, onSignOut, user, inDrawer = false }) {
   return (
     <div className="flex flex-col h-full bg-ink text-white">
       <BrandStripe className="h-1.5" />
-      <div className="px-5 py-5">
+      <div className="px-6 pt-7 pb-6">
         <Link to="/admin/dashboard" onClick={onNavigate} aria-label="Admin dashboard">
-          <Logo variant="light" className="h-6" />
+          <Logo variant="light" className="h-9" />
         </Link>
-        <p className="mt-2 text-xs font-bold uppercase tracking-widest text-blue">Admin</p>
+        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-blue">Admin</p>
       </div>
 
-      <nav aria-label="Admin sections" className="flex-1 overflow-y-auto px-3 pb-4">
+      <nav aria-label="Admin sections" className="flex-1 overflow-y-auto px-4 pb-6">
         {NAV.map((group) => (
           <div key={group.title} className="mb-4">
-            <p className="px-3 mb-1 text-xs font-bold uppercase tracking-widest text-white/50">{group.title}</p>
+            <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest text-white/50">{group.title}</p>
             <ul className="flex flex-col gap-0.5">
               {group.items.map(({ to, label, Icon }) => (
                 <li key={to}>
@@ -94,13 +94,16 @@ function SidebarContent({ onNavigate, onSignOut, user }) {
       </nav>
 
       <div className="border-t border-white/10 p-3 flex flex-col gap-0.5">
-        <Link
-          to="/"
-          onClick={onNavigate}
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white"
-        >
-          <StoreIcon className="w-[18px] h-[18px]" /> View store
-        </Link>
+        {/* Desktop has "View store" in the top bar; the drawer needs its own. */}
+        {inDrawer && (
+          <Link
+            to="/"
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 hover:text-white"
+          >
+            <StoreIcon className="w-[18px] h-[18px]" /> View store
+          </Link>
+        )}
         <button
           type="button"
           onClick={onSignOut}
@@ -140,11 +143,12 @@ export default function AdminLayout() {
   const section = location.pathname.split("/")[2] || "dashboard";
   const current = ALL_ITEMS.find((i) => i.to === section);
   const title = current?.label || "Admin";
+  const today = new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-screen bg-blue-50 lg:pl-60">
+    <div className="min-h-screen bg-blue-50 lg:pl-64">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block fixed inset-y-0 left-0 w-60 z-30">
+      <aside className="hidden lg:block fixed inset-y-0 left-0 w-64 z-30">
         <SidebarContent user={user} onSignOut={signOut} />
       </aside>
 
@@ -174,7 +178,7 @@ export default function AdminLayout() {
               >
                 <XIcon className="w-5 h-5" />
               </button>
-              <SidebarContent user={user} onSignOut={signOut} onNavigate={() => setDrawerOpen(false)} />
+              <SidebarContent user={user} onSignOut={signOut} onNavigate={() => setDrawerOpen(false)} inDrawer />
             </motion.aside>
           </>
         )}
@@ -182,7 +186,7 @@ export default function AdminLayout() {
 
       {/* Top bar */}
       <header className="sticky top-0 z-20 bg-white border-b border-mist">
-        <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
+        <div className="h-16 px-5 sm:px-8 lg:px-12 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
@@ -193,10 +197,10 @@ export default function AdminLayout() {
               <MenuIcon className="w-5 h-5" />
             </button>
             <Logo iconOnly className="h-7 lg:hidden" />
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Admin</p>
-              <h1 className="text-3xl font-bold text-ink leading-tight truncate">{title}</h1>
-            </div>
+            {/* The page itself shows its heading (with its actions), so the
+                bar doesn't repeat it -- just today's date. */}
+            <p className="hidden sm:block text-sm text-ink/70 truncate">{today}</p>
+            <h1 className="sr-only">{title}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link
@@ -217,7 +221,7 @@ export default function AdminLayout() {
         </div>
       </header>
 
-      <div className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="px-5 sm:px-8 lg:px-12 py-8 lg:py-12 w-full">
         <Outlet />
       </div>
     </div>

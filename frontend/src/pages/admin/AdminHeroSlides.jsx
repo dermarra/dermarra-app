@@ -96,13 +96,13 @@ export default function AdminHeroSlides() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h2 className="font-display text-3xl text-ink">Hero slides</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm"
+          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
         >
           + Add slide
         </motion.button>
@@ -244,7 +244,7 @@ export default function AdminHeroSlides() {
       ) : slides.length === 0 ? (
         <p className="text-ink/60 text-sm">No slides yet.</p>
       ) : (
-        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {slides.map((slide) => {
             const state = rowState[slide.id];
             const imageUrl = cloudinaryUrl(slide.cloudinary_public_id, { width: 80 });
@@ -252,7 +252,7 @@ export default function AdminHeroSlides() {
               <motion.div
                 key={slide.id}
                 variants={itemReveal}
-                className="flex items-center justify-between border border-mist rounded-sm px-4 py-3"
+                className="flex items-center justify-between gap-4 bg-white border border-mist rounded-xl px-5 py-4"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-10 rounded-sm bg-mist overflow-hidden shrink-0">
@@ -276,14 +276,14 @@ export default function AdminHeroSlides() {
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => openEdit(slide)}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs"
+                    className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(slide.id)}
                     disabled={state === "deleting"}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
+                    className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
                   >
                     {state === "deleting" ? "Deleting…" : "Delete"}
                   </button>

@@ -146,7 +146,7 @@ export default function AdminOrders() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <h2 className="font-display text-3xl text-ink mb-4">Orders</h2>
+      <h2 className="font-display text-3xl text-ink mb-8">Orders</h2>
 
       <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         {OTHER_FILTERS.map((f) => (

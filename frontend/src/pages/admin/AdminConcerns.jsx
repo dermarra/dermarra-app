@@ -90,13 +90,13 @@ export default function AdminConcerns() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h2 className="font-display text-3xl text-ink">Concerns</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm"
+          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
         >
           + Add concern
         </motion.button>
@@ -181,7 +181,7 @@ export default function AdminConcerns() {
       ) : concerns.length === 0 ? (
         <p className="text-ink/60 text-sm">No concerns yet.</p>
       ) : (
-        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {concerns.map((concern) => {
             const state = rowState[concern.id];
             const imageUrl = cloudinaryUrl(concern.cloudinary_public_id, { width: 80 });
@@ -189,10 +189,10 @@ export default function AdminConcerns() {
               <motion.div
                 key={concern.id}
                 variants={itemReveal}
-                className="flex items-center justify-between border border-mist rounded-sm px-4 py-3"
+                className="flex items-center justify-between gap-4 bg-white border border-mist rounded-xl px-5 py-4"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-sm bg-mist overflow-hidden shrink-0">
+                  <div className="w-14 h-14 rounded-lg bg-mist overflow-hidden shrink-0">
                     {imageUrl && <img src={imageUrl} alt="" className="w-full h-full object-cover" />}
                   </div>
                   <div>
@@ -206,14 +206,14 @@ export default function AdminConcerns() {
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => openEdit(concern)}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs"
+                    className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(concern.id)}
                     disabled={state === "deleting"}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
+                    className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
                   >
                     {state === "deleting" ? "Deleting…" : "Delete"}
                   </button>

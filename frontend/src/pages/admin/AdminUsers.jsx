@@ -66,12 +66,12 @@ export default function AdminUsers() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <h2 className="font-display text-3xl text-ink mb-4">Users</h2>
+      <h2 className="font-display text-3xl text-ink mb-8">Users</h2>
 
       {loading ? (
         <p className="text-ink/60 text-sm">Loading users…</p>
       ) : (
-        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {users.map((u) => {
             const state = rowState[u.id];
             const isSelf = u.id === currentUser?.id;

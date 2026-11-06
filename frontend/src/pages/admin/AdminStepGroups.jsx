@@ -163,7 +163,7 @@ export default function AdminStepGroups() {
                     </div>
                     <button
                       onClick={() => openEdit(group)}
-                      className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs shrink-0"
+                      className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink shrink-0"
                     >
                       Edit
                     </button>

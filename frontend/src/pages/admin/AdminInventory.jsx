@@ -100,7 +100,7 @@ export default function AdminInventory() {
       ) : rows.length === 0 ? (
         <p className="text-ink/60 text-sm">No products match this filter.</p>
       ) : (
-        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
+        <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {rows.map((row) => (
             <motion.div key={row.id || `product-${row.product_id}`} variants={itemReveal}>
               <Link

@@ -663,13 +663,13 @@ export default function AdminProducts() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h2 className="font-display text-3xl text-ink">Products</h2>
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm"
+          className="px-5 py-3 rounded-md bg-blue text-ink font-semibold text-sm"
         >
           + Add product
         </motion.button>
@@ -946,7 +946,7 @@ export default function AdminProducts() {
                       <button
                         type="button"
                         onClick={cancelCrop}
-                        className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs"
+                        className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
                       >
                         Cancel
                       </button>
@@ -1046,14 +1046,14 @@ export default function AdminProducts() {
           <button
             onClick={() => bulkSetActive(true)}
             disabled={bulkBusy}
-            className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink disabled:opacity-50"
           >
             Activate
           </button>
           <button
             onClick={() => bulkSetActive(false)}
             disabled={bulkBusy}
-            className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink disabled:opacity-50"
           >
             Deactivate
           </button>
@@ -1137,14 +1137,14 @@ export default function AdminProducts() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => openEdit(product)}
-                          className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs"
+                          className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
                           disabled={state === "deleting"}
-                          className="px-3 py-1.5 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
+                          className="px-4 py-2 rounded-md border border-orange-700/30 bg-white text-orange-700 text-xs font-semibold hover:border-orange-700 disabled:opacity-50"
                         >
                           {state === "deleting" ? "Deleting…" : "Delete"}
                         </button>

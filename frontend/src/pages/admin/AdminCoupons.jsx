@@ -260,7 +260,7 @@ export default function AdminCoupons() {
       ) : coupons.length === 0 ? (
         <p className="text-sm text-ink/60">No coupons yet.</p>
       ) : (
-        <motion.ul initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-2">
+        <motion.ul initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {coupons.map((coupon) => (
             <motion.li
               key={coupon.id}
@@ -281,7 +281,7 @@ export default function AdminCoupons() {
               <div className="flex gap-2">
                 <button
                   onClick={() => openEdit(coupon)}
-                  className="px-3 py-1.5 rounded-sm border border-mist text-ink/70 text-xs"
+                  className="px-4 py-2 rounded-md border border-ink/20 bg-white text-ink text-xs font-semibold hover:border-ink"
                 >
                   Edit
                 </button>

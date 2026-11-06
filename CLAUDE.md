@@ -157,6 +157,12 @@
 - The admin area is its own app shell (`AdminLayout.jsx`: ink sidebar,
   white top bar, `bg-blue-50` canvas); `App.jsx` hides the storefront
   navbar/footer/bottom-nav on `/admin/*`.
+  Each admin page shows its own heading next to its actions, so the top bar
+  does **not** repeat the section name (it shows today's date; an `sr-only`
+  `h1` carries the title). Sidebar: `w-64`, logo `h-9`; desktop "View store"
+  lives in the top bar only (the mobile drawer keeps its own). Canvas padding
+  `px-5 sm:px-8 lg:px-12 py-8 lg:py-12`; list rows are white
+  `rounded-xl px-5 py-4` cards with 56px thumbnails.
 
 ## Conventions
 - Backend: Flask blueprints per resource in `backend/app/routes/`, models in
