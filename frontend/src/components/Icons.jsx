@@ -18,6 +18,7 @@ import {
   SlCheck,
   SlChemistry,
   SlClose,
+  SlCompass,
   SlDirections,
   SlDrawer,
   SlDrop,
@@ -34,6 +35,7 @@ import {
   SlLock,
   SlLogout,
   SlMagicWand,
+  SlMagnifier,
   SlMenu,
   SlMinus,
   SlNote,
@@ -94,6 +96,8 @@ export const ChevronLeftIcon = sl(SlArrowLeft);
 export const HomeIcon = sl(SlHome);
 export const ShopIcon = sl(SlBasket);
 export const QuizIcon = sl(SlMagicWand);
+export const SearchIcon = sl(SlMagnifier);
+export const CompassIcon = sl(SlCompass);
 export const ChemistryIcon = sl(SlChemistry);
 export const BadgeIcon = sl(SlBadge);
 
