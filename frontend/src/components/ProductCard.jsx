@@ -74,7 +74,12 @@ export default function ProductCard({ product }) {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-        className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-bone-light/90 flex items-center justify-center text-orange-700 shadow-sm"
+        aria-pressed={wishlisted}
+        // Simple Line has no filled heart: "saved" = the line heart on a
+        // solid brand-orange circle (ink icon, 5.2:1).
+        className={`absolute top-2.5 right-2.5 z-10 w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+          wishlisted ? "bg-orange text-ink" : "bg-white/95 text-ink hover:text-orange-700"
+        }`}
       >
         {wishlisted ? <HeartFilledIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
       </motion.button>

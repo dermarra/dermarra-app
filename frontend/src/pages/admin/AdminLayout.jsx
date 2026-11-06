@@ -6,6 +6,7 @@ import Logo from "../../components/Logo.jsx";
 import BrandStripe from "../../components/BrandStripe.jsx";
 import {
   BoxIcon,
+  DirectionsIcon,
   DropletIcon,
   GridIcon,
   ImageIcon,
@@ -45,7 +46,7 @@ const NAV = [
       { to: "hero-slides", label: "Hero slides", Icon: ImageIcon },
       { to: "concerns", label: "Concerns", Icon: TargetIcon },
       { to: "ingredients", label: "Ingredients", Icon: DropletIcon },
-      { to: "step-groups", label: "Shop by Step", Icon: StepsIcon },
+      { to: "step-groups", label: "Shop by Step", Icon: DirectionsIcon },
     ],
   },
   { title: "People", items: [{ to: "users", label: "Users", Icon: UsersIcon }] },

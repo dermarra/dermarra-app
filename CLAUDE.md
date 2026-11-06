@@ -126,7 +126,7 @@
 - Shared UI primitives: `ImageUploadField.jsx` (Cloudinary upload; pass an
   `aspect` prop to require a `react-easy-crop` crop step first — via
   `frontend/src/lib/imageCrop.js` — otherwise it uploads immediately, e.g.
-  delivery-proof photos), `Icons.jsx` (small inline feather-style icon set),
+  delivery-proof photos), `Icons.jsx` (**Simple Line Icons** via `react-icons/sl`, owner's choice 2026-11-06 -- every app icon is a named re-export there, so pages never import react-icons directly; TikTok and eye-off are custom thin-stroke glyphs since Simple Line lacks them, and a saved wishlist heart is the line heart on an orange circle),
   `Reveal.jsx` (`framer-motion` scroll-triggered stagger reveal wrapper,
   `containerReveal`/`itemReveal` variants, used across the storefront).
 

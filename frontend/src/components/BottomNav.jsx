@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../context/CartContext";
+import { BagIcon, HomeIcon, QuizIcon, ShopIcon, UserIcon } from "./Icons.jsx";
 
 const items = [
   { to: "/", label: "Home", icon: "home" },
@@ -10,18 +11,13 @@ const items = [
   { to: "/account", label: "Account", icon: "account" },
 ];
 
+// Simple Line Icons (see Icons.jsx).
 const icons = {
-  home: (
-    <path d="M3 10.5 12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  ),
-  shop: (
-    <path d="M4 8h16l-1.2 11.2A2 2 0 0 1 17 21H7a2 2 0 0 1-2-1.8L4 8Zm3 0a3 3 0 0 1 6 0" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  ),
-  quiz: <path d="M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.7v.5M12 17h.01M4 4h16v16H4V4Z" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />,
-  cart: (
-    <path d="M3 4h2l2.6 12.4A2 2 0 0 0 9.5 18H18a2 2 0 0 0 2-1.6L21 8H6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  ),
-  account: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />,
+  home: HomeIcon,
+  shop: ShopIcon,
+  quiz: QuizIcon,
+  cart: BagIcon,
+  account: UserIcon,
 };
 
 export default function BottomNav() {
@@ -46,16 +42,16 @@ export default function BottomNav() {
             >
               {({ isActive }) => (
                 <>
-                  <motion.svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    className="w-5 h-5"
+                  <motion.span
+                    className="inline-flex"
                     animate={{ scale: isActive ? 1.1 : 1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                   >
-                    {icons[icon]}
-                  </motion.svg>
+                    {(() => {
+                      const NavIcon = icons[icon];
+                      return <NavIcon className="w-5 h-5" />;
+                    })()}
+                  </motion.span>
                   {label}
                   {isActive && (
                     <motion.span
