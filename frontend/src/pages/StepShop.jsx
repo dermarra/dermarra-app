@@ -62,7 +62,7 @@ export default function StepShop() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 text-center">
         <p className="text-ink/70">We couldn&apos;t find that step.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
           Shop all products
         </Link>
       </div>
@@ -77,7 +77,7 @@ export default function StepShop() {
         <p className="text-ink/70">{loadError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
         >
           Try again
         </button>
@@ -99,7 +99,7 @@ export default function StepShop() {
           <Breadcrumbs
             items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: group.label }]}
           />
-          <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
             Shop by step
           </p>
           <h1 className="font-display text-3xl sm:text-4xl text-ink max-w-lg">{group.label}</h1>

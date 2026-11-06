@@ -129,7 +129,7 @@ export default function AdminCoupons() {
             The newest active first-order coupon is what the homepage &quot;Become a member&quot; section advertises.
           </p>
         </div>
-        <button onClick={openCreate} className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light text-sm font-semibold">
+        <button onClick={openCreate} className="px-4 py-2 rounded-sm bg-blue text-ink text-sm font-semibold">
           New coupon
         </button>
       </div>
@@ -233,12 +233,12 @@ export default function AdminCoupons() {
                 <span className="block text-[11px] text-ink/55">Untick to switch the code off without losing its usage history.</span>
               </span>
             </label>
-            {error && <p className="text-sm text-clay">{error}</p>}
+            {error && <p className="text-sm text-orange-700">{error}</p>}
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light text-sm font-semibold disabled:opacity-50"
+                className="px-4 py-2 rounded-sm bg-blue text-ink text-sm font-semibold disabled:opacity-50"
               >
                 {submitting ? "Saving…" : "Save"}
               </button>
@@ -254,7 +254,7 @@ export default function AdminCoupons() {
         )}
       </AnimatePresence>
 
-      {loadError && <p className="text-sm text-clay">{loadError}</p>}
+      {loadError && <p className="text-sm text-orange-700">{loadError}</p>}
       {loading ? (
         <p className="text-sm text-ink/60">Loading coupons…</p>
       ) : coupons.length === 0 ? (

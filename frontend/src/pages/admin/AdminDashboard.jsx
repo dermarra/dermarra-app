@@ -4,12 +4,22 @@ import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import client from "../../api/client";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
+import { AlertIcon, BoxIcon, ReceiptIcon, TrendIcon, UsersIcon } from "../../components/Icons.jsx";
 
-// Chart marks use brand-600 (4.1:1 on white -- passes the 3:1 floor for
-// graphics); the lighter logo blue (#009EE2, 2.9:1) is too faint for data.
-const MARK = "#0086C0";
+// Chart marks are the brand blue itself (#1D9CD7, 3.1:1 on white -- clears
+// the 3:1 floor for graphics). Gridlines recessive, axis text in ink.
+const MARK = "#1D9CD7";
 const GRID = "#ECECEB";
-const AXIS_TEXT = "#64615A";
+const AXIS_TEXT = "#4A4547";
+
+// KPI icon tiles: solid brand colours with brand-black icons (literal class
+// strings so Tailwind keeps them).
+const TONES = {
+  blue: "bg-blue",
+  orange: "bg-orange",
+  lime: "bg-lime",
+  gold: "bg-gold",
+};
 
 const RANGES = [
   { value: "today", label: "Today" },
@@ -21,13 +31,13 @@ const RANGES = [
 // Order states: label + dot. Status colours carry meaning only alongside
 // the text label, never on their own.
 const STATUS = {
-  pending: { label: "Awaiting payment", dot: "bg-amber" },
-  payment_pending: { label: "Paying (M-Pesa)", dot: "bg-brand-400" },
-  paid: { label: "Paid · to process", dot: "bg-brand-700" },
-  processing: { label: "Processing", dot: "bg-brand-600" },
-  shipped: { label: "Shipped", dot: "bg-brand-500" },
-  delivered: { label: "Delivered", dot: "bg-sage-dark" },
-  payment_failed: { label: "Payment failed", dot: "bg-clay" },
+  pending: { label: "Awaiting payment", dot: "bg-gold" },
+  payment_pending: { label: "Paying (M-Pesa)", dot: "bg-gold" },
+  paid: { label: "Paid · to process", dot: "bg-blue" },
+  processing: { label: "Processing", dot: "bg-blue" },
+  shipped: { label: "Shipped", dot: "bg-blue" },
+  delivered: { label: "Delivered", dot: "bg-lime" },
+  payment_failed: { label: "Payment failed", dot: "bg-orange" },
   cancelled: { label: "Cancelled", dot: "bg-ink/30" },
 };
 
@@ -49,13 +59,13 @@ function Delta({ current, previous, range, invert = false }) {
   } else if (!previous) {
     text = "new this period";
     arrow = "▲";
-    tone = invert ? "text-clay" : "text-sage-dark";
+    tone = invert ? "text-orange-700" : "text-lime-800";
   } else {
     const change = (current - previous) / previous;
     const up = change > 0;
     arrow = up ? "▲" : "▼";
     text = `${Math.abs(change * 100).toFixed(0)}%`;
-    tone = up !== invert ? "text-sage-dark" : "text-clay";
+    tone = up !== invert ? "text-lime-800" : "text-orange-700";
   }
   return (
     <p className="text-xs mt-1">
@@ -72,12 +82,12 @@ function Card({ title, subtitle, action, children, className = "" }) {
   return (
     <motion.section
       variants={itemReveal}
-      className={`bg-white border border-brand-100 rounded-lg shadow-[0_1px_2px_rgba(0,56,82,0.06)] p-5 ${className}`}
+      className={`bg-white border border-mist rounded-xl shadow-sm p-5 ${className}`}
     >
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            {title && <h3 className="text-sm font-semibold text-brand-900">{title}</h3>}
+            {title && <h3 className="text-base font-bold text-ink">{title}</h3>}
             {subtitle && <p className="text-xs text-ink/60 mt-0.5">{subtitle}</p>}
           </div>
           {action}
@@ -88,20 +98,35 @@ function Card({ title, subtitle, action, children, className = "" }) {
   );
 }
 
-function KpiTile({ label, value, hint, delta, hero = false }) {
+/** Orbit-style KPI card: label + big value, a solid brand-colour icon tile.
+ * The hero (revenue) card is solid brand blue with brand-black text -- no
+ * gradients, and white on blue would only be 3.1:1. */
+function KpiTile({ label, value, hint, delta, hero = false, Icon, tone = "blue" }) {
   return (
     <motion.div
       variants={itemReveal}
-      className={`rounded-lg border p-5 ${
-        hero ? "bg-gradient-to-br from-brand-800 to-brand-700 border-brand-800 text-white" : "bg-white border-brand-100"
-      }`}
+      className={`h-full rounded-xl p-5 ${hero ? "bg-blue text-ink" : "bg-white border border-mist shadow-sm"}`}
     >
-      <p className={`text-xs font-semibold uppercase tracking-wide ${hero ? "text-brand-100" : "text-ink/60"}`}>{label}</p>
-      <p className={`font-display tabular-nums mt-2 ${hero ? "text-4xl sm:text-5xl" : "text-3xl text-brand-900"}`}>
-        {value}
-      </p>
-      {hint && <p className={`text-xs mt-1 ${hero ? "text-brand-100" : "text-ink/55"}`}>{hint}</p>}
-      {hero ? <div className="[&_*]:!text-brand-50">{delta}</div> : delta}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className={`text-sm font-semibold ${hero ? "text-ink" : "text-ink/70"}`}>{label}</p>
+          <p className={`font-display font-bold tabular-nums mt-2 text-ink ${hero ? "text-4xl sm:text-5xl" : "text-3xl"}`}>
+            {value}
+          </p>
+        </div>
+        {Icon && (
+          <span
+            aria-hidden="true"
+            className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-ink ${
+              hero ? "bg-white/35" : TONES[tone]
+            }`}
+          >
+            <Icon className="w-5 h-5" />
+          </span>
+        )}
+      </div>
+      {hint && <p className={`text-xs mt-1 ${hero ? "text-ink font-medium" : "text-ink/60"}`}>{hint}</p>}
+      {hero ? <div className="[&_*]:!text-ink">{delta}</div> : delta}
     </motion.div>
   );
 }
@@ -129,11 +154,11 @@ function TodoStrip({ todo }) {
     return (
       <motion.div
         variants={itemReveal}
-        className="flex items-center gap-3 rounded-lg border border-sage/40 bg-white px-5 py-4"
+        className="flex items-center gap-3 rounded-lg border border-lime/40 bg-white px-5 py-4"
       >
-        <span aria-hidden="true" className="w-8 h-8 rounded-full bg-sage/20 text-sage-dark flex items-center justify-center">✓</span>
+        <span aria-hidden="true" className="w-8 h-8 rounded-full bg-lime/20 text-lime-800 flex items-center justify-center">✓</span>
         <div>
-          <p className="text-sm font-semibold text-brand-900">All caught up</p>
+          <p className="text-sm font-semibold text-ink">All caught up</p>
           <p className="text-xs text-ink/60">No orders waiting, no stock problems.</p>
         </div>
       </motion.div>
@@ -141,19 +166,19 @@ function TodoStrip({ todo }) {
   }
   return (
     <motion.div variants={itemReveal}>
-      <h3 className="text-sm font-semibold text-brand-900 mb-2">Needs your attention</h3>
+      <h3 className="text-sm font-semibold text-ink mb-2">Needs your attention</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {open.map((t) => (
           <Link
             key={t.key}
             to={t.to}
-            className={`group flex items-start gap-3 rounded-lg border bg-white p-4 transition-colors hover:border-brand-600 ${
-              t.urgent ? "border-l-4 border-l-brand-700 border-brand-100" : "border-brand-100"
+            className={`group flex items-start gap-3 rounded-lg border bg-white p-4 transition-colors hover:border-blue-600 ${
+              t.urgent ? "border-l-4 border-l-orange border-mist" : "border-mist"
             }`}
           >
-            <span className="font-display text-3xl tabular-nums text-brand-800 leading-none">{todo[t.key]}</span>
+            <span className="font-display font-bold text-3xl tabular-nums text-ink leading-none">{todo[t.key]}</span>
             <span className="min-w-0">
-              <span className="block text-sm font-semibold text-ink group-hover:text-brand-800">{t.label} →</span>
+              <span className="block text-sm font-semibold text-ink group-hover:text-ink">{t.label} →</span>
               {t.help && <span className="block text-xs text-ink/55 mt-0.5">{t.help}</span>}
             </span>
           </Link>
@@ -176,9 +201,9 @@ function RevenueTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-md border border-brand-100 bg-white px-3 py-2 text-xs shadow-md">
+    <div className="rounded-md border border-mist bg-white px-3 py-2 text-xs shadow-md">
       <p className="text-ink/60 mb-1">{p.full}</p>
-      <p className="font-semibold text-brand-900 tabular-nums">{kes(p.revenue_cents)}</p>
+      <p className="font-semibold text-ink tabular-nums">{kes(p.revenue_cents)}</p>
       <p className="text-ink/70">{p.paid_orders} paid order{p.paid_orders === 1 ? "" : "s"}</p>
     </div>
   );
@@ -199,8 +224,8 @@ function RevenueChart({ days, range }) {
       {empty ? (
         // No axes when there's nothing to plot -- an empty 0-4 grid behind
         // the message read as data.
-        <div className="h-64 rounded-md border border-dashed border-brand-100 bg-brand-50/50 flex flex-col items-center justify-center text-center px-6">
-          <p className="text-sm font-semibold text-brand-900">No paid orders in this period yet</p>
+        <div className="h-64 rounded-md border border-dashed border-mist bg-blue-50 flex flex-col items-center justify-center text-center px-6">
+          <p className="text-sm font-semibold text-ink">No paid orders in this period yet</p>
           <p className="text-xs text-ink/60 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
         </div>
       ) : (
@@ -233,7 +258,7 @@ function RevenueChart({ days, range }) {
         </div>
       )}
       <details className="mt-3 text-xs">
-        <summary className="cursor-pointer text-brand-700 font-semibold">View as table</summary>
+        <summary className="cursor-pointer text-blue-700 font-semibold">View as table</summary>
         <table className="w-full mt-2 tabular-nums">
           <thead>
             <tr className="text-left text-ink/60">
@@ -269,7 +294,7 @@ function RankedBars({ rows, valueOf, labelOf, formatValue, empty }) {
             <span className="text-ink truncate">{labelOf(row)}</span>
             <span className="text-ink font-semibold tabular-nums shrink-0">{formatValue(row)}</span>
           </div>
-          <div className="h-2 rounded-full bg-brand-50">
+          <div className="h-2 rounded-full bg-blue-50">
             <div
               className="h-2 rounded-full"
               style={{ width: `${(valueOf(row) / max) * 100}%`, backgroundColor: MARK }}
@@ -315,8 +340,8 @@ export default function AdminDashboard() {
   const header = (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
       <div>
-        <h2 className="font-display text-2xl text-brand-900">Dashboard</h2>
-        <p className="text-sm text-ink/60">
+        <h2 className="text-xl font-bold text-ink">Overview</h2>
+        <p className="text-sm text-ink/70">
           {data
             ? data.period.days === 1
               ? `Today · Kenyan time`
@@ -324,7 +349,7 @@ export default function AdminDashboard() {
             : "Loading…"}
         </p>
       </div>
-      <div role="group" aria-label="Time period" className="inline-flex rounded-lg border border-brand-100 bg-white p-1 self-start">
+      <div role="group" aria-label="Time period" className="inline-flex rounded-lg border border-mist bg-white p-1 self-start">
         {RANGES.map((r) => (
           <button
             key={r.value}
@@ -332,7 +357,7 @@ export default function AdminDashboard() {
             aria-pressed={range === r.value}
             onClick={() => setRange(r.value)}
             className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-              range === r.value ? "bg-brand-700 text-white" : "text-ink/70 hover:text-brand-800"
+              range === r.value ? "bg-blue text-ink" : "text-ink/70 hover:text-ink"
             }`}
           >
             {r.label}
@@ -346,7 +371,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex flex-col gap-6">
         {header}
-        <p className="text-sm text-clay">{error}</p>
+        <p className="text-sm text-orange-700">{error}</p>
       </div>
     );
   }
@@ -357,10 +382,10 @@ export default function AdminDashboard() {
         {header}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-32 rounded-lg bg-white border border-brand-100 animate-pulse" />
+            <div key={i} className="h-32 rounded-lg bg-white border border-mist animate-pulse" />
           ))}
         </div>
-        <div className="h-72 rounded-lg bg-white border border-brand-100 animate-pulse" />
+        <div className="h-72 rounded-lg bg-white border border-mist animate-pulse" />
       </div>
     );
   }
@@ -385,6 +410,7 @@ export default function AdminDashboard() {
           <KpiTile
             hero
             label="Revenue"
+            Icon={TrendIcon}
             value={kes(kpis.revenue_cents)}
             hint={`${kpis.paid_orders} paid order${kpis.paid_orders === 1 ? "" : "s"}`}
             delta={<Delta current={kpis.revenue_cents} previous={prev.revenue_cents} range={range} />}
@@ -392,6 +418,8 @@ export default function AdminDashboard() {
         </div>
         <KpiTile
           label="Average order"
+          Icon={ReceiptIcon}
+          tone="orange"
           value={kpis.paid_orders ? kes(kpis.average_order_cents) : "—"}
           delta={kpis.paid_orders ? (
             <Delta current={kpis.average_order_cents} previous={prev.average_order_cents} range={range} />
@@ -399,26 +427,36 @@ export default function AdminDashboard() {
         />
         <KpiTile
           label="Checkout conversion"
+          Icon={TrendIcon}
+          tone="lime"
           value={pct(kpis.conversion_rate)}
           hint={`${kpis.orders_created} order${kpis.orders_created === 1 ? "" : "s"} started`}
         />
         <KpiTile
           label="Paid orders"
+          Icon={ReceiptIcon}
+          tone="blue"
           value={kpis.paid_orders}
           delta={<Delta current={kpis.paid_orders} previous={prev.paid_orders} range={range} />}
         />
         <KpiTile
           label="New customers"
+          Icon={UsersIcon}
+          tone="gold"
           value={kpis.new_customers}
           delta={<Delta current={kpis.new_customers} previous={prev.new_customers} range={range} />}
         />
         <KpiTile
           label="Catalogue"
+          Icon={BoxIcon}
+          tone="lime"
           value={data.catalog.products}
           hint={`active products · ${data.catalog.sizes} size${data.catalog.sizes === 1 ? "" : "s"} on sale`}
         />
         <KpiTile
           label="Stock alerts"
+          Icon={AlertIcon}
+          tone="orange"
           value={data.todo.low_stock_sizes + data.todo.out_of_stock_sizes}
           hint={`${data.todo.out_of_stock_sizes} out · ${data.todo.low_stock_sizes} low`}
         />
@@ -456,7 +494,7 @@ export default function AdminDashboard() {
         <Card
           title="Low stock"
           subtitle="Sizes at or below their reorder level"
-          action={<Link to="/admin/inventory" className="text-xs font-semibold text-brand-700 hover:text-brand-900">Inventory →</Link>}
+          action={<Link to="/admin/inventory" className="text-xs font-semibold text-blue-700 hover:text-ink">Inventory →</Link>}
         >
           {data.low_stock.length === 0 ? (
             <p className="text-sm text-ink/60">Every size is above its reorder level.</p>
@@ -472,7 +510,7 @@ export default function AdminDashboard() {
                   </div>
                   <Link
                     to={`/admin/inventory/${v.variant_id}`}
-                    className="shrink-0 px-3 py-1.5 rounded-md bg-brand-700 hover:bg-brand-800 text-white text-xs font-semibold"
+                    className="shrink-0 px-3 py-1.5 rounded-md bg-blue hover:bg-blue-400 text-ink text-xs font-semibold"
                   >
                     Receive stock
                   </Link>
@@ -484,7 +522,7 @@ export default function AdminDashboard() {
         <Card
           title="Coupons used"
           subtitle="On paid orders this period"
-          action={<Link to="/admin/coupons" className="text-xs font-semibold text-brand-700 hover:text-brand-900">Coupons →</Link>}
+          action={<Link to="/admin/coupons" className="text-xs font-semibold text-blue-700 hover:text-ink">Coupons →</Link>}
         >
           {data.coupon_usage.length === 0 ? (
             <p className="text-sm text-ink/60">No coupons redeemed in this period.</p>
@@ -492,7 +530,7 @@ export default function AdminDashboard() {
             <ul className="flex flex-col divide-y divide-mist">
               {data.coupon_usage.map((c) => (
                 <li key={c.code} className="flex justify-between gap-3 py-2.5 text-sm">
-                  <span className="font-mono text-brand-900">{c.code}</span>
+                  <span className="font-mono text-ink">{c.code}</span>
                   <span className="tabular-nums text-ink">
                     {c.uses} use{c.uses === 1 ? "" : "s"} · {kes(c.discount_cents)} off
                   </span>
@@ -506,7 +544,7 @@ export default function AdminDashboard() {
       <Card
         title="Recent orders"
         subtitle="Latest 8, any status"
-        action={<Link to="/admin/orders" className="text-xs font-semibold text-brand-700 hover:text-brand-900">All orders →</Link>}
+        action={<Link to="/admin/orders" className="text-xs font-semibold text-blue-700 hover:text-ink">All orders →</Link>}
       >
         {data.recent_orders.length === 0 ? (
           <p className="text-sm text-ink/60">No orders yet.</p>
@@ -524,9 +562,9 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {data.recent_orders.map((o) => (
-                  <tr key={o.id} className="border-t border-mist hover:bg-brand-50/60">
+                  <tr key={o.id} className="border-t border-mist hover:bg-blue-50/60">
                     <td className="py-2.5">
-                      <Link to={`/admin/orders/${o.id}`} className="font-mono text-brand-700 hover:text-brand-900">
+                      <Link to={`/admin/orders/${o.id}`} className="font-mono text-blue-700 hover:text-ink">
                         #{o.id.slice(0, 8)}
                       </Link>
                     </td>

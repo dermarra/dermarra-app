@@ -1,53 +1,54 @@
 /** @type {import('tailwindcss').Config} */
+
+// Dermarra brand system (from the "dermarra brand c" sheet): six colours --
+// blue, orange, lime, gold, black, white. Each hue's DEFAULT (= 500) is the
+// exact brand colour and is meant to be the dominant use; the 50-400 tints
+// and 600-900 shades exist for backgrounds and for text that has to sit on
+// white. Contrast rules (checked):
+//   * Text ON blue / orange / lime / gold is brand black (ink): 5.2-9.8:1.
+//     White text fails on all four (1.7-3.1:1) -- white goes on black only.
+//   * Coloured text on white uses the 700 shade (800 for lime): >= 5:1.
+//   * Data marks may use the brand colours directly (>= 3:1 vs white,
+//     except lime/gold, which need a direct label or an outline).
+const scale = (s) => ({ DEFAULT: s[500], ...s });
+
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
+        ink: {
+          DEFAULT: "#231F20", // brand black
+          soft: "#4A4547",
+        },
         bone: {
-          DEFAULT: "#FFFFFF",
+          DEFAULT: "#FFFFFF", // brand white
           light: "#F7F7F6",
         },
-        ink: "#64615A",
-        sage: {
-          DEFAULT: "#84C665",
-          light: "#AFDA9B",
-          dark: "#63954C",
-        },
-        amber: {
-          DEFAULT: "#F47A53",
-          light: "#F8A98F",
-          dark: "#B75C3E",
-        },
-        sky: {
-          DEFAULT: "#00C0F3",
-          light: "#59D6F7",
-          dark: "#0090B6",
-        },
-        // Dermarra brand blue -- the logo/favicon mark (#009ee2), built out
-        // into a scale. The admin area's primary colour. Contrast on white
-        // (checked): 500 = 3.0 (accents/large only), 600 = 4.1 (chart marks,
-        // large text), 700 = 5.9 and 800 = 8.7 (buttons with white text,
-        // body-size text and links).
-        brand: {
-          50: "#EAF7FD",
-          100: "#D2EEFA",
-          200: "#A6DCF4",
-          300: "#6FC6EC",
-          400: "#33B0E6",
-          DEFAULT: "#009EE2",
-          500: "#009EE2",
-          600: "#0086C0",
-          700: "#006B9A",
-          800: "#005077",
-          900: "#003852",
-        },
-        clay: "#B75C3E",
         mist: "#ECECEB",
+        blue: scale({
+          50: "#EDF7FC", 100: "#D6EDF8", 200: "#AEDBF1", 300: "#7CC6E8", 400: "#4AB0DF",
+          500: "#1D9CD7", 600: "#1E86B6", 700: "#1F6F95", 800: "#205974", 900: "#214253",
+        }),
+        orange: scale({
+          50: "#FEF3ED", 100: "#FCE4D7", 200: "#FAC8AF", 300: "#F7A77F", 400: "#F4854E",
+          500: "#F16722", 600: "#CC5A22", 700: "#A74D21", 800: "#824021", 900: "#5D3321",
+        }),
+        lime: scale({
+          50: "#FAFCEF", 100: "#F3F7DA", 200: "#E7F0B5", 300: "#D8E788", 400: "#C9DD5A",
+          500: "#BBD531", 600: "#A0B42E", 700: "#84932B", 800: "#697328", 900: "#4E5225",
+        }),
+        gold: scale({
+          50: "#FBF6EE", 100: "#F6EBD9", 200: "#EDD7B3", 300: "#E2BF85", 400: "#D7A657",
+          500: "#CD902D", 600: "#AE7C2B", 700: "#906728", 800: "#715326", 900: "#533F24",
+        }),
       },
       fontFamily: {
-        display: ["Fraunces", "ui-serif", "Georgia", "serif"],
-        body: ["'Public Sans'", "ui-sans-serif", "system-ui", "sans-serif"],
+        // Gotham is the reference; it's a licensed (Hoefler&Co) geometric sans.
+        // Montserrat is its standard free near-match. Swap here if a Gotham
+        // web licence is ever bought.
+        display: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["'IBM Plex Mono'", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       borderRadius: {

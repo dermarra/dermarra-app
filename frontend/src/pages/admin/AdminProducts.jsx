@@ -56,7 +56,7 @@ const emptyForm = {
 };
 
 function StockBadge({ product }) {
-  const cls = product.in_stock ? "text-sage-dark border-sage/30" : "text-clay border-clay/30";
+  const cls = product.in_stock ? "text-lime-800 border-lime/30" : "text-orange-700 border-orange-700/30";
   return (
     <span className={`text-[11px] px-2 py-0.5 rounded-full border ${cls}`}>
       {product.in_stock ? "In stock" : "Out of stock"}
@@ -185,7 +185,7 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
           onClick={save}
           disabled={saving || !dirty}
           title={dirty ? "Save changes to this size" : "Change something first"}
-          className="px-3 py-1 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
+          className="px-3 py-1 rounded-sm bg-blue text-ink text-xs font-semibold disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
         </button>
@@ -193,12 +193,12 @@ function VariantRow({ productId, variant, onSaved, onDeleted }) {
           type="button"
           onClick={remove}
           disabled={saving}
-          className="px-3 py-1 rounded-sm border border-mist text-clay text-xs disabled:opacity-50"
+          className="px-3 py-1 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
         >
           Delete
         </button>
       </div>
-      {error && <p className="text-xs text-clay">{error}</p>}
+      {error && <p className="text-xs text-orange-700">{error}</p>}
     </div>
   );
 }
@@ -218,14 +218,14 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
       ref={setNodeRef}
       style={style}
       className={`relative border rounded-sm overflow-hidden ${
-        image.is_primary ? "border-brand-600" : "border-mist"
+        image.is_primary ? "border-blue-600" : "border-mist"
       } ${isDragging ? "opacity-50 z-10" : ""}`}
     >
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
         <img src={url} alt="" className="w-full h-24 object-cover" />
       </div>
       {image.is_primary && (
-        <span className="absolute top-1 left-1 text-[10px] font-semibold bg-brand-700 text-bone-light px-1.5 py-0.5 rounded-sm">
+        <span className="absolute top-1 left-1 text-[10px] font-semibold bg-blue text-ink px-1.5 py-0.5 rounded-sm">
           Primary
         </span>
       )}
@@ -244,7 +244,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
           type="button"
           onClick={() => onDelete(image.id)}
           disabled={busy}
-          className="flex-1 text-[10px] py-1 border-t border-mist text-clay disabled:opacity-50"
+          className="flex-1 text-[10px] py-1 border-t border-mist text-orange-700 disabled:opacity-50"
         >
           Delete
         </button>
@@ -669,14 +669,14 @@ export default function AdminProducts() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm"
+          className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm"
         >
           + Add product
         </motion.button>
       </div>
 
       {savedNotice && (
-        <p className="mb-4 text-sm text-sage-dark border border-sage/40 rounded-sm px-3 py-2">{savedNotice}</p>
+        <p className="mb-4 text-sm text-lime-800 border border-lime/40 rounded-sm px-3 py-2">{savedNotice}</p>
       )}
 
       <AnimatePresence>
@@ -813,7 +813,7 @@ export default function AdminProducts() {
             ) : (
               <div className="flex flex-col gap-2">
                 {(currentProduct()?.variants || []).length === 0 && (
-                  <p className="text-xs text-clay border border-clay/40 rounded-sm px-3 py-2">
+                  <p className="text-xs text-orange-700 border border-orange-700/40 rounded-sm px-3 py-2">
                     This product has no sizes yet, so customers can&apos;t see or buy it. Add at least one size
                     (label, SKU and price) below, then receive stock for it under Inventory.
                   </p>
@@ -870,12 +870,12 @@ export default function AdminProducts() {
                     type="button"
                     onClick={handleAddVariant}
                     disabled={addingVariant}
-                    className="sm:mt-5 px-3 py-2 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
+                    className="sm:mt-5 px-3 py-2 rounded-sm bg-blue text-ink text-xs font-semibold disabled:opacity-50"
                   >
                     {addingVariant ? "Adding…" : "+ Add size"}
                   </button>
                 </div>
-                {newVariantError && <p className="text-xs text-clay">{newVariantError}</p>}
+                {newVariantError && <p className="text-xs text-orange-700">{newVariantError}</p>}
               </div>
             )}
           </div>
@@ -939,7 +939,7 @@ export default function AdminProducts() {
                         type="button"
                         onClick={confirmCrop}
                         disabled={imageBusy}
-                        className="px-3 py-1.5 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-sm bg-blue text-ink text-xs font-semibold disabled:opacity-50"
                       >
                         {imageBusy ? "Uploading…" : "Confirm crop & upload"}
                       </button>
@@ -961,7 +961,7 @@ export default function AdminProducts() {
                     className="text-xs text-ink/70"
                   />
                 )}
-                {imageError && <p className="text-xs text-clay">{imageError}</p>}
+                {imageError && <p className="text-xs text-orange-700">{imageError}</p>}
               </div>
             )}
           </div>
@@ -981,13 +981,13 @@ export default function AdminProducts() {
             </span>
           </label>
 
-          {error && <p className="text-sm text-clay">{error}</p>}
+          {error && <p className="text-sm text-orange-700">{error}</p>}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
             >
               {submitting ? "Saving…" : "Save"}
             </button>
@@ -1108,7 +1108,7 @@ export default function AdminProducts() {
                       <p className="font-semibold text-ink">{product.name}</p>
                       <p className="text-xs text-ink/60">{product.step_type}</p>
                       {state && state !== "saving" && state !== "deleting" && (
-                        <p className="text-xs text-clay mt-1">{state}</p>
+                        <p className="text-xs text-orange-700 mt-1">{state}</p>
                       )}
                     </td>
                     <td className="py-2 pr-2">
@@ -1124,7 +1124,7 @@ export default function AdminProducts() {
                     <td className="py-2 pr-2">
                       <button
                         onClick={() => openEdit(product)}
-                        className="text-ink hover:text-brand-700 underline decoration-dotted"
+                        className="text-ink hover:text-blue-700 underline decoration-dotted"
                       >
                         {(product.variants || []).reduce((sum, v) => sum + (v.on_hand || 0), 0)}
                       </button>
@@ -1144,7 +1144,7 @@ export default function AdminProducts() {
                         <button
                           onClick={() => handleDelete(product.id)}
                           disabled={state === "deleting"}
-                          className="px-3 py-1.5 rounded-sm border border-mist text-clay text-xs disabled:opacity-50"
+                          className="px-3 py-1.5 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
                         >
                           {state === "deleting" ? "Deleting…" : "Delete"}
                         </button>

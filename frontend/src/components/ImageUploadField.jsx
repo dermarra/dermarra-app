@@ -101,7 +101,7 @@ export default function ImageUploadField({ value, onChange, folder, aspect }) {
             whileTap={{ scale: 0.97 }}
             onClick={confirmCrop}
             disabled={uploading}
-            className="px-3 py-1.5 rounded-sm bg-brand-700 text-bone-light text-xs font-semibold disabled:opacity-50"
+            className="px-3 py-1.5 rounded-full bg-blue text-ink text-xs font-bold disabled:opacity-50"
           >
             {uploading ? "Uploading…" : "Confirm crop & upload"}
           </motion.button>
@@ -113,7 +113,7 @@ export default function ImageUploadField({ value, onChange, folder, aspect }) {
             Cancel
           </button>
         </div>
-        {error && <p className="text-xs text-clay mt-2">{error}</p>}
+        {error && <p className="text-xs text-orange-700 mt-2">{error}</p>}
       </div>
     );
   }
@@ -145,11 +145,11 @@ export default function ImageUploadField({ value, onChange, folder, aspect }) {
         />
         {uploading && (
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-xs text-ink/60">Uploading…</p>
           </div>
         )}
-        {error && <p className="text-xs text-clay">{error}</p>}
+        {error && <p className="text-xs text-orange-700">{error}</p>}
       </div>
     </div>
   );

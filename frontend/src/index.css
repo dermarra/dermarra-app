@@ -12,15 +12,21 @@
   h1,
   h2,
   h3 {
-    @apply font-display;
+    /* Montserrat headings: bold and slightly tight, Gotham-style. */
+    @apply font-display font-bold tracking-tight;
   }
   :focus-visible {
-    outline: 2px solid theme("colors.amber.DEFAULT");
+    outline: 2px solid theme("colors.blue.DEFAULT");
     outline-offset: 2px;
   }
 }
 
 @layer utilities {
+  /* Montserrat display text (prices, big figures, headings) is bold by
+     default -- the old Fraunces display face carried its own emphasis. */
+  .font-display {
+    font-weight: 700;
+  }
   .pb-safe-nav {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }

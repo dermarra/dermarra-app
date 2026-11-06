@@ -52,7 +52,7 @@ export default function ProductDetail() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 text-center">
         <p className="text-ink/70">{loadError}</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
           Shop all products
         </Link>
       </div>
@@ -128,7 +128,7 @@ export default function ProductDetail() {
                   key={id}
                   onClick={() => setSelectedIndex(index)}
                   className={`w-14 h-14 rounded-sm overflow-hidden border shrink-0 transition-colors ${
-                    index === selectedIndex ? "border-amber" : "border-mist"
+                    index === selectedIndex ? "border-orange" : "border-mist"
                   }`}
                 >
                   <img
@@ -144,7 +144,7 @@ export default function ProductDetail() {
 
         <div>
           {product.key_actives && (
-            <span className="font-mono text-xs tracking-wide text-sage-dark uppercase">
+            <span className="font-mono text-xs tracking-wide text-lime-800 uppercase">
               {product.key_actives}
             </span>
           )}
@@ -152,7 +152,7 @@ export default function ProductDetail() {
           <p className="text-ink/70 mt-2">{product.short_description}</p>
           <p className="text-xl font-semibold mt-4 text-ink">KES {price}</p>
           {selectedVariant?.stock_status === "low_stock" && (
-            <p className="text-xs font-semibold text-amber-dark mt-2">Only a few left in stock</p>
+            <p className="text-xs font-semibold text-orange-700 mt-2">Only a few left in stock</p>
           )}
 
           {product.variants?.length > 1 && (
@@ -167,7 +167,7 @@ export default function ProductDetail() {
                     disabled={!v.in_stock}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                       v.id === selectedVariantId
-                        ? "border-amber bg-amber/10 text-amber-dark"
+                        ? "border-orange bg-orange/10 text-orange-700"
                         : "border-mist text-ink/70 hover:border-ink/30"
                     }`}
                   >
@@ -182,7 +182,7 @@ export default function ProductDetail() {
               {product.skin_concerns.map((c) => (
                 <span
                   key={c.id}
-                  className="text-[11px] px-2 py-1 rounded-full bg-clay/10 text-clay font-medium"
+                  className="text-[11px] px-2 py-1 rounded-full bg-orange-700/10 text-orange-700 font-medium"
                 >
                   {c.name}
                 </span>
@@ -196,14 +196,14 @@ export default function ProductDetail() {
             onClick={handleAdd}
             disabled={adding || !variantInStock}
             className={`hidden sm:flex mt-6 w-full py-3 rounded-sm font-semibold transition-colors disabled:opacity-50 items-center justify-center gap-2 ${
-              added ? "bg-sage text-bone-light" : "bg-amber text-bone-light hover:bg-amber-dark"
+              added ? "bg-lime text-ink" : "bg-orange text-ink hover:bg-orange-400"
             }`}
           >
             {added && <CheckIcon className="w-4 h-4" />}
             {!added && variantInStock && <BagIcon className="w-4 h-4" />}
             {buttonLabel(false)}
           </motion.button>
-          {addError && <p className="text-sm text-clay mt-2">{addError}</p>}
+          {addError && <p className="text-sm text-orange-700 mt-2">{addError}</p>}
 
           <dl className="mt-6 flex flex-col gap-2 text-sm border-t border-mist pt-4">
             <div className="flex justify-between">
@@ -253,7 +253,7 @@ export default function ProductDetail() {
           onClick={handleAdd}
           disabled={adding || !variantInStock}
           className={`w-full py-3 rounded-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 ${
-            added ? "bg-sage text-bone-light" : "bg-amber text-bone-light"
+            added ? "bg-lime text-ink" : "bg-orange text-ink"
           }`}
         >
           {added && <CheckIcon className="w-4 h-4" />}

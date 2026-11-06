@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component {
         <div className="mt-6 flex justify-center gap-3">
           <button
             onClick={() => window.location.reload()}
-            className="px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+            className="px-5 py-3 rounded-full bg-orange text-ink font-bold"
           >
             Reload page
           </button>

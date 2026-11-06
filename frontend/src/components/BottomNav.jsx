@@ -40,7 +40,7 @@ export default function BottomNav() {
               end={to === "/"}
               className={({ isActive }) =>
                 `relative flex flex-col items-center gap-1 py-2 text-[11px] font-medium ${
-                  isActive ? "text-amber" : "text-ink/60"
+                  isActive ? "text-orange-700" : "text-ink/60"
                 }`
               }
             >
@@ -60,7 +60,7 @@ export default function BottomNav() {
                   {isActive && (
                     <motion.span
                       layoutId="bottomNavActive"
-                      className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-amber"
+                      className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-orange"
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   )}
@@ -73,7 +73,7 @@ export default function BottomNav() {
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
                           transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                          className="absolute top-0 right-1/2 translate-x-3 -translate-y-1 bg-amber text-bone-light text-[9px] rounded-full w-4 h-4 flex items-center justify-center"
+                          className="absolute top-0 right-1/2 translate-x-3 -translate-y-1 bg-orange text-ink text-[9px] rounded-full w-4 h-4 flex items-center justify-center"
                         >
                           {itemCount}
                         </motion.span>

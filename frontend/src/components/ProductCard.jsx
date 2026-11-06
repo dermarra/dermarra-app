@@ -74,13 +74,13 @@ export default function ProductCard({ product }) {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-        className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-bone-light/90 flex items-center justify-center text-clay shadow-sm"
+        className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-bone-light/90 flex items-center justify-center text-orange-700 shadow-sm"
       >
         {wishlisted ? <HeartFilledIcon className="w-4 h-4" /> : <HeartIcon className="w-4 h-4" />}
       </motion.button>
       <Link
         to={`/shop/${product.slug}`}
-        className="group flex flex-col focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber"
+        className="group flex flex-col focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange"
       >
         <div className="relative aspect-square bg-mist overflow-hidden">
           {imageUrl && (
@@ -99,7 +99,7 @@ export default function ProductCard({ product }) {
         </div>
         <div className="p-3 flex flex-col gap-1">
           {product.key_actives && (
-            <span className="font-mono text-[10px] tracking-wide text-sage-dark uppercase">
+            <span className="font-mono text-[10px] tracking-wide text-lime-800 uppercase">
               {product.key_actives}
             </span>
           )}
@@ -114,10 +114,10 @@ export default function ProductCard({ product }) {
         disabled={!product.in_stock || !product.default_variant_id || status === "adding"}
         className={`w-full py-2.5 text-xs font-semibold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
           status === "added"
-            ? "bg-sage text-bone-light border-sage"
+            ? "bg-lime text-ink border-lime"
             : status === "error"
-            ? "bg-clay text-bone-light border-clay"
-            : "bg-amber text-bone-light border-amber hover:bg-amber-dark"
+            ? "bg-orange-700 text-ink border-orange-700"
+            : "bg-orange text-ink border-orange hover:bg-orange-400"
         }`}
       >
         {status === "added" && <CheckIcon className="w-3.5 h-3.5" />}

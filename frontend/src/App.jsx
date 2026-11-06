@@ -44,10 +44,13 @@ import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
 
 export default function App() {
   const location = useLocation();
+  // The admin area is its own app shell (sidebar + top bar, see
+  // AdminLayout.jsx) -- the storefront navbar/footer/bottom-nav don't show.
+  const isAdmin = location.pathname.startsWith("/admin");
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 pb-safe-nav sm:pb-0">
+      {!isAdmin && <Navbar />}
+      <main className={`flex-1 ${isAdmin ? "" : "pb-safe-nav sm:pb-0"}`}>
         <ErrorBoundary key={location.pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -99,9 +102,9 @@ export default function App() {
           </Route>
         </Routes>
         </ErrorBoundary>
-        <Footer />
+        {!isAdmin && <Footer />}
       </main>
-      <BottomNav />
+      {!isAdmin && <BottomNav />}
     </div>
   );
 }

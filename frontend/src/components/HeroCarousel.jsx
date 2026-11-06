@@ -26,7 +26,7 @@ export default function HeroCarousel({ slides }) {
   const goTo = (i) => setIndex(((i % slides.length) + slides.length) % slides.length);
 
   return (
-    <section className="relative h-[calc(100vh-4rem)] min-h-[420px] overflow-hidden bg-ink">
+    <section className="relative h-[calc(100vh-4.25rem)] min-h-[420px] overflow-hidden bg-ink">
       <AnimatePresence mode="wait">
         {imageUrl && (
           <motion.img
@@ -41,7 +41,8 @@ export default function HeroCarousel({ slides }) {
           />
         )}
       </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent" />
+      {/* Solid scrim (no gradients in the brand system) keeps white text readable on any photo. */}
+      <div className="absolute inset-0 bg-ink/55" />
 
       <div className="relative z-10 h-full flex flex-col justify-end sm:justify-center mx-auto max-w-6xl px-4 pb-16 sm:pb-0">
         <AnimatePresence mode="wait">
@@ -53,7 +54,7 @@ export default function HeroCarousel({ slides }) {
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
             {slide.eyebrow && (
-              <p className="font-mono text-xs tracking-widest text-amber uppercase mb-3">{slide.eyebrow}</p>
+              <p className="font-mono text-xs tracking-widest text-orange-700 uppercase mb-3">{slide.eyebrow}</p>
             )}
             <h1 className="font-display text-3xl sm:text-5xl leading-tight text-bone-light max-w-2xl">
               {slide.title}
@@ -69,7 +70,7 @@ export default function HeroCarousel({ slides }) {
               >
                 <Link
                   to={slide.cta_link}
-                  className="block px-5 py-3 rounded-sm bg-amber text-bone-light text-sm font-semibold hover:bg-amber-dark transition-colors"
+                  className="block px-5 py-3 rounded-full bg-orange text-ink text-sm font-bold hover:bg-orange-400 transition-colors"
                 >
                   {slide.cta_label}
                 </Link>
@@ -103,7 +104,7 @@ export default function HeroCarousel({ slides }) {
                 onClick={() => goTo(i)}
                 aria-label={`Go to slide ${i + 1}`}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-6 bg-amber" : "w-1.5 bg-bone-light/50"
+                  i === index ? "w-6 bg-orange" : "w-1.5 bg-bone-light/50"
                 }`}
               />
             ))}

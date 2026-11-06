@@ -204,7 +204,7 @@ export default function AdminRoutines() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm"
+          className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm"
         >
           + Add routine
         </motion.button>
@@ -318,13 +318,13 @@ export default function AdminRoutines() {
             </span>
           </label>
 
-          {error && <p className="text-sm text-clay">{error}</p>}
+          {error && <p className="text-sm text-orange-700">{error}</p>}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
             >
               {submitting ? "Saving…" : "Save"}
             </button>
@@ -396,7 +396,7 @@ export default function AdminRoutines() {
               <button
                 type="button"
                 onClick={() => removeStep(index)}
-                className="px-2 py-1.5 rounded-sm border border-mist text-clay text-xs"
+                className="px-2 py-1.5 rounded-sm border border-mist text-orange-700 text-xs"
               >
                 Remove
               </button>
@@ -411,14 +411,14 @@ export default function AdminRoutines() {
             + Add step
           </button>
 
-          {stepsError && <p className="text-sm text-clay">{stepsError}</p>}
+          {stepsError && <p className="text-sm text-orange-700">{stepsError}</p>}
 
           <div className="flex gap-2">
             <button
               type="button"
               onClick={saveSteps}
               disabled={stepsSubmitting || steps.length === 0}
-              className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
             >
               {stepsSubmitting ? "Saving…" : "Save steps"}
             </button>
@@ -455,7 +455,7 @@ export default function AdminRoutines() {
                     {routine.skin_type && ` · ${routine.skin_type} skin`}
                   </p>
                   {state && state !== "deleting" && (
-                    <p className="text-xs text-clay mt-1">{state}</p>
+                    <p className="text-xs text-orange-700 mt-1">{state}</p>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -474,7 +474,7 @@ export default function AdminRoutines() {
                   <button
                     onClick={() => handleDelete(routine.id)}
                     disabled={state === "deleting"}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-clay text-xs disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
                   >
                     {state === "deleting" ? "Deleting…" : "Delete"}
                   </button>

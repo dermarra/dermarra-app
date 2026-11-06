@@ -46,7 +46,7 @@ export default function Login() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
             Welcome back
           </p>
           <h1 className="font-display text-2xl sm:text-3xl text-ink mb-8">Sign in</h1>
@@ -59,9 +59,9 @@ export default function Login() {
                 placeholder="Email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
               />
-              <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+              <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
 
             <label className="relative block">
@@ -71,9 +71,9 @@ export default function Login() {
                 placeholder="Password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
               />
-              <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+              <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
@@ -88,14 +88,14 @@ export default function Login() {
               Forgot password?
             </Link>
 
-            {error && <p className="text-sm text-clay">{error}</p>}
+            {error && <p className="text-sm text-orange-700">{error}</p>}
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={submitting}
-              className="py-3 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="py-3 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
             >
               {submitting ? "Signing in…" : "Sign in"}
             </motion.button>
@@ -103,7 +103,7 @@ export default function Login() {
 
           <p className="text-sm text-ink/60 mt-6">
             No account?{" "}
-            <Link to="/signup" state={location.state} className="text-amber font-medium hover:text-amber-dark">
+            <Link to="/signup" state={location.state} className="text-orange-700 font-medium hover:text-orange-700">
               Sign up
             </Link>
           </p>

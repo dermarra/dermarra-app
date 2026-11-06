@@ -121,7 +121,7 @@ export default function AdminOrderDetail() {
       </div>
 
       {order.stock_allocated === false && (
-        <p className="text-sm text-clay border border-clay/40 rounded-sm p-3">
+        <p className="text-sm text-orange-700 border border-orange-700/40 rounded-sm p-3">
           This order is paid, but no stock was deducted for it -- the payment confirmed after its items had
           sold out. Check you can fulfil it (or cancel and refund) before shipping.
         </p>
@@ -159,7 +159,7 @@ export default function AdminOrderDetail() {
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
         {order.status === "payment_failed" && order.payment_failure_reason && (
-          <p className="text-sm text-clay">Last attempt: {order.payment_failure_reason}</p>
+          <p className="text-sm text-orange-700">Last attempt: {order.payment_failure_reason}</p>
         )}
         <p className="text-sm text-ink/80">Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}</p>
 
@@ -185,7 +185,7 @@ export default function AdminOrderDetail() {
           >
             {sendingInvoice ? "Sending…" : "Email invoice to customer"}
           </motion.button>
-          {invoiceSent && <span className="text-xs text-sage-dark">Invoice sent.</span>}
+          {invoiceSent && <span className="text-xs text-lime-800">Invoice sent.</span>}
         </div>
       </section>
 
@@ -196,7 +196,7 @@ export default function AdminOrderDetail() {
         </section>
       )}
 
-      {error && <p className="text-sm text-clay">{error}</p>}
+      {error && <p className="text-sm text-orange-700">{error}</p>}
 
       {nextStatus && (
         <section className="border border-mist rounded-sm p-4">
@@ -234,7 +234,7 @@ export default function AdminOrderDetail() {
             whileTap={{ scale: 0.98 }}
             onClick={() => advance(nextStatus)}
             disabled={busy || (nextStatus === "delivered" && !proofPublicId)}
-            className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+            className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
           >
             {busy ? "Saving…" : `Mark as ${nextStatus}`}
           </motion.button>
@@ -247,7 +247,7 @@ export default function AdminOrderDetail() {
           whileTap={{ scale: 0.98 }}
           onClick={cancelOrder}
           disabled={busy}
-          className="self-start px-4 py-2 rounded-sm border border-mist text-clay text-sm disabled:opacity-50"
+          className="self-start px-4 py-2 rounded-sm border border-mist text-orange-700 text-sm disabled:opacity-50"
         >
           Cancel order
         </motion.button>

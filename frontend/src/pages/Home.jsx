@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import HeroCarousel from "../components/HeroCarousel.jsx";
+import BrandStripe from "../components/BrandStripe.jsx";
 import Reveal, { containerReveal, itemReveal } from "../components/Reveal.jsx";
 import { ChevronLeftIcon, ChevronRightIcon } from "../components/Icons.jsx";
 
@@ -31,6 +32,11 @@ const PRINCIPLES = [
     copy: "Every formula is built on scientifically proven actives at optimal concentrations — no unnecessary complexity, no unproven trends.",
   },
 ];
+
+// Solid brand fills with brand-black text (5.2-9.8:1). No gradients.
+const PRINCIPLE_FILLS = ["bg-lime", "bg-blue", "bg-gold"];
+// Shop-by-step colours follow the logo's petals: prep, treat, seal, protect.
+const STEP_FILLS = { cleanser: "bg-lime", serum: "bg-orange", barrier_cream: "bg-blue", spf: "bg-gold" };
 
 function ConcernSlider({ concerns }) {
   const scrollRef = useRef(null);
@@ -116,29 +122,11 @@ export default function Home() {
         <HeroCarousel slides={heroSlides} />
       ) : (
         <section className="relative px-4 pt-10 pb-16 sm:pt-16 sm:pb-24 mx-auto max-w-6xl overflow-hidden">
-          <motion.div
-            aria-hidden="true"
-            className="absolute -top-10 -right-16 w-64 h-64 rounded-full bg-amber/10 blur-2xl"
-            animate={{ y: [0, 18, 0], x: [0, -10, 0] }}
-            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            aria-hidden="true"
-            className="absolute top-24 right-1/3 w-40 h-40 rounded-full bg-sky/10 blur-2xl"
-            animate={{ y: [0, -14, 0], x: [0, 12, 0] }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            aria-hidden="true"
-            className="absolute -bottom-8 left-1/4 w-48 h-48 rounded-full bg-sage/10 blur-2xl"
-            animate={{ y: [0, 16, 0] }}
-            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-          />
 
           <motion.div initial="hidden" animate="show" variants={containerReveal} className="relative">
             <motion.p
               variants={itemReveal}
-              className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-3"
+              className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-3"
             >
               Barrier-first · Clinically precise
             </motion.p>
@@ -156,7 +144,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/quiz"
-                  className="block px-5 py-3 rounded-sm bg-amber text-bone-light text-sm font-semibold hover:bg-amber-dark transition-colors"
+                  className="block px-5 py-3 rounded-full bg-orange text-ink text-sm font-bold hover:bg-orange-400 transition-colors"
                 >
                   Find your routine
                 </Link>
@@ -164,7 +152,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/shop"
-                  className="block px-5 py-3 rounded-sm border border-mist text-sm font-semibold text-ink hover:bg-mist/40 transition-colors"
+                  className="block px-5 py-3 rounded-full border-2 border-ink text-sm font-bold text-ink hover:bg-ink hover:text-white transition-colors"
                 >
                   Shop all products
                 </Link>
@@ -177,7 +165,7 @@ export default function Home() {
       {/* ---------- The Dermarra story ---------- */}
       <Reveal as={motion.section} className="px-4 py-16 sm:py-20 mx-auto max-w-6xl">
         <div className="max-w-2xl">
-          <motion.p variants={itemReveal} className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <motion.p variants={itemReveal} className="text-xs font-bold tracking-widest text-blue-700 uppercase mb-2">
             Why Dermarra
           </motion.p>
           <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink mb-4">
@@ -194,10 +182,14 @@ export default function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-10">
           {PRINCIPLES.map((p, index) => (
-            <motion.div key={p.label} variants={itemReveal} className="border-t border-mist pt-4">
-              <span className="font-mono text-xs text-ink/40">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="font-display text-lg text-ink mt-2 mb-2">{p.label}</h3>
-              <p className="text-sm text-ink/70 leading-relaxed">{p.copy}</p>
+            <motion.div
+              key={p.label}
+              variants={itemReveal}
+              className={`rounded-2xl p-6 text-ink ${PRINCIPLE_FILLS[index % PRINCIPLE_FILLS.length]}`}
+            >
+              <span className="text-xs font-bold tracking-widest">{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="text-xl font-bold mt-3 mb-2">{p.label}</h3>
+              <p className="text-sm leading-relaxed">{p.copy}</p>
             </motion.div>
           ))}
         </div>
@@ -230,22 +222,29 @@ export default function Home() {
             {stepGroups.map((group) => {
               const imageUrl = cloudinaryUrl(group.cloudinary_public_id, { width: 400 });
               return (
-                <motion.div key={group.id} variants={itemReveal} whileHover={{ y: -3 }}>
-                  <div className="aspect-square rounded-sm bg-mist overflow-hidden mb-3">
+                <motion.div
+                  key={group.id}
+                  variants={itemReveal}
+                  whileHover={{ y: -3 }}
+                  className={`rounded-2xl p-3 pb-5 text-ink ${STEP_FILLS[group.step_type] || "bg-blue"}`}
+                >
+                  <div className="aspect-square rounded-xl bg-white/40 overflow-hidden mb-3">
                     {imageUrl && (
                       <img src={imageUrl} alt={group.label} className="w-full h-full object-cover" />
                     )}
                   </div>
-                  <h3 className="font-display text-lg text-ink">{group.label}</h3>
-                  <p className="text-sm text-ink/70 mt-1 leading-relaxed">
-                    {group.description || STEP_COPY[group.step_type]}
-                  </p>
-                  <Link
-                    to={`/shop/step/${group.key}`}
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-amber hover:text-amber-dark mt-2"
-                  >
-                    View all <span>→</span>
-                  </Link>
+                  <div className="px-1">
+                    <h3 className="text-lg font-bold">{group.label}</h3>
+                    <p className="text-sm mt-1 leading-relaxed">
+                      {group.description || STEP_COPY[group.step_type]}
+                    </p>
+                    <Link
+                      to={`/shop/step/${group.key}`}
+                      className="inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4 mt-2"
+                    >
+                      View all <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
                 </motion.div>
               );
             })}
@@ -291,19 +290,20 @@ export default function Home() {
 
       {/* ---------- Become a member ---------- */}
       {!user && (
-        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-4xl text-center">
-          <motion.p variants={itemReveal} className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-3">
+        <Reveal as={motion.section} className="px-4 py-16 mx-auto max-w-6xl">
+          <div className="rounded-2xl bg-lime px-6 py-12 sm:py-14 text-center text-ink">
+          <motion.p variants={itemReveal} className="text-xs font-bold tracking-widest uppercase mb-3">
             Join the family
           </motion.p>
           <motion.h2 variants={itemReveal} className="font-display text-2xl sm:text-3xl text-ink">
             Your skin&apos;s story is just getting started. Let&apos;s write it together.
           </motion.h2>
-          <motion.p variants={itemReveal} className="text-ink/70 mt-3 max-w-md mx-auto">
+          <motion.p variants={itemReveal} className="mt-3 max-w-md mx-auto">
             Create your Dermarra account to save your quiz results, build a wishlist, track
             orders, and pick up your routine right where you left off.
           </motion.p>
           {featuredCoupon && (
-            <motion.p variants={itemReveal} className="mt-4 text-sm font-semibold text-sage-dark">
+            <motion.p variants={itemReveal} className="mt-4 mx-auto w-fit rounded-full bg-white px-4 py-1.5 text-sm font-bold">
               Join now and use {featuredCoupon.code} for {featuredCoupon.discount_type === "percent"
                 ? `${featuredCoupon.discount_value}% off your first order.`
                 : `KES ${(featuredCoupon.discount_value / 100).toFixed(0)} off your first order.`}
@@ -317,11 +317,12 @@ export default function Home() {
           >
             <Link
               to="/signup"
-              className="inline-block px-6 py-3 rounded-sm bg-amber text-bone-light text-sm font-semibold hover:bg-amber-dark transition-colors"
+              className="inline-block px-6 py-3 rounded-full bg-ink text-white text-sm font-bold hover:bg-ink-soft transition-colors"
             >
               Join Dermarra
             </Link>
           </motion.div>
+          </div>
         </Reveal>
       )}
 
@@ -332,21 +333,10 @@ export default function Home() {
       >
         <motion.div
           variants={itemReveal}
-          className="relative overflow-hidden rounded-sm bg-ink px-6 py-12 sm:py-16 text-center"
+          className="relative overflow-hidden rounded-2xl bg-ink px-6 pt-14 pb-12 sm:pb-16 text-center"
         >
-          <motion.div
-            aria-hidden="true"
-            className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-amber/20 blur-2xl"
-            animate={{ y: [0, 14, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            aria-hidden="true"
-            className="absolute -bottom-16 -right-8 w-56 h-56 rounded-full bg-sky/20 blur-2xl"
-            animate={{ y: [0, -14, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <h2 className="relative font-display text-2xl sm:text-3xl text-bone-light max-w-xl mx-auto">
+          <BrandStripe className="absolute inset-x-0 top-0 h-2" />
+          <h2 className="relative text-2xl sm:text-3xl text-white max-w-xl mx-auto">
             Not sure where to start? Answer three questions.
           </h2>
           <motion.div
@@ -356,7 +346,7 @@ export default function Home() {
           >
             <Link
               to="/quiz"
-              className="inline-block px-6 py-3 rounded-sm bg-amber text-bone-light text-sm font-semibold hover:bg-amber-dark transition-colors"
+              className="inline-block px-6 py-3 rounded-full bg-orange text-ink text-sm font-bold hover:bg-orange-400 transition-colors"
             >
               Find your routine
             </Link>

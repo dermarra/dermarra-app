@@ -18,7 +18,7 @@ export default function Cart() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 text-center">
         <p className="text-ink/70">Sign in to view your cart.</p>
-        <Link to="/login" state={{ from: "/cart" }} className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+        <Link to="/login" state={{ from: "/cart" }} className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
           Sign in
         </Link>
       </div>
@@ -37,7 +37,7 @@ export default function Cart() {
           <BagIcon className="w-6 h-6 text-ink/40" />
         </div>
         <p className="text-ink/70">Your cart is empty.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
           Shop products
         </Link>
       </motion.div>
@@ -122,21 +122,21 @@ export default function Cart() {
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() => updateItem(item.id, Math.max(1, item.quantity - 1))}
-                      className="w-7 h-7 rounded-full border border-mist flex items-center justify-center text-ink/70 hover:border-amber hover:text-amber transition-colors"
+                      className="w-7 h-7 rounded-full border border-mist flex items-center justify-center text-ink/70 hover:border-orange hover:text-orange-700 transition-colors"
                     >
                       <MinusIcon className="w-3.5 h-3.5" />
                     </button>
                     <span className="text-sm w-5 text-center text-ink">{item.quantity}</span>
                     <button
                       onClick={() => updateItem(item.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-full border border-mist flex items-center justify-center text-ink/70 hover:border-amber hover:text-amber transition-colors"
+                      className="w-7 h-7 rounded-full border border-mist flex items-center justify-center text-ink/70 hover:border-orange hover:text-orange-700 transition-colors"
                     >
                       <PlusIcon className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => removeItem(item.id)}
                       aria-label="Remove item"
-                      className="ml-3 flex items-center gap-1 text-xs text-clay hover:text-amber-dark"
+                      className="ml-3 flex items-center gap-1 text-xs text-orange-700 hover:text-orange-700"
                     >
                       <TrashIcon className="w-3.5 h-3.5" />
                       Remove
@@ -157,7 +157,7 @@ export default function Cart() {
               onChange={(event) => setCouponCode(event.target.value)}
               placeholder="Coupon code"
               aria-label="Coupon code"
-              className="min-w-0 flex-1 border border-mist rounded-sm px-3 py-2 text-sm bg-bone text-ink uppercase focus:border-amber"
+              className="min-w-0 flex-1 border border-mist rounded-sm px-3 py-2 text-sm bg-bone text-ink uppercase focus:border-orange"
               disabled={couponLoading || Boolean(cart.coupon)}
             />
             <button
@@ -169,23 +169,23 @@ export default function Cart() {
             </button>
           </form>
           {cart.coupon && (
-            <button onClick={handleRemoveCoupon} disabled={couponLoading} className="text-sm text-clay underline disabled:opacity-40">
+            <button onClick={handleRemoveCoupon} disabled={couponLoading} className="text-sm text-orange-700 underline disabled:opacity-40">
               Remove
             </button>
           )}
         </div>
-        {couponError && <p className="text-sm text-clay mt-2">{couponError}</p>}
-        {cart.coupon && <p className="text-sm text-sage-dark mt-2">{cart.coupon.code} applied</p>}
+        {couponError && <p className="text-sm text-orange-700 mt-2">{couponError}</p>}
+        {cart.coupon && <p className="text-sm text-lime-800 mt-2">{cart.coupon.code} applied</p>}
         <div className="mt-4 flex flex-col gap-1 text-sm text-ink/70">
           <div className="flex justify-between"><span>Subtotal</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>
-          {discount > 0 && <div className="flex justify-between text-sage-dark"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
+          {discount > 0 && <div className="flex justify-between text-lime-800"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
         </div>
         <div className="mt-3 flex items-center justify-between">
           <span className="font-semibold text-ink">Total: KES {(total / 100).toFixed(0)}</span>
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/checkout"
-              className="block px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold hover:bg-amber-dark transition-colors"
+              className="block px-5 py-3 rounded-full bg-orange text-ink font-bold hover:bg-orange-400 transition-colors"
             >
               Checkout
             </Link>

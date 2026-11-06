@@ -101,7 +101,7 @@ export default function ConcernShop() {
         <p className="text-ink/70">{loadError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
         >
           Try again
         </button>
@@ -113,7 +113,7 @@ export default function ConcernShop() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 text-center">
         <p className="text-ink/70">We couldn&apos;t find that concern.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold">
+        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold">
           Shop all products
         </Link>
       </div>
@@ -134,7 +134,7 @@ export default function ConcernShop() {
           <Breadcrumbs
             items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: concern.name }]}
           />
-          <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
             Shop by concern
           </p>
           <h1 className="font-display text-3xl sm:text-4xl text-ink max-w-lg">{concern.name}</h1>
@@ -180,7 +180,7 @@ export default function ConcernShop() {
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}
                           onClick={() => addRoutineToCart(routine.id)}
-                          className="shrink-0 px-4 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold hover:bg-amber-dark transition-colors whitespace-nowrap"
+                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-bold hover:bg-orange-400 transition-colors whitespace-nowrap"
                         >
                           {addedRoutineId === routine.id
                             ? "Added to cart"
@@ -190,14 +190,14 @@ export default function ConcernShop() {
                         <Link
                           to="/login"
                           state={{ from: location.pathname }}
-                          className="shrink-0 px-4 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold hover:bg-amber-dark transition-colors whitespace-nowrap"
+                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-bold hover:bg-orange-400 transition-colors whitespace-nowrap"
                         >
                           Sign in to add
                         </Link>
                       )}
                     </div>
                     {routineAddError[routine.id] && (
-                      <p className="text-xs text-clay mb-3">{routineAddError[routine.id]}</p>
+                      <p className="text-xs text-orange-700 mb-3">{routineAddError[routine.id]}</p>
                     )}
                     <RoutineStepRail steps={routine.steps} />
                   </div>

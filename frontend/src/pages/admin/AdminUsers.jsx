@@ -92,7 +92,7 @@ export default function AdminUsers() {
                       {u.lifetime_value_cents != null && ` · ${formatKES(u.lifetime_value_cents)} lifetime`} ·
                       joined {new Date(u.created_at).toLocaleDateString()}
                     </p>
-                    {state && state !== "saving" && <p className="text-xs text-clay mt-1">{state}</p>}
+                    {state && state !== "saving" && <p className="text-xs text-orange-700 mt-1">{state}</p>}
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.03 }}
@@ -104,7 +104,7 @@ export default function AdminUsers() {
                     disabled={state === "saving" || (isSelf && u.is_admin)}
                     title={isSelf && u.is_admin ? "You can't remove your own admin access" : ""}
                     className={`px-3 py-1.5 rounded-sm border text-xs shrink-0 disabled:opacity-40 ${
-                      u.is_admin ? "border-mist text-clay" : "border-mist text-ink/70"
+                      u.is_admin ? "border-mist text-orange-700" : "border-mist text-ink/70"
                     }`}
                   >
                     {state === "saving" ? "Saving…" : u.is_admin ? "Revoke admin" : "Make admin"}
@@ -153,7 +153,7 @@ export default function AdminUsers() {
                                 <Link
                                   key={order.id}
                                   to={`/admin/orders/${order.id}`}
-                                  className="flex items-center justify-between text-sm hover:text-brand-700"
+                                  className="flex items-center justify-between text-sm hover:text-blue-700"
                                 >
                                   <span className="font-mono text-xs">{order.id.slice(0, 8)}</span>
                                   <span className="text-xs uppercase text-ink/60">{order.status}</span>
@@ -167,7 +167,7 @@ export default function AdminUsers() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-clay">Could not load this profile.</p>
+                      <p className="text-xs text-orange-700">Could not load this profile.</p>
                     )}
                   </motion.div>
                 )}

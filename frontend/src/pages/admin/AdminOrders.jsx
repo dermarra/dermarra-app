@@ -63,7 +63,7 @@ function Column({ status, orders }) {
       ref={setNodeRef}
       variants={itemReveal}
       className={`flex-1 min-w-[220px] border rounded-sm p-3 transition-colors ${
-        isOver ? "border-brand-600 bg-brand-50" : "border-mist"
+        isOver ? "border-blue-600 bg-blue-50" : "border-mist"
       }`}
     >
       <h3 className="text-xs font-semibold uppercase tracking-wide text-ink/70 mb-3">
@@ -163,7 +163,7 @@ export default function AdminOrders() {
         ))}
       </div>
 
-      {error && <p className="text-sm text-clay mb-4">{error}</p>}
+      {error && <p className="text-sm text-orange-700 mb-4">{error}</p>}
 
       {loading ? (
         <p className="text-ink/60 text-sm">Loading orders…</p>

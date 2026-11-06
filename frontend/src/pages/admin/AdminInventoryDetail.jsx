@@ -111,7 +111,7 @@ export default function AdminInventoryDetail() {
   };
 
   if (loading) return <p className="text-ink/60 text-sm">Loading…</p>;
-  if (error) return <p className="text-sm text-clay">{error}</p>;
+  if (error) return <p className="text-sm text-orange-700">{error}</p>;
   if (!detail) return null;
 
   const { variant, batches, transactions } = detail;
@@ -158,7 +158,7 @@ export default function AdminInventoryDetail() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setReceiveOpen((v) => !v)}
-            className="px-3 py-1.5 rounded-sm bg-brand-700 text-bone-light font-semibold text-xs"
+            className="px-3 py-1.5 rounded-sm bg-blue text-ink font-semibold text-xs"
           >
             {receiveOpen ? "Cancel" : "+ Log production run"}
           </motion.button>
@@ -237,13 +237,13 @@ export default function AdminInventoryDetail() {
                   rows={2}
                 />
               </Field>
-              {receiveError && <p className="text-sm text-clay">{receiveError}</p>}
+              {receiveError && <p className="text-sm text-orange-700">{receiveError}</p>}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={receiveBusy}
-                className="self-start px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+                className="self-start px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
               >
                 {receiveBusy ? "Saving…" : "Log production run"}
               </motion.button>
@@ -383,7 +383,7 @@ export default function AdminInventoryDetail() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="flex flex-col gap-3 border border-amber/60 bg-amber-light/10 rounded-sm p-4"
+              className="flex flex-col gap-3 border border-orange/60 bg-orange-300/10 rounded-sm p-4"
             >
               <h4 className="text-sm font-semibold text-ink">Confirm this adjustment</h4>
               <p className="text-sm text-ink/80">
@@ -392,14 +392,14 @@ export default function AdminInventoryDetail() {
                 <span className="font-mono">{selectedBatch?.batch_number}</span>.
               </p>
               <p className="text-xs text-ink/60">Reason: {adjustForm.reason}</p>
-              {adjustError && <p className="text-sm text-clay">{adjustError}</p>}
+              {adjustError && <p className="text-sm text-orange-700">{adjustError}</p>}
               <div className="flex gap-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={confirmAdjust}
                   disabled={adjustBusy}
-                  className="px-4 py-2 rounded-sm bg-clay text-bone-light font-semibold text-sm disabled:opacity-50"
+                  className="px-4 py-2 rounded-sm bg-orange-700 text-bone-light font-semibold text-sm disabled:opacity-50"
                 >
                   {adjustBusy ? "Applying…" : "Confirm and apply"}
                 </motion.button>
@@ -436,7 +436,7 @@ export default function AdminInventoryDetail() {
                   <tr key={t.id} className="border-t border-mist">
                     <td className="py-1.5 pr-3 whitespace-nowrap">{new Date(t.created_at).toLocaleString()}</td>
                     <td className="py-1.5 pr-3 font-mono">{t.type}</td>
-                    <td className={`py-1.5 pr-3 font-mono ${t.quantity < 0 ? "text-clay" : "text-sage-dark"}`}>
+                    <td className={`py-1.5 pr-3 font-mono ${t.quantity < 0 ? "text-orange-700" : "text-lime-800"}`}>
                       {t.quantity > 0 ? `+${t.quantity}` : t.quantity}
                     </td>
                     <td className="py-1.5 pr-3 text-ink/70">{t.reason || "—"}</td>

@@ -40,20 +40,39 @@ def _send(email, *, failure_label):
         raise
 
 
+# Brand system (see frontend/tailwind.config.js): ink #231F20, blue #1D9CD7,
+# orange #F16722, lime #BBD531, gold #CD902D. Links/headings on white use the
+# readable shades (blue-700 #1F6F95); emails can't use the SVG logo (Gmail
+# blocks SVG), so they load the PNG rendered from it at /brand/logo-email.png.
+_INK = "#231F20"
+_LINK = "#1F6F95"
+_STRIPE = (
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">'
+    "<tr>"
+    '<td style="height:6px;background:#BBD531;"></td><td style="height:6px;background:#F16722;"></td>'
+    '<td style="height:6px;background:#1D9CD7;"></td><td style="height:6px;background:#CD902D;"></td>'
+    "</tr></table>"
+)
+
+
+def _logo_url():
+    return f"{current_app.config['FRONTEND_BASE_URL'].rstrip('/')}/brand/logo-email.png"
+
+
 def _email_shell(body_html):
     """A consistent branded wrapper every transactional email renders
-    inside, instead of each function hand-rolling its own bare <p> tags
-    with no visual identity."""
+    inside: the four-colour brand stripe, the Dermarra logo, then the body."""
     return (
-        '<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;'
-        'max-width:560px;margin:0 auto;color:#3A3733;">'
-        '<div style="padding:24px 0;border-bottom:2px solid #ECECEB;">'
-        '<span style="font-size:20px;font-weight:600;letter-spacing:-0.02em;">'
-        'Dermarra<span style="color:#F47A53;">+</span></span>'
+        '<div style="font-family:Montserrat,-apple-system,Helvetica,Arial,sans-serif;'
+        f'max-width:560px;margin:0 auto;color:{_INK};">'
+        f"{_STRIPE}"
+        '<div style="padding:22px 0 18px;border-bottom:1px solid #ECECEB;">'
+        f'<img src="{_e(_logo_url())}" width="180" alt="Dermarra Skincare" '
+        'style="display:block;border:0;height:auto;width:180px;">'
         "</div>"
         f'<div style="padding:24px 0;">{body_html}</div>'
         '<div style="padding:16px 0;border-top:1px solid #ECECEB;'
-        'font-size:12px;color:#8A867E;">'
+        'font-size:12px;color:#4A4547;">'
         "Dermarra Skincare"
         "</div>"
         "</div>"
@@ -83,7 +102,7 @@ def send_password_reset_email(user, reset_url):
             f"<p>Hi {_e(user.full_name)},</p>"
             "<p>Someone requested a password reset for this account. If that was you, "
             "click the link below -- it expires in 30 minutes:</p>"
-            f'<p><a href="{reset_url}" style="color:#F47A53;">{reset_url}</a></p>'
+            f'<p><a href="{reset_url}" style="color:{_LINK};">{reset_url}</a></p>'
             "<p>If you didn't request this, you can safely ignore this email.</p>"
         ),
     )
@@ -186,7 +205,7 @@ def send_order_invoice_email(user, order):
     address_html = ""
     if order.shipping_address_line1:
         address_html = (
-            '<p style="color:#64615A;margin-top:24px;">'
+            '<p style="color:#4A4547;margin-top:24px;">'
             f"{_e(order.shipping_name)}<br>"
             f"{_e(order.shipping_address_line1)}<br>"
             + (f"{_e(order.shipping_address_line2)}<br>" if order.shipping_address_line2 else "")
@@ -196,7 +215,7 @@ def send_order_invoice_email(user, order):
         )
 
     receipt_html = (
-        f'<p style="color:#64615A;">M-Pesa receipt: {_e(order.mpesa_receipt_number)}</p>'
+        f'<p style="color:#4A4547;">M-Pesa receipt: {_e(order.mpesa_receipt_number)}</p>'
         if order.mpesa_receipt_number else ""
     )
 
@@ -205,14 +224,14 @@ def send_order_invoice_email(user, order):
         sender=_sender(),
         subject=f"Invoice for your Dermarra Skincare order #{order.id[:8]}",
         html_content=_email_shell(
-            f'<h2 style="color:#F47A53;">Invoice #{order.id[:8]}</h2>'
+            f'<h2 style="color:{_INK};border-left:6px solid #1D9CD7;padding-left:10px;">Invoice #{order.id[:8]}</h2>'
             f'<p>{order.created_at.strftime("%d %b %Y")}</p>'
             '<table style="width:100%;border-collapse:collapse;margin-top:16px;">'
             "<thead><tr>"
-            '<th style="text-align:left;padding:8px;border-bottom:2px solid #64615A;">Item</th>'
-            '<th style="text-align:center;padding:8px;border-bottom:2px solid #64615A;">Qty</th>'
-            '<th style="text-align:right;padding:8px;border-bottom:2px solid #64615A;">Unit price</th>'
-            '<th style="text-align:right;padding:8px;border-bottom:2px solid #64615A;">Total</th>'
+            '<th style="text-align:left;padding:8px;border-bottom:2px solid #4A4547;">Item</th>'
+            '<th style="text-align:center;padding:8px;border-bottom:2px solid #4A4547;">Qty</th>'
+            '<th style="text-align:right;padding:8px;border-bottom:2px solid #4A4547;">Unit price</th>'
+            '<th style="text-align:right;padding:8px;border-bottom:2px solid #4A4547;">Total</th>'
             f"</tr></thead><tbody>{rows_html}</tbody>"
             "<tfoot>"
             f'<tr><td colspan="3" style="padding:8px;text-align:right;">Subtotal</td>'
@@ -220,7 +239,7 @@ def send_order_invoice_email(user, order):
             f"{_discount_row_html(order)}"
             f'<tr><td colspan="3" style="padding:8px;text-align:right;">Shipping</td>'
             f'<td style="padding:8px;text-align:right;">KES {order.shipping_cents / 100:.0f}</td></tr>'
-            f'<tr style="font-weight:bold;color:#F47A53;">'
+            f'<tr style="font-weight:bold;color:{_INK};background:#EDF7FC;">'
             f'<td colspan="3" style="padding:8px;text-align:right;">Total</td>'
             f'<td style="padding:8px;text-align:right;">KES {order.total_cents / 100:.0f}</td></tr>'
             "</tfoot>"

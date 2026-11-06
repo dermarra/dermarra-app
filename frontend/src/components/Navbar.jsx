@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { BagIcon, UserIcon } from "./Icons.jsx";
+import Logo from "./Logo.jsx";
+import BrandStripe from "./BrandStripe.jsx";
 
 function CartLink({ className }) {
   const { itemCount } = useCart();
@@ -17,7 +19,7 @@ function CartLink({ className }) {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 15 }}
-            className="absolute -top-2 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-amber text-bone-light text-[10px] font-semibold flex items-center justify-center"
+            className="absolute -top-2 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-orange text-ink text-[10px] font-semibold flex items-center justify-center"
           >
             {itemCount}
           </motion.span>
@@ -46,29 +48,34 @@ export default function Navbar() {
     : `${location.pathname}${location.search}`;
 
   return (
-    <header className="sticky top-0 z-30 bg-bone-light/95 backdrop-blur border-b border-mist">
+    <header className="sticky top-0 z-30 bg-white border-b border-mist">
+      <BrandStripe className="h-1" />
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="font-display text-lg tracking-tight text-ink">
-          Dermarra<span className="text-amber">+</span>
+        <Link to="/" aria-label="Dermarra Skincare home" className="shrink-0">
+          <Logo className="h-6 sm:h-7" />
         </Link>
 
-        <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-ink/80">
-          <Link to="/shop" className="hover:text-ink transition-colors">Shop</Link>
-          <Link to="/quiz" className="hover:text-ink transition-colors">Find your routine</Link>
-          <CartLink className="hover:text-ink transition-colors" />
+        <nav className="hidden sm:flex items-center gap-6 text-sm font-semibold text-ink">
+          <Link to="/shop" className="hover:text-blue-700 transition-colors">Shop</Link>
+          <Link to="/quiz" className="hover:text-blue-700 transition-colors">Find your routine</Link>
+          <CartLink className="hover:text-blue-700 transition-colors" />
           {user ? (
             <>
               {user.is_admin && (
-                <Link to="/admin/orders" className="hover:text-ink transition-colors">Admin</Link>
+                <Link to="/admin/dashboard" className="hover:text-blue-700 transition-colors">Admin</Link>
               )}
-              <Link to="/account" className="flex items-center gap-1.5 hover:text-ink transition-colors">
+              <Link to="/account" className="flex items-center gap-1.5 hover:text-blue-700 transition-colors">
                 <UserIcon className="w-4 h-4" />
                 {user.full_name}
               </Link>
-              <button onClick={signOut} className="hover:text-ink transition-colors">Sign out</button>
+              <button onClick={signOut} className="text-ink/70 hover:text-ink transition-colors">Sign out</button>
             </>
           ) : (
-            <Link to="/login" state={returnTo ? { from: returnTo } : undefined} className="hover:text-ink transition-colors">
+            <Link
+              to="/login"
+              state={returnTo ? { from: returnTo } : undefined}
+              className="px-4 py-2 rounded-full bg-blue text-ink hover:bg-blue-400 transition-colors"
+            >
               Sign in
             </Link>
           )}

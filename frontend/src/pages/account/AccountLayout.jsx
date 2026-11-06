@@ -21,7 +21,7 @@ export default function AccountLayout() {
         <p className="text-ink/70">Sign in to view your account.</p>
         <Link
           to="/login"
-          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
         >
           Sign in
         </Link>
@@ -35,26 +35,18 @@ export default function AccountLayout() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-sm border border-mist bg-bone-light p-6 mb-6"
+        className="relative overflow-hidden rounded-2xl bg-blue text-ink p-6 mb-6"
       >
-        <motion.div
-          aria-hidden="true"
-          className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-amber/10 blur-2xl"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <p className="relative font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
-          My account
-        </p>
-        <h1 className="relative font-display text-2xl text-ink">{user.full_name}</h1>
-        <p className="relative text-sm text-ink/60 mt-1">{user.email}</p>
+        <p className="relative text-xs font-bold tracking-widest uppercase mb-2">My account</p>
+        <h1 className="relative text-2xl font-bold">{user.full_name}</h1>
+        <p className="relative text-sm mt-1">{user.email}</p>
         {/* The only sign-out on mobile -- BottomNav has no account menu. */}
         <button
           onClick={() => {
             logout();
             navigate("/", { replace: true });
           }}
-          className="relative mt-4 px-4 py-2 rounded-sm border border-mist text-ink/70 text-xs font-semibold hover:border-ink/40"
+          className="relative mt-4 px-4 py-2 rounded-full bg-ink text-white text-xs font-bold hover:bg-ink-soft"
         >
           Sign out
         </button>

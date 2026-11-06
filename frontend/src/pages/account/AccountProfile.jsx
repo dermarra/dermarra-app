@@ -12,8 +12,8 @@ import {
 } from "../../components/Icons.jsx";
 
 const inputClass =
-  "peer w-full border border-mist rounded-sm pl-10 pr-4 py-2.5 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors";
-const iconClass = "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber";
+  "peer w-full border border-mist rounded-sm pl-10 pr-4 py-2.5 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors";
+const iconClass = "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700";
 
 function Card({ eyebrow, title, children }) {
   return (
@@ -23,7 +23,7 @@ function Card({ eyebrow, title, children }) {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="border border-mist rounded-sm bg-bone-light p-5"
     >
-      <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-1">{eyebrow}</p>
+      <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-1">{eyebrow}</p>
       <h2 className="font-display text-lg text-ink mb-4">{title}</h2>
       {children}
     </motion.section>
@@ -37,7 +37,7 @@ function SaveButton({ submitting, children = "Save" }) {
       whileTap={{ scale: 0.98 }}
       type="submit"
       disabled={submitting}
-      className="px-5 py-2.5 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+      className="px-5 py-2.5 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
     >
       {submitting ? "Saving…" : children}
     </motion.button>
@@ -114,7 +114,7 @@ function ProfileSection() {
           />
           <PhoneIcon className={iconClass} />
         </label>
-        {error && <p className="text-sm text-clay">{error}</p>}
+        {error && <p className="text-sm text-orange-700">{error}</p>}
         <div className="flex gap-2">
           <SaveButton submitting={submitting} />
           <button
@@ -190,8 +190,8 @@ function PasswordSection() {
           {showPasswords ? "Hide passwords" : "Show passwords"}
         </button>
 
-        {error && <p className="text-sm text-clay">{error}</p>}
-        {success && <p className="text-sm text-sage-dark">Password updated.</p>}
+        {error && <p className="text-sm text-orange-700">{error}</p>}
+        {success && <p className="text-sm text-lime-800">Password updated.</p>}
         <SaveButton submitting={submitting}>Change password</SaveButton>
       </form>
     </Card>
@@ -322,14 +322,14 @@ function AddressSection() {
             value={form.city}
             onChange={(e) => setForm({ ...form, city: e.target.value })}
             placeholder="City"
-            className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-amber transition-colors"
+            className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-orange transition-colors"
           />
           <input
             required
             value={form.postal_code}
             onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
             placeholder="Postal code"
-            className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-amber transition-colors"
+            className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-orange transition-colors"
           />
         </div>
         <input
@@ -337,7 +337,7 @@ function AddressSection() {
           value={form.country}
           onChange={(e) => setForm({ ...form, country: e.target.value })}
           placeholder="Country"
-          className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-amber transition-colors"
+          className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-orange transition-colors"
         />
         <label className="relative block">
           <input
@@ -351,7 +351,7 @@ function AddressSection() {
           <PhoneIcon className={iconClass} />
         </label>
 
-        {error && <p className="text-sm text-clay">{error}</p>}
+        {error && <p className="text-sm text-orange-700">{error}</p>}
         <div className="flex gap-2">
           <SaveButton submitting={submitting} />
           <button

@@ -49,7 +49,7 @@ export default function AccountRoutines() {
   };
 
   if (loading) return <p className="text-sm text-ink/60">Loading your routines…</p>;
-  if (error) return <p className="text-sm text-clay">{error}</p>;
+  if (error) return <p className="text-sm text-orange-700">{error}</p>;
 
   if (routines.length === 0) {
     return (
@@ -87,12 +87,12 @@ export default function AccountRoutines() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => reorder(routine)}
-              className="shrink-0 px-4 py-2 rounded-sm bg-amber text-bone-light text-xs font-semibold whitespace-nowrap"
+              className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-bold whitespace-nowrap"
             >
               {addedId === routine.id ? "Added ✓" : "Reorder"}
             </motion.button>
           </div>
-          {reorderError[routine.id] && <p className="text-xs text-clay mb-3">{reorderError[routine.id]}</p>}
+          {reorderError[routine.id] && <p className="text-xs text-orange-700 mb-3">{reorderError[routine.id]}</p>}
           <RoutineStepRail steps={routine.steps} />
         </motion.div>
         );

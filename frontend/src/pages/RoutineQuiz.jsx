@@ -19,7 +19,7 @@ const SKIN_TYPES = [
 function ProgressLabel({ step }) {
   if (step !== "concern" && step !== "skin_type") return null;
   return (
-    <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+    <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
       {step === "concern" ? "Step 1 of 2" : "Step 2 of 2"}
     </p>
   );
@@ -128,13 +128,13 @@ export default function RoutineQuiz() {
                   whileTap={{ scale: 0.97 }}
                   onClick={() => chooseConcern(c)}
                   className={`shrink-0 snap-start w-40 sm:w-48 rounded-sm border p-4 text-left transition-colors ${
-                    concern?.id === c.id ? "border-amber bg-amber-light/20" : "border-mist bg-bone-light"
+                    concern?.id === c.id ? "border-orange bg-orange-300/20" : "border-mist bg-bone-light"
                   }`}
                 >
                   {c.description ? (
                     <>
                       <span className="font-semibold text-sm text-ink leading-snug">{c.description}</span>
-                      <p className="text-[11px] font-mono uppercase tracking-wide text-sage-dark mt-2">
+                      <p className="text-[11px] font-mono uppercase tracking-wide text-lime-800 mt-2">
                         {c.name}
                       </p>
                     </>
@@ -169,7 +169,7 @@ export default function RoutineQuiz() {
                   whileTap={{ scale: 0.97 }}
                   disabled={matching}
                   onClick={() => chooseSkinType(t.value)}
-                  className="rounded-sm border border-mist bg-bone-light p-4 text-sm font-semibold text-ink hover:border-amber transition-colors disabled:opacity-50"
+                  className="rounded-sm border border-mist bg-bone-light p-4 text-sm font-semibold text-ink hover:border-orange transition-colors disabled:opacity-50"
                 >
                   {t.label}
                 </motion.button>
@@ -180,7 +180,7 @@ export default function RoutineQuiz() {
                 whileTap={{ scale: 0.97 }}
                 disabled={matching}
                 onClick={() => chooseSkinType(null)}
-                className="rounded-sm border border-mist bg-bone-light p-4 text-sm font-semibold text-ink/60 hover:border-amber transition-colors disabled:opacity-50"
+                className="rounded-sm border border-mist bg-bone-light p-4 text-sm font-semibold text-ink/60 hover:border-orange transition-colors disabled:opacity-50"
               >
                 Not sure
               </motion.button>
@@ -188,7 +188,7 @@ export default function RoutineQuiz() {
 
             {matching && (
               <div className="flex items-center gap-3 mt-6">
-                <div className="w-5 h-5 border-2 border-amber border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-orange border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm text-ink/60">Finding your routine…</p>
               </div>
             )}
@@ -206,7 +206,7 @@ export default function RoutineQuiz() {
           >
             {error && (
               <div>
-                <p className="text-sm text-clay">{error}</p>
+                <p className="text-sm text-orange-700">{error}</p>
                 <button
                   onClick={startOver}
                   className="mt-4 px-5 py-2.5 rounded-sm border border-mist text-ink/70 text-sm font-semibold"
@@ -245,7 +245,7 @@ export default function RoutineQuiz() {
                       whileTap={{ scale: 0.98 }}
                       onClick={handleAdd}
                       className={`px-6 py-3 rounded-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
-                        added ? "bg-sage text-bone-light" : "bg-amber text-bone-light hover:bg-amber-dark"
+                        added ? "bg-lime text-ink" : "bg-orange text-ink hover:bg-orange-400"
                       }`}
                     >
                       {added ? (
@@ -263,7 +263,7 @@ export default function RoutineQuiz() {
                     <Link
                       to="/login"
                       state={{ from: "/quiz" }}
-                      className="px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold hover:bg-amber-dark transition-colors"
+                      className="px-6 py-3 rounded-full bg-orange text-ink font-bold hover:bg-orange-400 transition-colors"
                     >
                       Sign in to add this routine to your cart
                     </Link>
@@ -272,7 +272,7 @@ export default function RoutineQuiz() {
                     Start over
                   </button>
                 </div>
-                {addError && <p className="text-sm text-clay mt-3">{addError}</p>}
+                {addError && <p className="text-sm text-orange-700 mt-3">{addError}</p>}
               </>
             )}
           </motion.div>

@@ -51,21 +51,21 @@ export default function ResetPassword() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
             Reset password
           </p>
           <h1 className="font-display text-2xl sm:text-3xl text-ink mb-8">Choose a new password</h1>
 
           {!token ? (
-            <p className="text-sm text-clay">
+            <p className="text-sm text-orange-700">
               This reset link is missing its token -- request a new one from the{" "}
-              <Link to="/forgot-password" className="text-amber font-medium hover:text-amber-dark">
+              <Link to="/forgot-password" className="text-orange-700 font-medium hover:text-orange-700">
                 forgot password
               </Link>{" "}
               page.
             </p>
           ) : done ? (
-            <p className="text-sm text-sage-dark">Password updated -- redirecting you to sign in…</p>
+            <p className="text-sm text-lime-800">Password updated -- redirecting you to sign in…</p>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <label className="relative block">
@@ -76,9 +76,9 @@ export default function ResetPassword() {
                   placeholder="New password (min. 8 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                  className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
                 />
-                <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+                <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
@@ -97,19 +97,19 @@ export default function ResetPassword() {
                   placeholder="Confirm new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                  className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
                 />
-                <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+                <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
               </label>
 
-              {error && <p className="text-sm text-clay">{error}</p>}
+              {error && <p className="text-sm text-orange-700">{error}</p>}
 
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="py-3 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+                className="py-3 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
               >
                 {submitting ? "Saving…" : "Reset password"}
               </motion.button>
@@ -117,7 +117,7 @@ export default function ResetPassword() {
           )}
 
           <p className="text-sm text-ink/60 mt-6">
-            <Link to="/login" className="text-amber font-medium hover:text-amber-dark">
+            <Link to="/login" className="text-orange-700 font-medium hover:text-orange-700">
               ← Back to sign in
             </Link>
           </p>

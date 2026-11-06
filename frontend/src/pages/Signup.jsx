@@ -49,7 +49,7 @@ export default function Signup() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
             Join Dermarra
           </p>
           <h1 className="font-display text-2xl sm:text-3xl text-ink mb-8">Create your account</h1>
@@ -62,9 +62,9 @@ export default function Signup() {
                 placeholder="Full name"
                 value={form.fullName}
                 onChange={handleChange("fullName")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
               />
-              <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+              <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
 
             <label className="relative block">
@@ -74,9 +74,9 @@ export default function Signup() {
                 placeholder="Email"
                 value={form.email}
                 onChange={handleChange("email")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
               />
-              <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+              <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
 
             <label className="relative block">
@@ -85,9 +85,9 @@ export default function Signup() {
                 placeholder="Phone (optional)"
                 value={form.phone}
                 onChange={handleChange("phone")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
               />
-              <PhoneIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+              <PhoneIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
 
             <label className="relative block">
@@ -98,9 +98,9 @@ export default function Signup() {
                 placeholder="Password (min. 8 characters)"
                 value={form.password}
                 onChange={handleChange("password")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
               />
-              <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+              <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
@@ -111,14 +111,14 @@ export default function Signup() {
               </button>
             </label>
 
-            {error && <p className="text-sm text-clay">{error}</p>}
+            {error && <p className="text-sm text-orange-700">{error}</p>}
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={submitting}
-              className="py-3 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+              className="py-3 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
             >
               {submitting ? "Creating account…" : "Create account"}
             </motion.button>
@@ -126,7 +126,7 @@ export default function Signup() {
 
           <p className="text-sm text-ink/60 mt-6">
             Already have an account?{" "}
-            <Link to="/login" state={location.state} className="text-amber font-medium hover:text-amber-dark">
+            <Link to="/login" state={location.state} className="text-orange-700 font-medium hover:text-orange-700">
               Sign in
             </Link>
           </p>

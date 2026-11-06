@@ -39,10 +39,10 @@ export default function RoutineStepRail({ steps, activeStepId = null, timeOfDay 
             <motion.div
               whileHover={{ y: -3 }}
               className={`flex flex-col items-center gap-2 w-28 sm:w-32 rounded-sm border p-3 transition-colors ${
-                isActive ? "border-amber bg-amber-light/20" : "border-mist bg-bone-light"
+                isActive ? "border-orange bg-orange-300/20" : "border-mist bg-bone-light"
               }`}
             >
-              <span className="font-mono text-[10px] tracking-widest text-sage-dark">
+              <span className="font-mono text-[10px] tracking-widest text-lime-800">
                 STEP {String(step.order_index).padStart(2, "0")}
               </span>
               <div className="w-16 h-16 rounded-sm overflow-hidden bg-mist">

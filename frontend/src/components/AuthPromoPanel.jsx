@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../api/client";
+import Logo from "./Logo.jsx";
 
 const AUTO_ADVANCE_MS = 5000;
 const MAX_SLIDES = 4;
@@ -36,7 +37,7 @@ export default function AuthPromoPanel() {
             onClick={() => onSelect(i)}
             aria-label={`Go to slide ${i + 1}`}
             className={`h-1.5 rounded-full transition-all ${
-              i === active ? "w-6 bg-amber" : "w-1.5 bg-ink/15"
+              i === active ? "w-6 bg-orange" : "w-1.5 bg-ink/15"
             }`}
           />
         ))}
@@ -46,9 +47,7 @@ export default function AuthPromoPanel() {
   if (slides.length === 0) {
     return (
       <div className="h-full min-h-[320px] bg-mist/50 flex flex-col items-center justify-center text-center px-10 py-12">
-        <p className="font-display text-2xl text-ink">
-          Dermarra<span className="text-amber">+</span>
-        </p>
+        <Logo className="h-9" />
         <p className="text-ink/60 text-sm mt-2 max-w-[220px]">
           Skin health, engineered as a system -- cleanse, treat, repair, protect.
         </p>
@@ -76,7 +75,7 @@ export default function AuthPromoPanel() {
             </div>
           )}
           {slide.eyebrow && (
-            <p className="font-mono text-[11px] tracking-widest text-sage-dark uppercase mb-2">
+            <p className="font-mono text-[11px] tracking-widest text-lime-800 uppercase mb-2">
               {slide.eyebrow}
             </p>
           )}

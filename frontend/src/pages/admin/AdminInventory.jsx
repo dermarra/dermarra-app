@@ -12,10 +12,10 @@ const STATUS_LABELS = {
 };
 
 const STATUS_STYLES = {
-  in_stock: "border-sage text-sage-dark",
-  low_stock: "border-amber text-amber-dark",
-  out_of_stock: "border-clay text-clay",
-  no_sizes: "border-clay text-clay",
+  in_stock: "border-lime text-lime-800",
+  low_stock: "border-orange text-orange-700",
+  out_of_stock: "border-orange-700 text-orange-700",
+  no_sizes: "border-orange-700 text-orange-700",
 };
 
 const FILTERS = [
@@ -80,7 +80,7 @@ export default function AdminInventory() {
       </div>
 
       {expiringSoon.length > 0 && (
-        <section className="border border-amber/60 bg-amber-light/10 rounded-sm p-4">
+        <section className="border border-orange/60 bg-orange-300/10 rounded-sm p-4">
           <h3 className="text-sm font-semibold text-ink mb-2">Expiring within 30 days</h3>
           <div className="flex flex-col gap-1">
             {expiringSoon.map((batch) => (
@@ -93,7 +93,7 @@ export default function AdminInventory() {
         </section>
       )}
 
-      {error && <p className="text-sm text-clay">{error}</p>}
+      {error && <p className="text-sm text-orange-700">{error}</p>}
 
       {loading ? (
         <p className="text-ink/60 text-sm">Loading inventory…</p>
@@ -118,7 +118,7 @@ export default function AdminInventory() {
                       {row.reorder_level}
                     </p>
                   ) : (
-                    <p className="text-xs text-clay">
+                    <p className="text-xs text-orange-700">
                       Hidden from the shop -- add a size (label, SKU, price) to sell and stock it →
                     </p>
                   )}

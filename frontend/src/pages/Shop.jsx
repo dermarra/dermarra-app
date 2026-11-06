@@ -37,7 +37,7 @@ export default function Shop() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+        <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
           The full system
         </p>
         <h1 className="font-display text-2xl sm:text-3xl text-ink mb-6">Shop all products</h1>
@@ -63,7 +63,7 @@ export default function Shop() {
       {loading ? (
         <p className="text-ink/60 text-sm">Loading products…</p>
       ) : loadError ? (
-        <p className="text-clay text-sm">{loadError}</p>
+        <p className="text-orange-700 text-sm">{loadError}</p>
       ) : products.length === 0 ? (
         <p className="text-ink/60 text-sm">No products yet for this filter.</p>
       ) : (

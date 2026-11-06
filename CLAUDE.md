@@ -87,9 +87,29 @@
   prefills from these and can save the entered address back through the same
   endpoint, reflecting the response into `AuthContext` via `updateUser()`
   rather than forcing a re-login.
-- Design tokens (colors, fonts) are in `frontend/tailwind.config.js` —
-  `amber` (brand CTA color, from the actual dropper-bottle packaging),
-  `sage` (barrier/biology accent), `mono` font for ingredient concentrations.
+- **Brand system (rebrand, 2026-11-06)** -- tokens in
+  `frontend/tailwind.config.js`, from the owner's "dermarra brand c" sheet:
+  six colours -- `blue #1D9CD7`, `orange #F16722`, `lime #BBD531`,
+  `gold #CD902D`, `ink` (brand black `#231F20`), `bone` (white) -- each
+  colour with a 50-900 scale whose DEFAULT is the exact brand colour.
+  Owner's rules: **no gradients anywhere** (also no blurred glow blobs), and
+  the brand colours themselves are dominant, not their tints. Contrast rule
+  that follows from that: **text on blue/orange/lime/gold is `text-ink`**
+  (5.2-9.8:1); white text fails on all four, so white only goes on `ink`.
+  Coloured text on white uses the 700 shade (lime 800). The old
+  `amber`/`sage`/`sky`/`clay`/`brand` tokens are gone. Font: Montserrat
+  (free near-match for Gotham, the owner's reference -- Gotham itself is
+  licensed); `.font-display` is bold by default; IBM Plex Mono stays for
+  ingredient strengths.
+- **Logos** live in `frontend/public/brand/` (official files): `logo-dark.svg`
+  / `logo-light.svg` (wordmark + multicolour icon, for light / ink
+  backgrounds), `icon-dark.svg` / `icon-light.svg`; `logo-email.png` is a
+  raster for emails (Gmail blocks SVG). Use `components/Logo.jsx`, never a
+  text "Dermarra+". Favicon = the dark multicolour icon.
+  `components/BrandStripe.jsx` = the four-colour solid stripe.
+- The admin area is its own app shell (`AdminLayout.jsx`: ink sidebar,
+  white top bar, `bg-blue-50` canvas); `App.jsx` hides the storefront
+  navbar/footer/bottom-nav on `/admin/*`.
 
 ## Conventions
 - Backend: Flask blueprints per resource in `backend/app/routes/`, models in

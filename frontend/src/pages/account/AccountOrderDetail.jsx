@@ -50,7 +50,7 @@ export default function AccountOrderDetail() {
               <span className="text-ink">
                 {item.name} × {item.quantity}
                 {item.routine_id && (
-                  <span className="ml-2 text-[10px] font-mono uppercase text-sage-dark align-middle">
+                  <span className="ml-2 text-[10px] font-mono uppercase text-lime-800 align-middle">
                     Routine
                   </span>
                 )}
@@ -87,7 +87,7 @@ export default function AccountOrderDetail() {
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
         {order.status === "payment_failed" && order.payment_failure_reason && (
-          <p className="text-sm text-clay">Last attempt: {order.payment_failure_reason}</p>
+          <p className="text-sm text-orange-700">Last attempt: {order.payment_failure_reason}</p>
         )}
         <p className="text-sm text-ink/80">
           Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}

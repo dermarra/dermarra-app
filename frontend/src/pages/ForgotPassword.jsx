@@ -41,7 +41,7 @@ export default function ForgotPassword() {
         </div>
 
         <div className="p-8 sm:p-12 flex flex-col justify-center">
-          <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+          <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
             Reset password
           </p>
           <h1 className="font-display text-2xl sm:text-3xl text-ink mb-3">Forgot your password?</h1>
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
           </p>
 
           {sent ? (
-            <p className="text-sm text-sage-dark">{sent}</p>
+            <p className="text-sm text-lime-800">{sent}</p>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <label className="relative block">
@@ -60,16 +60,16 @@ export default function ForgotPassword() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors"
+                  className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
                 />
-                <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber" />
+                <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
               </label>
 
-              {error && <p className="text-sm text-clay">{error}</p>}
+              {error && <p className="text-sm text-orange-700">{error}</p>}
               {noAccount && (
-                <p className="text-sm text-clay">
+                <p className="text-sm text-orange-700">
                   There&apos;s no account with that email.{" "}
-                  <Link to="/signup" state={{ email }} className="text-amber font-medium underline">
+                  <Link to="/signup" state={{ email }} className="text-orange-700 font-medium underline">
                     Create an account
                   </Link>
                 </p>
@@ -80,7 +80,7 @@ export default function ForgotPassword() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="py-3 rounded-sm bg-amber text-bone-light font-semibold text-sm disabled:opacity-50"
+                className="py-3 rounded-full bg-orange text-ink font-bold text-sm disabled:opacity-50"
               >
                 {submitting ? "Sending…" : "Send reset link"}
               </motion.button>
@@ -88,7 +88,7 @@ export default function ForgotPassword() {
           )}
 
           <p className="text-sm text-ink/60 mt-6">
-            <Link to="/login" className="text-amber font-medium hover:text-amber-dark">
+            <Link to="/login" className="text-orange-700 font-medium hover:text-orange-700">
               ← Back to sign in
             </Link>
           </p>

@@ -76,7 +76,7 @@ export default function AdminStepGroups() {
               >
                 {isEditing ? (
                   <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                    <p className="text-xs font-mono uppercase tracking-widest text-sage-dark">
+                    <p className="text-xs font-mono uppercase tracking-widest text-lime-800">
                       {group.key} · maps to step_type &ldquo;{group.step_type}&rdquo;
                     </p>
                     <p className="text-[11px] text-ink/55 -mt-2">
@@ -124,7 +124,7 @@ export default function AdminStepGroups() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="text-sm text-clay"
+                          className="text-sm text-orange-700"
                         >
                           {error}
                         </motion.p>
@@ -137,7 +137,7 @@ export default function AdminStepGroups() {
                         whileTap={{ scale: 0.98 }}
                         type="submit"
                         disabled={submitting}
-                        className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+                        className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
                       >
                         {submitting ? "Saving…" : "Save"}
                       </motion.button>

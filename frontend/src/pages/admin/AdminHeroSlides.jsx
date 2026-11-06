@@ -102,7 +102,7 @@ export default function AdminHeroSlides() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openCreate}
-          className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm"
+          className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm"
         >
           + Add slide
         </motion.button>
@@ -215,7 +215,7 @@ export default function AdminHeroSlides() {
               />
             </div>
 
-            {error && <p className="text-sm text-clay">{error}</p>}
+            {error && <p className="text-sm text-orange-700">{error}</p>}
 
             <div className="flex gap-2">
               <motion.button
@@ -223,7 +223,7 @@ export default function AdminHeroSlides() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-sm bg-brand-700 text-bone-light font-semibold text-sm disabled:opacity-50"
+                className="px-4 py-2 rounded-sm bg-blue text-ink font-semibold text-sm disabled:opacity-50"
               >
                 {submitting ? "Saving…" : "Save"}
               </motion.button>
@@ -269,7 +269,7 @@ export default function AdminHeroSlides() {
                     </p>
                     <p className="text-xs text-ink/60">Position {slide.position}</p>
                     {state && state !== "deleting" && (
-                      <p className="text-xs text-clay mt-1">{state}</p>
+                      <p className="text-xs text-orange-700 mt-1">{state}</p>
                     )}
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function AdminHeroSlides() {
                   <button
                     onClick={() => handleDelete(slide.id)}
                     disabled={state === "deleting"}
-                    className="px-3 py-1.5 rounded-sm border border-mist text-clay text-xs disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-sm border border-mist text-orange-700 text-xs disabled:opacity-50"
                   >
                     {state === "deleting" ? "Deleting…" : "Delete"}
                   </button>

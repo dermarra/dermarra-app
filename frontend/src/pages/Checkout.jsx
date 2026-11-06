@@ -21,10 +21,10 @@ const emptyShipping = {
 };
 
 const inputClass =
-  "peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors";
-const iconClass = "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-amber";
+  "peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors";
+const iconClass = "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700";
 const plainInputClass =
-  "border border-mist rounded-sm px-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-amber transition-colors";
+  "border border-mist rounded-sm px-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors";
 
 export default function Checkout() {
   const { cart, refreshCart } = useCart();
@@ -165,7 +165,7 @@ export default function Checkout() {
         <Link
           to="/login"
           state={{ from: "/cart" }}
-          className="inline-block mt-4 px-5 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-bold"
         >
           Sign in
         </Link>
@@ -193,7 +193,7 @@ export default function Checkout() {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
-          className="w-14 h-14 rounded-full bg-sage flex items-center justify-center mx-auto mb-4"
+          className="w-14 h-14 rounded-full bg-lime flex items-center justify-center mx-auto mb-4"
         >
           <CheckIcon className="w-7 h-7 text-bone-light" />
         </motion.div>
@@ -205,7 +205,7 @@ export default function Checkout() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => navigate(`/account/orders/${order.id}`)}
-          className="mt-6 px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold"
+          className="mt-6 px-6 py-3 rounded-full bg-orange text-ink font-bold"
         >
           View order
         </motion.button>
@@ -227,10 +227,10 @@ export default function Checkout() {
           PIN to complete the payment of <span className="font-semibold">KES {((order?.total_cents ?? total) / 100).toFixed(0)}</span>.
         </p>
         <div className="mt-6 flex justify-center">
-          <div className="w-8 h-8 border-2 border-amber border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-orange border-t-transparent rounded-full animate-spin" />
         </div>
         {error && (
-          <p className="text-sm text-clay mt-4">
+          <p className="text-sm text-orange-700 mt-4">
             {error}{" "}
             <Link to="/account/orders" className="underline">View my orders</Link>
           </p>
@@ -263,13 +263,13 @@ export default function Checkout() {
               className={`${plainInputClass} w-full mt-1`}
             />
           </label>
-          {error && <p className="text-sm text-clay">{error}</p>}
+          {error && <p className="text-sm text-orange-700">{error}</p>}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             type="submit"
             disabled={retrying}
-            className="px-6 py-3 rounded-sm bg-amber text-bone-light font-semibold disabled:opacity-50"
+            className="px-6 py-3 rounded-full bg-orange text-ink font-bold disabled:opacity-50"
           >
             {retrying ? "Sending prompt…" : `Retry payment · KES ${((order?.total_cents ?? 0) / 100).toFixed(0)}`}
           </motion.button>
@@ -288,14 +288,14 @@ export default function Checkout() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="mx-auto max-w-lg px-4 py-6 pb-32 sm:pb-6"
     >
-      <p className="font-mono text-xs tracking-widest text-sage-dark uppercase mb-2">
+      <p className="font-mono text-xs tracking-widest text-lime-800 uppercase mb-2">
         Almost there
       </p>
       <h1 className="font-display text-2xl sm:text-3xl text-ink mb-4">Checkout</h1>
 
       <div className="rounded-sm border border-mist bg-bone-light p-4 mb-6 text-sm">
         <div className="flex justify-between text-ink/70"><span>Subtotal ({cart.items.length} item{cart.items.length !== 1 ? "s" : ""})</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>
-        {discount > 0 && <div className="flex justify-between text-sage-dark mt-1"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
+        {discount > 0 && <div className="flex justify-between text-lime-800 mt-1"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
         <div className="flex justify-between font-semibold text-ink mt-2 pt-2 border-t border-mist"><span>Total</span><span>KES {(total / 100).toFixed(0)}</span></div>
       </div>
 
@@ -346,7 +346,7 @@ export default function Checkout() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="text-sm text-clay"
+              className="text-sm text-orange-700"
             >
               {error}
             </motion.p>
@@ -358,7 +358,7 @@ export default function Checkout() {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={step === "creating_order"}
-          className="mt-2 py-3 rounded-sm bg-amber text-bone-light font-semibold disabled:opacity-50"
+          className="mt-2 py-3 rounded-full bg-orange text-ink font-bold disabled:opacity-50"
         >
           {step === "creating_order" ? "Preparing order…" : `Pay with M-Pesa · KES ${(total / 100).toFixed(0)}`}
         </motion.button>
