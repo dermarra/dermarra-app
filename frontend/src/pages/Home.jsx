@@ -7,6 +7,8 @@ import HeroCarousel from "../components/HeroCarousel.jsx";
 import BrandStripe from "../components/BrandStripe.jsx";
 import ServiceTiles, { BRAND_ACCENTS, productSummary } from "../components/ServiceTiles.jsx";
 import Reveal, { containerReveal, itemReveal } from "../components/Reveal.jsx";
+import FluidCardStack from "../components/FluidCardStack.jsx";
+import { BadgeIcon, ChemistryIcon, DropletIcon, LayersIcon } from "../components/Icons.jsx";
 
 // Fallback copy for a step group whose admin-editable `description` hasn't
 // been filled in yet -- keyed by Product.step_type so it lines up
@@ -18,23 +20,50 @@ const STEP_COPY = {
   spf: "Broad-spectrum SPF, every morning — the step that makes the other three worth it.",
 };
 
+// "Why Dermarra" cards (FluidCardStack). Solid brand fills with brand-black
+// text (5.2-9.8:1). No gradients.
 const PRINCIPLES = [
   {
-    label: "Barrier-first",
-    copy: "Every product is designed to protect, restore, and strengthen your skin barrier first — long-term skin health over short-term cosmetic gains.",
+    key: "barrier",
+    title: "Barrier-first",
+    description:
+      "Every product is designed to protect, restore, and strengthen your skin barrier first — long-term skin health over short-term cosmetic gains.",
+    icon: DropletIcon,
+    fill: "bg-lime",
+    to: "/shop",
+    cta: "Shop the range",
   },
   {
-    label: "System-based skincare",
-    copy: "Instead of standalone products, we build coordinated systems where each step has a defined role, working together to maximize results and minimize irritation.",
+    key: "system",
+    title: "System-based skincare",
+    description:
+      "Instead of standalone products, we build coordinated systems where each step has a defined role, working together to maximize results and minimize irritation.",
+    icon: LayersIcon,
+    fill: "bg-blue",
+    to: "/quiz",
+    cta: "Find your routine",
   },
   {
-    label: "Clinical precision",
-    copy: "Every formula is built on scientifically proven actives at optimal concentrations — no unnecessary complexity, no unproven trends.",
+    key: "precision",
+    title: "Clinical precision",
+    description:
+      "Every formula is built on scientifically proven actives at optimal concentrations — no unnecessary complexity, no unproven trends.",
+    icon: ChemistryIcon,
+    fill: "bg-orange",
+    to: "/shop",
+    cta: "See the formulas",
+  },
+  {
+    key: "in-house",
+    title: "Made in-house",
+    description:
+      "We formulate and make every product ourselves, in small batches. Every batch is tracked, with its expiry date, from production to your door.",
+    icon: BadgeIcon,
+    fill: "bg-gold",
+    to: "/shop",
+    cta: "Shop all products",
   },
 ];
-
-// Solid brand fills with brand-black text (5.2-9.8:1). No gradients.
-const PRINCIPLE_FILLS = ["bg-lime", "bg-blue", "bg-gold"];
 // Shop-by-step accents follow the logo's petals: prep, treat, seal, protect.
 const STEP_ACCENTS = { cleanser: "#BBD531", serum: "#F16722", barrier_cream: "#1D9CD7", spf: "#CD902D" };
 
@@ -124,19 +153,9 @@ export default function Home() {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-10">
-          {PRINCIPLES.map((p, index) => (
-            <motion.div
-              key={p.label}
-              variants={itemReveal}
-              className={`rounded-2xl p-6 text-ink ${PRINCIPLE_FILLS[index % PRINCIPLE_FILLS.length]}`}
-            >
-              <span className="font-display font-semibold text-4xl leading-none">{String(index + 1).padStart(2, "0")}</span>
-              <h3 className="text-2xl font-semibold mt-4 mb-2">{p.label}</h3>
-              <p className="text-base font-medium leading-relaxed">{p.copy}</p>
-            </motion.div>
-          ))}
-        </div>
+        <motion.div variants={itemReveal} className="mt-10">
+          <FluidCardStack cards={PRINCIPLES} />
+        </motion.div>
       </Reveal>
 
       {/* ---------- Shop by concern ---------- */}

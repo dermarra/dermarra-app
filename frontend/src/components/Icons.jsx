@@ -12,9 +12,11 @@
 import {
   SlArrowLeft,
   SlArrowRight,
+  SlBadge,
   SlBag,
   SlBasket,
   SlCheck,
+  SlChemistry,
   SlClose,
   SlDirections,
   SlDrawer,
@@ -92,6 +94,8 @@ export const ChevronLeftIcon = sl(SlArrowLeft);
 export const HomeIcon = sl(SlHome);
 export const ShopIcon = sl(SlBasket);
 export const QuizIcon = sl(SlMagicWand);
+export const ChemistryIcon = sl(SlChemistry);
+export const BadgeIcon = sl(SlBadge);
 
 export function EyeOffIcon(props) {
   return (

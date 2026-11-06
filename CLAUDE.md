@@ -115,6 +115,26 @@
   `.service-tiles` rules in `index.css` (hover only for `(hover: hover) and
   (pointer: fine)`). Steps use their petal accent; concerns/ingredients
   rotate the four brand colours.
+- **"Why Dermarra"** (just below the hero) uses `components/FluidCardStack.jsx`
+  -- native port of the owner's Framer "Fluid Card Stack"
+  (framer.com/m/Fluid-Card-Stack-qBHE.js): a horizontal accordion, the
+  hovered/focused/tapped card springs open (stiffness 300, damping 40), the
+  others fold to 15% strips with vertical titles; stacked and all-open
+  below `lg`. Four principles in `Home.jsx` `PRINCIPLES`, one brand fill each.
+- **Butterfly cursor**: `components/ButterflyCursor.jsx`, native port of the
+  owner's Framer "ButterflyCursor"; mounted in `App.jsx` on storefront routes
+  only (not `/admin`), brand blue, native cursor kept. Renders only for
+  `(pointer: fine)` and no reduced-motion -- so headless Chromium never shows
+  it (it reports no fine pointer even with emulation; override `matchMedia`
+  with a stand-in object to screenshot it).
+- **Routine builder** (`/quiz`, `pages/RoutineQuiz.jsx`) follows The
+  Ordinary's regimen builder: white split screen (question left, answers
+  right), "01 / 03" counter, "Why we ask" drawer, progress line + text
+  Back/Next footer. Steps: skin type (pills) -> top-3 concerns (photo tiles)
+  -> rank them (framer-motion `Reorder` + up/down buttons; skipped for one
+  concern). Matching sends the #1 concern and falls back down the ranking on
+  404. Results: greeting, ranked concerns, routine grouped by StepGroup
+  (Prep/Treat/Seal/Protect via `step_type`) with an AM/PM toggle.
 - **Logos** live in `frontend/public/brand/` (official files): `logo-dark.svg`
   / `logo-light.svg` (wordmark + multicolour icon, for light / ink
   backgrounds), `icon-dark.svg` / `icon-light.svg`; `logo-email.png` is a

@@ -5,6 +5,7 @@ import BottomNav from "./components/BottomNav.jsx";
 import Footer from "./components/Footer.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import ButterflyCursor from "./components/ButterflyCursor.jsx";
 
 import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
@@ -105,6 +106,7 @@ export default function App() {
         {!isAdmin && <Footer />}
       </main>
       {!isAdmin && <BottomNav />}
+      {!isAdmin && <ButterflyCursor />}
     </div>
   );
 }
