@@ -251,16 +251,24 @@ export function ListRow({ thumb, title, subtitle, note, stats, badge, actions, b
  * Enter in a text field submits (callers keep their own guards). */
 export function EditorDrawer({ open, title, description, onClose, onSubmit, saving, submitLabel = "Save", error, wide = false, children }) {
   const firstFieldRef = useRef(null);
+  // Callers pass a fresh onClose on every render (inline arrow), so keep the
+  // latest in a ref: the effect below must run only when the drawer opens.
+  // It used to depend on onClose, so every keystroke re-ran it and its
+  // "focus the first field" timer yanked the cursor back to the Name box.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const onKey = (e) => e.key === "Escape" && onCloseRef.current();
     window.addEventListener("keydown", onKey);
     const t = setTimeout(() => firstFieldRef.current?.querySelector("input, textarea, select")?.focus(), 250);
     return () => {
       window.removeEventListener("keydown", onKey);
       clearTimeout(t);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>
