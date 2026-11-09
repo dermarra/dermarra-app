@@ -49,7 +49,7 @@ export default function BrandStory() {
             Our story
           </motion.p>
           <motion.h2 variants={itemReveal} className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-5">
-            From the dermis, a transformation.
+            We are set to Butterfly your skin
           </motion.h2>
           <motion.div variants={itemReveal} className="flex flex-col gap-4 text-ink/80 leading-relaxed">
             <p>
