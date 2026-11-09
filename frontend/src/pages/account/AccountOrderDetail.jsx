@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
 import OrderTotals from "../../components/OrderTotals.jsx";
+import { ArrowLeftIcon } from "../../components/Icons.jsx";
 
 export default function AccountOrderDetail() {
   const { orderId } = useParams();
@@ -31,8 +32,8 @@ export default function AccountOrderDetail() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="flex flex-col gap-4"
     >
-      <button onClick={() => navigate("/account/orders")} className="text-sm text-ink/60 self-start">
-        ← Back to orders
+      <button onClick={() => navigate("/account/orders")} className="inline-flex items-center gap-2 text-sm text-ink/70 self-start">
+        <ArrowLeftIcon className="w-3.5 h-3.5" /> Back to orders
       </button>
 
       <div className="flex items-center justify-between">

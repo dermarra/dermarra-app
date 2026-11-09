@@ -3,6 +3,7 @@ import Cropper from "react-easy-crop";
 import client, { cloudinaryUrl } from "../api/client";
 import { getCroppedBlob } from "../lib/imageCrop.js";
 import { Button } from "./admin/Kit.jsx";
+import { ImageIcon } from "./Icons.jsx";
 
 /**
  * Admin photo picker: a drop zone ("Drop a photo here, or browse") when
@@ -172,11 +173,7 @@ export default function ImageUploadField({ value, onChange, folder, aspect, remo
           dragging ? "border-blue bg-blue-50" : "border-ink/25 bg-bone-light hover:border-blue hover:bg-blue-50"
         }`}
       >
-        <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-ink/70">
-          <rect x="3" y="4" width="18" height="16" rx="2" />
-          <path d="M3 16l5-5 4 4 3-3 6 6" />
-          <circle cx="15.5" cy="8.5" r="1.5" />
-        </svg>
+        <ImageIcon className="w-7 h-7 text-ink/70" />
         {uploading ? (
           <span className="font-semibold">Uploading…</span>
         ) : (

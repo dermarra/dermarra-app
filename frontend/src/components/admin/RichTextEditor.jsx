@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { Placeholder } from "@tiptap/extensions";
 import client from "../../api/client";
+import { ListIcon } from "../Icons.jsx";
 
 /** Word-processor style editor for blog posts (TipTap). Produces HTML; the
  * server sanitises it on save (app/services/blog_service.py), so only
@@ -124,7 +125,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Start w
           <span className="underline">U</span>
         </Tool>
         <Sep />
-        <Tool label="Bulleted list" active={state.bullet} onClick={() => chain().toggleBulletList().run()}>• List</Tool>
+        <Tool label="Bulleted list" active={state.bullet} onClick={() => chain().toggleBulletList().run()}><ListIcon className="w-4 h-4" /> List</Tool>
         <Tool label="Numbered list" active={state.ordered} onClick={() => chain().toggleOrderedList().run()}>1. List</Tool>
         <Tool label="Quote" active={state.quote} onClick={() => chain().toggleBlockquote().run()}>“ ”</Tool>
         <Sep />

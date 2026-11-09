@@ -20,6 +20,7 @@ import {
   selectClass,
   tableClass,
 } from "../../components/admin/Kit.jsx";
+import { ArrowLeftIcon } from "../../components/Icons.jsx";
 
 const STATUS = {
   in_stock: { label: "In stock", tone: "good" },
@@ -355,7 +356,7 @@ export default function AdminInventoryDetail() {
               </div>
             </dl>
             <Button onClick={() => setReviewing(false)} className="self-start">
-              ← Back to edit
+              <ArrowLeftIcon className="w-3.5 h-3.5" /> Back to edit
             </Button>
           </div>
         ) : (

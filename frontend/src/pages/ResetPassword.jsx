@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import client from "../api/client";
 import AuthPromoPanel from "../components/AuthPromoPanel.jsx";
-import { LockIcon, EyeIcon, EyeOffIcon } from "../components/Icons.jsx";
+import { ArrowLeftIcon, EyeIcon, EyeOffIcon, LockIcon } from "../components/Icons.jsx";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -117,8 +117,8 @@ export default function ResetPassword() {
           )}
 
           <p className="text-sm text-ink/60 mt-6">
-            <Link to="/login" className="text-orange-700 font-medium hover:text-orange-700">
-              ← Back to sign in
+            <Link to="/login" className="inline-flex items-center gap-2 text-orange-700 font-medium hover:text-orange-700">
+              <ArrowLeftIcon className="w-3.5 h-3.5" /> Back to sign in
             </Link>
           </p>
         </div>

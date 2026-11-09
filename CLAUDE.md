@@ -220,7 +220,7 @@
 - Shared UI primitives: `ImageUploadField.jsx` (Cloudinary upload; pass an
   `aspect` prop to require a `react-easy-crop` crop step first — via
   `frontend/src/lib/imageCrop.js` — otherwise it uploads immediately, e.g.
-  delivery-proof photos), `Icons.jsx` (**Simple Line Icons** via `react-icons/sl`, owner's choice 2026-11-06 -- every app icon is a named re-export there, so pages never import react-icons directly; TikTok and eye-off are custom thin-stroke glyphs since Simple Line lacks them, and a saved wishlist heart is the line heart on an orange circle),
+  delivery-proof photos), `Icons.jsx` (**Simple Line Icons** via `react-icons/sl`, owner's choice 2026-11-06 -- every app icon is a named re-export there, so pages never import react-icons directly. **Strictly Simple Line everywhere, shop and admin (owner, 2026-11-09)**: no other packs, no hand-drawn SVG icons, no text arrows/ticks (← → ✓ •) standing in for icons -- use `ArrowLeftIcon`/`ArrowRightIcon`/`CheckIcon`/`ListIcon`. Simple Line gaps map to the nearest SL icon: eye-off = `SlLock`, TikTok = `SlMusicTone`; a saved wishlist heart is the line heart on an orange circle. The backend sends no icons (emails are text-only).,
   `Reveal.jsx` (`framer-motion` scroll-triggered stagger reveal wrapper,
   `containerReveal`/`itemReveal` variants, used across the storefront).
 

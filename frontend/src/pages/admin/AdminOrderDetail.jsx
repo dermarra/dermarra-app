@@ -9,6 +9,7 @@ import { BackLink, Button, EmptyState, LoadingState, PageHeader, Panel, StatusBa
 import { ORDER_STATUS } from "../../lib/orderStatus.js";
 import { can } from "../../lib/permissions.js";
 import { useAuth } from "../../context/AuthContext";
+import { CheckIcon } from "../../components/Icons.jsx";
 
 const NEXT_STEP = { paid: "processing", processing: "shipped", shipped: "delivered" };
 const CANCELLABLE = new Set(["paid", "processing", "shipped"]);
@@ -137,7 +138,7 @@ export default function AdminOrderDetail() {
             <>
               {mayFulfil && (
                 <Button size="lg" onClick={sendInvoice} disabled={sendingInvoice}>
-                  {sendingInvoice ? "Sending…" : invoiceSent ? "Invoice sent ✓" : "Email invoice"}
+                  {sendingInvoice ? "Sending…" : invoiceSent ? <>Invoice sent <CheckIcon className="w-4 h-4" /></> : "Email invoice"}
                 </Button>
               )}
               {mayCancel && CANCELLABLE.has(order.status) && (

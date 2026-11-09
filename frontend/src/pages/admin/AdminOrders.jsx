@@ -139,7 +139,7 @@ export default function AdminOrders() {
     if (toIndex === -1 || toIndex === fromIndex) return;
 
     if (toIndex !== fromIndex + 1) {
-      setError("Orders can only move one step forward at a time (Paid → Processing → Shipped → Delivered).");
+      setError("Orders can only move one step forward at a time (Paid, then Processing, Shipped and Delivered).");
       return;
     }
 

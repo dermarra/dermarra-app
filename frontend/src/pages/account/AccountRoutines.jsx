@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import client, { cloudinaryUrl } from "../../api/client";
 import { useCart } from "../../context/CartContext";
 import RoutineStepRail from "../../components/RoutineStepRail.jsx";
+import { CheckIcon } from "../../components/Icons.jsx";
 
 // Mirrors the backend's own definition of "never reached a successful
 // payment" (see admin.py's _UNPAID_STATUSES) -- only orders that got past
@@ -89,7 +90,7 @@ export default function AccountRoutines() {
               onClick={() => reorder(routine)}
               className="btn btn-primary btn-sm shrink-0"
             >
-              {addedId === routine.id ? "Added ✓" : "Reorder"}
+              {addedId === routine.id ? <>Added <CheckIcon className="w-4 h-4" /></> : "Reorder"}
             </motion.button>
           </div>
           {reorderError[routine.id] && <p className="text-sm text-orange-700 mb-3">{reorderError[routine.id]}</p>}

@@ -13,7 +13,7 @@ export default function RequirePermission({ page, children }) {
     <div className="max-w-xl">
       <h2 className="text-4xl font-semibold leading-tight">No access</h2>
       <p className="mt-3 text-ink/70">
-        Your role ({user?.admin_role?.name || "none"}) doesn&apos;t include this page. A super admin can change your access under People → Users.
+        Your role ({user?.admin_role?.name || "none"}) doesn&apos;t include this page. A super admin can change your access under People, then Users.
       </p>
       <div className="mt-6">{home ? <Button variant="primary" size="lg" to={`/admin/${home}`}>Go to {home.replace("-", " ")}</Button> : <EmptyState>Your role doesn&apos;t open any admin pages yet.</EmptyState>}</div>
     </div>

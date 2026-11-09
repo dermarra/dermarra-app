@@ -6,6 +6,8 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { BRAND_ACCENTS } from "../components/ServiceTiles.jsx";
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -694,7 +696,7 @@ export default function RoutineQuiz() {
             onClick={back}
             className={`inline-flex items-center gap-3 text-lg ${position <= 0 && !isNoMatch ? "invisible" : ""}`}
           >
-            <span aria-hidden="true">&larr;</span> Back
+            <ArrowLeftIcon className="w-4 h-4" /> Back
           </button>
           {!isNoMatch && (
             <button
@@ -703,7 +705,7 @@ export default function RoutineQuiz() {
               disabled={!answered || matching}
               className="inline-flex items-center gap-3 text-lg disabled:text-ink/35"
             >
-              {nextLabel} {!matching && <span aria-hidden="true">&rarr;</span>}
+              {nextLabel} {!matching && <ArrowRightIcon className="w-4 h-4" />}
             </button>
           )}
         </div>

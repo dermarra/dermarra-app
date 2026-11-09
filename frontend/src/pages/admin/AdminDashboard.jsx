@@ -6,7 +6,7 @@ import client from "../../api/client";
 import { PageHeader, FilterTabs } from "../../components/admin/Kit.jsx";
 import { TeamCard, VisitorsCard } from "../../components/admin/Traffic.jsx";
 import { containerReveal, itemReveal } from "../../components/Reveal.jsx";
-import { AlertIcon, BoxIcon, ReceiptIcon, TrendIcon, UsersIcon } from "../../components/Icons.jsx";
+import { AlertIcon, ArrowRightIcon, BoxIcon, CheckIcon, ReceiptIcon, TrendIcon, UsersIcon } from "../../components/Icons.jsx";
 
 // Chart marks are the brand blue itself (#1D9CD7, 3.1:1 on white -- clears
 // the 3:1 floor for graphics). Gridlines recessive, axis text in ink.
@@ -158,7 +158,7 @@ function TodoStrip({ todo }) {
         variants={itemReveal}
         className="flex items-center gap-3 rounded-lg border border-lime/40 bg-white px-5 py-4"
       >
-        <span aria-hidden="true" className="w-8 h-8 rounded-full bg-lime/20 text-lime-800 flex items-center justify-center">✓</span>
+        <span aria-hidden="true" className="w-8 h-8 rounded-full bg-lime/20 text-lime-800 flex items-center justify-center"><CheckIcon className="w-4 h-4" /></span>
         <div>
           <p className="text-sm font-semibold text-ink">All caught up</p>
           <p className="text-sm text-ink/70">No orders waiting, no stock problems.</p>
@@ -180,7 +180,7 @@ function TodoStrip({ todo }) {
           >
             <span className="font-display font-bold text-3xl tabular-nums text-ink leading-none">{todo[t.key]}</span>
             <span className="min-w-0">
-              <span className="block text-sm font-semibold text-ink group-hover:text-ink">{t.label} →</span>
+              <span className="block text-sm font-semibold text-ink group-hover:text-ink">{t.label} <ArrowRightIcon className="inline w-3 h-3 ml-1 align-[-1px]" /></span>
               {t.help && <span className="block text-sm text-ink/70 mt-0.5">{t.help}</span>}
             </span>
           </Link>
@@ -485,7 +485,7 @@ export default function AdminDashboard() {
         <Card
           title="Low stock"
           subtitle="Sizes at or below their reorder level"
-          action={<Link to="/admin/inventory" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">Inventory →</Link>}
+          action={<Link to="/admin/inventory" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap inline-flex items-center gap-1.5">Inventory <ArrowRightIcon className="w-3 h-3" /></Link>}
         >
           {data.low_stock.length === 0 ? (
             <p className="text-sm text-ink/70">Every size is above its reorder level.</p>
@@ -513,7 +513,7 @@ export default function AdminDashboard() {
         <Card
           title="Coupons used"
           subtitle="On paid orders this period"
-          action={<Link to="/admin/coupons" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">Coupons →</Link>}
+          action={<Link to="/admin/coupons" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap inline-flex items-center gap-1.5">Coupons <ArrowRightIcon className="w-3 h-3" /></Link>}
         >
           {data.coupon_usage.length === 0 ? (
             <p className="text-sm text-ink/70">No coupons redeemed in this period.</p>
@@ -535,7 +535,7 @@ export default function AdminDashboard() {
       <Card
         title="Recent orders"
         subtitle="Latest 8, any status"
-        action={<Link to="/admin/orders" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap">All orders →</Link>}
+        action={<Link to="/admin/orders" className="text-sm font-semibold text-blue-700 hover:text-ink whitespace-nowrap inline-flex items-center gap-1.5">All orders <ArrowRightIcon className="w-3 h-3" /></Link>}
       >
         {data.recent_orders.length === 0 ? (
           <p className="text-sm text-ink/70">No orders yet.</p>

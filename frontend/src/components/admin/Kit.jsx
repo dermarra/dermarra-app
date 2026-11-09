@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { cloudinaryUrl } from "../../api/client";
 import { itemReveal } from "../Reveal.jsx";
+import { ArrowLeftIcon, SearchIcon, XIcon } from "../Icons.jsx";
 
 /** The admin panel kit -- every admin page builds its header, toolbar, rows,
  * badges and buttons from these, so the panels stay identical (agreed design:
@@ -136,10 +137,7 @@ export function FilterTabs({ options, value, onChange, label = "Filter" }) {
 export function SearchBox({ value, onChange, placeholder = "Search", label = "Search" }) {
   return (
     <label className="flex items-center gap-2.5 h-[52px] w-full sm:w-[340px] px-4 bg-white border border-ink/20 rounded-lg focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/30">
-      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink/70 shrink-0">
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-4-4" />
-      </svg>
+      <SearchIcon className="w-4 h-4 text-ink/70 shrink-0" />
       <span className="sr-only">{label}</span>
       <input
         type="search"
@@ -297,9 +295,7 @@ export function EditorDrawer({ open, title, description, onClose, onSubmit, savi
                 aria-label="Close"
                 className="w-11 h-11 -mr-2 shrink-0 rounded-lg flex items-center justify-center hover:bg-blue-50"
               >
-                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
+                <XIcon className="w-[18px] h-[18px]" />
               </button>
             </div>
             <div ref={firstFieldRef} className="flex-1 overflow-y-auto px-6 sm:px-8 py-7 flex flex-col gap-6">
@@ -353,11 +349,11 @@ export function Panel({ title, description, actions, children, className = "" })
 export const tableClass =
   "w-full text-left [&_th]:pb-3 [&_th]:pr-4 [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-[0.08em] [&_th]:text-ink/70 [&_th]:whitespace-nowrap [&_td]:py-3 [&_td]:pr-4 [&_td]:border-t [&_td]:border-mist [&_td]:align-top";
 
-/** A "← Back to …" link above a detail page's header. */
+/** A "Back to …" link (Simple Line arrow) above a detail page's header. */
 export function BackLink({ to, children }) {
   return (
     <Link to={to} className="inline-flex items-center gap-2 mb-5 text-[15px] font-semibold text-ink/70 hover:text-ink">
-      <span aria-hidden="true">←</span> {children}
+      <ArrowLeftIcon className="w-3.5 h-3.5" /> {children}
     </Link>
   );
 }
