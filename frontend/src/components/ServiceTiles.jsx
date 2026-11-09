@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useInView, useReducedMotion } from "framer-motion";
 import { cloudinaryUrl } from "../api/client";
 import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
 
@@ -20,10 +21,12 @@ import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
  * Brand mapping: accents are brand colours (text on them is ink, 5.2:1+);
  * fonts and sizes follow the site's type rules.
  *
- * Shown as a static carousel (no autoplay): 4 cards per view from `xl`,
- * 3 from `lg`, 2 from `sm`, one-and-a-peek on phones; round prev/next
- * buttons beside the section heading scroll one view at a time and disable at
- * either end (hidden when everything fits). Swipe / trackpad scroll still work.
+ * Shown as a carousel: 4 cards per view from `xl`, 3 from `lg`, 2 from
+ * `sm`, one-and-a-peek on phones. Round prev/next buttons sit on the left
+ * and right edges, centred on the cards, move one card and wrap round at
+ * the ends; when there's more than fits, it also slides one card every
+ * 4.5s (paused on hover/focus/off-screen/reduced motion). Hidden when
+ * everything fits. Swipe / trackpad scroll still work.
  *
  * tiles: [{ key, to, title, category, description, imageId, tags[], detail,
  *           cta, accent }]; heading: the section's title + intro, shown left
@@ -152,32 +155,34 @@ function Tile({ tile, index, variant }) {
   );
 }
 
-function ArrowButton({ dir, disabled, onClick, label }) {
+function ArrowButton({ dir, onClick, label, className = "" }) {
   const Icon = dir === "prev" ? ChevronLeftIcon : ChevronRightIcon;
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
       aria-label={label}
-      className="w-12 h-12 rounded-full border border-ink text-ink flex items-center justify-center transition-colors hover:bg-ink hover:text-white disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+      className={`absolute top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white border border-ink text-ink shadow-md flex items-center justify-center transition-colors hover:bg-ink hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${className}`}
     >
       <Icon className="w-4 h-4" />
     </button>
   );
 }
 
+const AUTO_STEP_MS = 4500;
+
 export default function ServiceTiles({ tiles, heading, label = "cards", variant = "full" }) {
+  const rootRef = useRef(null);
   const trackRef = useRef(null);
-  const [edges, setEdges] = useState({ start: true, end: true });
+  const [scrollable, setScrollable] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [tick, setTick] = useState(0); // bumps on manual moves, restarting the auto timer
+  const inView = useInView(rootRef, { margin: "0px 0px -15% 0px" });
+  const reduced = useReducedMotion();
 
   const measure = useCallback(() => {
     const el = trackRef.current;
-    if (!el) return;
-    setEdges({
-      start: el.scrollLeft <= 2,
-      end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 2,
-    });
+    if (el) setScrollable(el.scrollWidth > el.clientWidth + 2);
   }, []);
 
   useEffect(() => {
@@ -186,49 +191,72 @@ export default function ServiceTiles({ tiles, heading, label = "cards", variant 
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    el.addEventListener("scroll", measure, { passive: true });
-    return () => {
-      ro.disconnect();
-      el.removeEventListener("scroll", measure);
-    };
+    return () => ro.disconnect();
   }, [measure, tiles.length]);
 
-  const page = (dir) => {
-    const el = trackRef.current;
-    if (!el) return;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    el.scrollBy({ left: dir * el.clientWidth, behavior: reduce ? "auto" : "smooth" });
+  // Move by one card; past either end it wraps round, so the arrows never
+  // dead-end and the auto-slide can keep going.
+  const step = useCallback(
+    (dir) => {
+      const el = trackRef.current;
+      if (!el) return;
+      const card = el.firstElementChild;
+      const by = card ? card.getBoundingClientRect().width + 16 : el.clientWidth;
+      const max = el.scrollWidth - el.clientWidth;
+      const behavior = reduced ? "auto" : "smooth";
+      if (dir > 0 && el.scrollLeft >= max - 2) el.scrollTo({ left: 0, behavior });
+      else if (dir < 0 && el.scrollLeft <= 2) el.scrollTo({ left: max, behavior });
+      else el.scrollBy({ left: dir * by, behavior });
+    },
+    [reduced]
+  );
+  const manual = (dir) => {
+    step(dir);
+    setTick((t) => t + 1);
   };
 
-  const scrollable = !(edges.start && edges.end);
+  // Slides in moments (owner, 2026-11-10): one card every few seconds, then
+  // a pause -- so shoppers see there's more. Stops while hovered/focused,
+  // off screen, or under prefers-reduced-motion.
+  useEffect(() => {
+    if (!scrollable || paused || !inView || reduced) return undefined;
+    const id = setInterval(() => step(1), AUTO_STEP_MS);
+    return () => clearInterval(id);
+  }, [scrollable, paused, inView, reduced, step, tick]);
 
   return (
-    <div>
-      <div className="flex items-end justify-between gap-6 mb-8">
-        <div className="min-w-0">{heading}</div>
-        {scrollable && (
-          <div className="flex gap-3 shrink-0">
-            <ArrowButton dir="prev" disabled={edges.start} onClick={() => page(-1)} label={`Previous ${label}`} />
-            <ArrowButton dir="next" disabled={edges.end} onClick={() => page(1)} label={`Next ${label}`} />
-          </div>
-        )}
-      </div>
+    <div ref={rootRef}>
+      <div className="mb-8 min-w-0">{heading}</div>
       <div
-        ref={trackRef}
-        role="list"
-        // Vertical padding leaves room for the hover lift + shadow, which an
-        // overflow container would otherwise clip.
-        className="service-tiles flex gap-4 overflow-x-auto snap-x snap-mandatory py-3 -my-3 px-1 -mx-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative"
+        onPointerEnter={(e) => e.pointerType === "mouse" && setPaused(true)}
+        onPointerLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={() => setPaused(false)}
       >
-        {tiles.map((tile, index) => (
-          <div
-            key={tile.key}
-            role="listitem"
-            className="shrink-0 snap-start w-[85%] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]"
-          >
-            <Tile tile={tile} index={index} variant={variant} />
-          </div>
-        ))}
+        <div
+          ref={trackRef}
+          role="list"
+          // Vertical padding leaves room for the hover lift + shadow, which an
+          // overflow container would otherwise clip.
+          className="service-tiles flex gap-4 overflow-x-auto snap-x snap-mandatory py-3 -my-3 px-1 -mx-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {tiles.map((tile, index) => (
+            <div
+              key={tile.key}
+              role="listitem"
+              className="shrink-0 snap-start w-[85%] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]"
+            >
+              <Tile tile={tile} index={index} variant={variant} />
+            </div>
+          ))}
+        </div>
+        {scrollable && (
+          <>
+            <ArrowButton dir="prev" onClick={() => manual(-1)} label={`Previous ${label}`} className="left-0 -translate-x-1/3 sm:-translate-x-1/2" />
+            <ArrowButton dir="next" onClick={() => manual(1)} label={`Next ${label}`} className="right-0 translate-x-1/3 sm:translate-x-1/2" />
+          </>
+        )}
       </div>
     </div>
   );

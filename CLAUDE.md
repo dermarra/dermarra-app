@@ -125,8 +125,11 @@
   description beside its photo), step chips + sort + result count, product
   grid, then "The complete routine" (bundle add). Shown as a static carousel (owner,
   2026-11-06): 4 cards per view from `xl` (3 `lg`, 2 `sm`, 1 + peek on
-  phones), round prev/next buttons beside the section heading (passed in as
-  `heading`), hidden when all cards fit. Homepage sections use the navbar's
+  phones). Round prev/next buttons sit **on the left and right edges,
+  centred on the cards** (owner, 2026-11-10), move one card and wrap round;
+  when there's more than fits, the row also **slides one card every 4.5s**
+  (stepwise, not continuous; paused on hover/focus, off screen and under
+  reduced motion). Arrows hidden when all cards fit. Homepage sections use the navbar's
   container: `max-w-[1440px] px-5 sm:px-8 lg:px-12`.
 - **Product page** (`/shop/:slug`, `ProductDetail.jsx`) follows The
   Ordinary's product page: breadcrumb, `components/ThumbnailSlider.jsx`
