@@ -161,16 +161,18 @@
   **The four-colour stripe is gone everywhere** (owner, 2026-11-09).
 - **Storefront look (owner, 2026-11-09)**: **no dark backgrounds on the
   shop** (admin keeps its ink sidebar) -- footer is white, closing CTA blue.
-  **Hero = the products as a Swatch Accordion** (`components/SwatchAccordion.jsx`
+  **Hero = the admin's banners (Admin -> Hero slides, `GET /api/hero-slides`)
+  as a Swatch Accordion -- never the product catalogue (owner, 2026-11-10)** (`components/SwatchAccordion.jsx`
   + `.swa` rules in `index.css`; native port of the owner's Framer "Swatch
   Accordion", framer.com/m/SwatchAccordion-NZuH6I.js, owner 2026-11-10):
-  one strip per product cycling blue/orange/lime/gold, hover/click/keys open
+  one strip per banner (title, subtitle, eyebrow as a tag, CTA label/link --
+  internal path or full URL; no link = no button) cycling blue/orange/lime/gold, hover/click/keys open
   a strip into its photo, autoplay with a progress line (pauses on hover,
   focus, off-screen), stacked bars under 640px. Brand changes vs. the
   original: solid colour wash/card instead of gradients and glass, 8px,
-  Simple Line icons, the site `.btn`. Products without a photo show the
-  butterfly icon when open. (Replaced the old admin-slide `HeroCarousel`,
-  deleted; hero slides now only feed the sign-in panel `AuthPromoPanel`.)
+  Simple Line icons, the site `.btn`. A banner without a photo shows the
+  butterfly icon when open. (Replaces the old `HeroCarousel`, deleted; the
+  same banners also feed the sign-in panel `AuthPromoPanel`.)
   Navbar logo `h-9 sm:h-10 lg:h-12` (80px wide was too small, owner
   2026-11-09). **Navbar stays white over the hero, then takes the colour of
   the landing section under it**: sections carry

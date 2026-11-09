@@ -20,12 +20,6 @@ const STEP_COPY = {
   spf: "Broad-spectrum SPF, every morning — the step that makes the other three worth it.",
 };
 
-const STEP_LABEL = {
-  cleanser: "Step 01 · Cleanse",
-  serum: "Step 02 · Treat",
-  barrier_cream: "Step 03 · Repair",
-  spf: "Step 04 · Protect",
-};
 const HERO_COLORS = ["#1D9CD7", "#F16722", "#BBD531", "#CD902D"]; // blue, orange, lime, gold
 
 // "Why Dermarra" cards (FluidCardStack). Solid brand fills with brand-black
@@ -80,6 +74,7 @@ export default function Home() {
   const [concerns, setConcerns] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [stepGroups, setStepGroups] = useState([]);
+  const [heroSlides, setHeroSlides] = useState([]);
   const [products, setProducts] = useState([]);
   const [featuredCoupon, setFeaturedCoupon] = useState(null);
 
@@ -90,27 +85,29 @@ export default function Home() {
     client.get("/products/concerns").then(({ data }) => setConcerns(data)).catch(ignore);
     client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6))).catch(ignore);
     client.get("/products/step-groups").then(({ data }) => setStepGroups(data)).catch(ignore);
+    client.get("/hero-slides").then(({ data }) => setHeroSlides(data)).catch(ignore);
     client.get("/products").then(({ data }) => setProducts(data)).catch(ignore);
     client.get("/coupons/featured").then(({ data }) => setFeaturedCoupon(data)).catch(ignore);
   }, []);
 
-  // Hero panels: one per product, cycling the four brand colours. Products
-  // without a photo show the Dermarra butterfly until one is uploaded.
-  const heroItems = products.map((p, i) => ({
-    key: p.id,
-    title: p.name,
-    description: p.description || p.short_description || STEP_COPY[p.step_type],
-    tags: [STEP_LABEL[p.step_type], ...(p.key_actives || "").split(",").map((t) => t.trim()).filter(Boolean)].filter(Boolean).slice(0, 3),
-    image: cloudinaryUrl(p.cloudinary_public_id, { width: 1600 }),
-    to: `/shop/${p.slug}`,
-    button: p.price_from_cents ? `Shop now · KES ${(p.price_from_cents / 100).toLocaleString("en-KE")}` : "Shop now",
+  // Hero panels: the banners admins post under Admin -> Hero slides (not the
+  // catalogue -- owner, 2026-11-10), in their admin order, cycling the four
+  // brand colours.
+  const heroItems = heroSlides.map((slide, i) => ({
+    key: slide.id,
+    title: slide.title?.trim(),
+    description: slide.subtitle,
+    tags: slide.eyebrow ? [slide.eyebrow] : [],
+    image: cloudinaryUrl(slide.cloudinary_public_id, { width: 1600 }),
+    to: slide.cta_link,
+    button: slide.cta_label,
     color: HERO_COLORS[i % HERO_COLORS.length],
   }));
   const heroHeight = typeof window === "undefined" ? 560 : Math.max(480, Math.min(640, window.innerHeight - 360));
 
   return (
     <div className="overflow-x-hidden">
-      {/* ---------- Hero: the products, as a swatch accordion ----------
+      {/* ---------- Hero: the admin's banners, as a swatch accordion ----------
           No data-nav here: the navbar stays white over the hero (owner,
           2026-11-09) and takes a brand colour from the next section on. */}
       <section className="px-5 sm:px-8 lg:px-12 pt-8 sm:pt-12 pb-12 sm:pb-16 mx-auto max-w-[1440px]">

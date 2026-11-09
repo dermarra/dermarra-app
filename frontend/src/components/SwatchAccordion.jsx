@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useInView, useReducedMotion } from "framer-motion";
 import { ArrowRightIcon, PlusIcon } from "./Icons.jsx";
 
-/** Homepage hero: the products as colour strips that open into image panels
+/** Homepage hero: the admin's banners (Hero slides) as colour strips that
+ * open into image panels
  * -- a native port of the owner-supplied Framer component "Swatch Accordion"
  * (framer.com/m/SwatchAccordion-NZuH6I.js, by Matthias Ölschlegel). Rebuilt
  * rather than embedded: Framer modules need Framer's runtime.
@@ -31,9 +32,24 @@ import { ArrowRightIcon, PlusIcon } from "./Icons.jsx";
  * icons; the button is the site's standard 52px button.
  *
  * items: [{ key, title, description, tags[], image, focus (0-100),
- *           to, button, color }] */
+ *           to (path or URL; optional), button, color }] */
 
 const INTERVAL_S = 6;
+
+// Banner links are free text in the admin: internal paths use the router,
+// full URLs open as ordinary links, no link means no button.
+function BannerLink({ to, className, children, ...rest }) {
+  if (!to) return null;
+  return /^https?:\/\//i.test(to) ? (
+    <a href={to} className={className} {...rest}>
+      {children}
+    </a>
+  ) : (
+    <Link to={to} className={className} {...rest}>
+      {children}
+    </Link>
+  );
+}
 
 function SplitTitle({ text }) {
   let c = 0;
@@ -163,7 +179,7 @@ export default function SwatchAccordion({ items, height = 600, autoplay = true }
                 onClick={() => open(index)}
                 onKeyDown={(e) => onKeyDown(e, index)}
               />
-              {isOpen && <Link to={item.to} className="swa-strip-link" tabIndex={-1} aria-hidden="true" />}
+              {isOpen && <BannerLink to={item.to} className="swa-strip-link" tabIndex={-1} aria-hidden="true" />}
 
               <div className="swa-closed" aria-hidden="true">
                 <span className="swa-num">{num}</span>
@@ -211,12 +227,14 @@ export default function SwatchAccordion({ items, height = 600, autoplay = true }
                       <p className="swa-desc">{item.description}</p>
                     </div>
                   )}
-                  <div className="swa-rc">
-                    <Link to={item.to} className="btn btn-dark swa-cta" tabIndex={isOpen ? 0 : -1}>
-                      <span>{item.button || "Shop now"}</span>
-                      <ArrowRightIcon className="w-4 h-4" />
-                    </Link>
-                  </div>
+                  {item.to && (
+                    <div className="swa-rc">
+                      <BannerLink to={item.to} className="btn btn-dark swa-cta" tabIndex={isOpen ? 0 : -1}>
+                        <span>{item.button || "Shop now"}</span>
+                        <ArrowRightIcon className="w-4 h-4" />
+                      </BannerLink>
+                    </div>
+                  )}
                 </div>
                 {autoplayOn && isOpen && (
                   <div className="swa-progress" aria-hidden="true">
