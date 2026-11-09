@@ -114,7 +114,11 @@
   embed (Framer modules need Framer's runtime). Hover/focus states live in
   `.service-tiles` rules in `index.css` (hover only for `(hover: hover) and
   (pointer: fine)`). Steps use their petal accent; concerns/ingredients
-  rotate the four brand colours. **Concern cards are `compact`** (owner,
+  rotate the four brand colours. `ServiceTiles` takes `variant`:
+  "full" (ingredients), "compact" (concerns) or "step" (owner, 2026-11-10:
+  the concern-card design + step heading, a 4-segment step line -- this
+  card's steps in its brand colour, the rest ink -- the description and a
+  "View all" button). **Concern cards are `compact`** (owner,
   2026-11-10): photo + one button named after the concern (no "Shop for",
   category, text or tags), opening `/shop/concern/:slug` -- laid out after
   The Ordinary's concern pages: crumb, split banner (concern name +

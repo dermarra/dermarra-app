@@ -27,11 +27,23 @@ import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
  *
  * tiles: [{ key, to, title, category, description, imageId, tags[], detail,
  *           cta, accent }]; heading: the section's title + intro, shown left
- * of the arrows. `compact`: photo + one button named after the tile only
- * (the homepage concern cards). */
+ * of the arrows. `variant`: "full" (default), "compact" (photo + one button
+ * named after the tile -- concern cards) or "step" (compact design + step
+ * heading, a step line from tile.step {index,total}, description and a
+ * "View all" button -- step cards). */
 export const BRAND_ACCENTS = ["#BBD531", "#F16722", "#1D9CD7", "#CD902D"]; // lime, orange, blue, gold
 
-function Tile({ tile, index, compact }) {
+function CtaBar({ children }) {
+  return (
+    <span className="st-cta relative isolate flex items-center justify-between gap-3 min-h-[52px] px-4 py-3 overflow-hidden rounded-lg bg-bone-light text-ink text-[15px] font-semibold before:absolute before:inset-0 before:-z-10 before:bg-[var(--st-accent)] before:origin-left before:scale-x-0 before:transition-transform before:duration-[350ms] before:ease-[cubic-bezier(.2,.75,.25,1)]">
+      {children}
+      <ChevronRightIcon className="st-arrow w-4 h-4 shrink-0 transition-transform duration-[350ms] ease-[cubic-bezier(.2,.75,.25,1)]" />
+    </span>
+  );
+}
+
+function Tile({ tile, index, variant }) {
+  const compact = variant === "compact";
   const number = String(index + 1).padStart(2, "0");
   const imageUrl = cloudinaryUrl(tile.imageId, { width: 640 });
   const titleId = `tile-title-${tile.key}`;
@@ -62,10 +74,38 @@ function Tile({ tile, index, compact }) {
         // Compact (owner, 2026-11-10, concern cards): just the photo and one
         // button named after the tile -- no category, text or tags.
         <div className="p-4">
-          <span className="st-cta relative isolate flex items-center justify-between gap-3 min-h-[52px] px-4 py-3 overflow-hidden rounded-lg bg-bone-light text-ink text-[15px] font-semibold before:absolute before:inset-0 before:-z-10 before:bg-[var(--st-accent)] before:origin-left before:scale-x-0 before:transition-transform before:duration-[350ms] before:ease-[cubic-bezier(.2,.75,.25,1)]">
+          <CtaBar>
             <span id={titleId} className="min-w-0">{tile.title}</span>
-            <ChevronRightIcon className="st-arrow w-4 h-4 shrink-0 transition-transform duration-[350ms] ease-[cubic-bezier(.2,.75,.25,1)]" />
-          </span>
+          </CtaBar>
+        </div>
+      ) : variant === "step" ? (
+        // Step cards (owner, 2026-11-10): the concern-card design plus the
+        // step heading, a 4-segment step line (this card's steps in its
+        // brand colour, the rest ink) and the description.
+        <div className="flex flex-1 flex-col min-w-0 p-6">
+          <h3 id={titleId} className="text-2xl font-semibold tracking-tight leading-tight">
+            {tile.title}
+          </h3>
+          {tile.step && (
+            <span className="mt-3 flex gap-1.5" role="img" aria-label={`Step ${tile.step.index} of ${tile.step.total}`}>
+              {Array.from({ length: tile.step.total }, (_, i) => (
+                <span
+                  key={i}
+                  aria-hidden="true"
+                  className="h-[3px] w-6 rounded-full"
+                  style={{ backgroundColor: i < tile.step.index ? "var(--st-accent)" : "#231F20" }}
+                />
+              ))}
+            </span>
+          )}
+          <p className="mt-4 text-ink/75 leading-relaxed line-clamp-3 min-h-[4.875em]" title={tile.description || undefined}>
+            {tile.description}
+          </p>
+          <div className="mt-auto pt-6">
+            <CtaBar>
+              <span className="min-w-0">{tile.cta || "View all"}</span>
+            </CtaBar>
+          </div>
         </div>
       ) : (
       <div className="flex flex-1 flex-col min-w-0 p-6">
@@ -127,7 +167,7 @@ function ArrowButton({ dir, disabled, onClick, label }) {
   );
 }
 
-export default function ServiceTiles({ tiles, heading, label = "cards", compact = false }) {
+export default function ServiceTiles({ tiles, heading, label = "cards", variant = "full" }) {
   const trackRef = useRef(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
@@ -186,7 +226,7 @@ export default function ServiceTiles({ tiles, heading, label = "cards", compact 
             role="listitem"
             className="shrink-0 snap-start w-[85%] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]"
           >
-            <Tile tile={tile} index={index} compact={compact} />
+            <Tile tile={tile} index={index} variant={variant} />
           </div>
         ))}
       </div>

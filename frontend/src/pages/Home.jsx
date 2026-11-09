@@ -178,7 +178,7 @@ export default function Home() {
           <motion.div variants={itemReveal}>
             <ServiceTiles
               label="concerns"
-              compact
+              variant="compact"
               heading={
                 <>
                   <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by concern.</h2>
@@ -209,6 +209,7 @@ export default function Home() {
           <motion.div variants={itemReveal}>
             <ServiceTiles
               label="steps"
+              variant="step"
               heading={
                 <>
                   <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by step.</h2>
@@ -222,11 +223,10 @@ export default function Home() {
                 key: `step-${group.id}`,
                 to: `/shop/step/${group.key}`,
                 title: group.label,
-                category: `Step ${String(index + 1).padStart(2, "0")} · ${group.key}`,
+                step: { index: index + 1, total: stepGroups.length },
                 description: group.description || STEP_COPY[group.step_type],
                 imageId: group.cloudinary_public_id,
-                ...productSummary(products.filter((p) => p.step_type === group.step_type)),
-                cta: `Shop ${group.label.replace(/^Step\s*\d+:?\s*/i, "")}`,
+                cta: "View all",
                 accent: STEP_ACCENTS[group.step_type],
               }))}
             />
