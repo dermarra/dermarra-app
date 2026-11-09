@@ -27,10 +27,11 @@ import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
  *
  * tiles: [{ key, to, title, category, description, imageId, tags[], detail,
  *           cta, accent }]; heading: the section's title + intro, shown left
- * of the arrows. */
+ * of the arrows. `compact`: photo + one button named after the tile only
+ * (the homepage concern cards). */
 export const BRAND_ACCENTS = ["#BBD531", "#F16722", "#1D9CD7", "#CD902D"]; // lime, orange, blue, gold
 
-function Tile({ tile, index }) {
+function Tile({ tile, index, compact }) {
   const number = String(index + 1).padStart(2, "0");
   const imageUrl = cloudinaryUrl(tile.imageId, { width: 640 });
   const titleId = `tile-title-${tile.key}`;
@@ -57,6 +58,16 @@ function Tile({ tile, index }) {
         </span>
       </div>
 
+      {compact ? (
+        // Compact (owner, 2026-11-10, concern cards): just the photo and one
+        // button named after the tile -- no category, text or tags.
+        <div className="p-4">
+          <span className="st-cta relative isolate flex items-center justify-between gap-3 min-h-[52px] px-4 py-3 overflow-hidden rounded-lg bg-bone-light text-ink text-[15px] font-semibold before:absolute before:inset-0 before:-z-10 before:bg-[var(--st-accent)] before:origin-left before:scale-x-0 before:transition-transform before:duration-[350ms] before:ease-[cubic-bezier(.2,.75,.25,1)]">
+            <span id={titleId} className="min-w-0">{tile.title}</span>
+            <ChevronRightIcon className="st-arrow w-4 h-4 shrink-0 transition-transform duration-[350ms] ease-[cubic-bezier(.2,.75,.25,1)]" />
+          </span>
+        </div>
+      ) : (
       <div className="flex flex-1 flex-col min-w-0 p-6">
         {tile.category && (
           <p className="flex items-center gap-2 mb-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-ink/70">
@@ -96,6 +107,7 @@ function Tile({ tile, index }) {
           </span>
         </div>
       </div>
+      )}
     </Link>
   );
 }
@@ -115,7 +127,7 @@ function ArrowButton({ dir, disabled, onClick, label }) {
   );
 }
 
-export default function ServiceTiles({ tiles, heading, label = "cards" }) {
+export default function ServiceTiles({ tiles, heading, label = "cards", compact = false }) {
   const trackRef = useRef(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
@@ -174,7 +186,7 @@ export default function ServiceTiles({ tiles, heading, label = "cards" }) {
             role="listitem"
             className="shrink-0 snap-start w-[85%] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] xl:w-[calc((100%-3rem)/4)]"
           >
-            <Tile tile={tile} index={index} />
+            <Tile tile={tile} index={index} compact={compact} />
           </div>
         ))}
       </div>

@@ -114,7 +114,12 @@
   embed (Framer modules need Framer's runtime). Hover/focus states live in
   `.service-tiles` rules in `index.css` (hover only for `(hover: hover) and
   (pointer: fine)`). Steps use their petal accent; concerns/ingredients
-  rotate the four brand colours. Shown as a static carousel (owner,
+  rotate the four brand colours. **Concern cards are `compact`** (owner,
+  2026-11-10): photo + one button named after the concern (no "Shop for",
+  category, text or tags), opening `/shop/concern/:slug` -- laid out after
+  The Ordinary's concern pages: crumb, split banner (concern name +
+  description beside its photo), step chips + sort + result count, product
+  grid, then "The complete routine" (bundle add). Shown as a static carousel (owner,
   2026-11-06): 4 cards per view from `xl` (3 `lg`, 2 `sm`, 1 + peek on
   phones), round prev/next buttons beside the section heading (passed in as
   `heading`), hidden when all cards fit. Homepage sections use the navbar's

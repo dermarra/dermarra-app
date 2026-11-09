@@ -178,6 +178,7 @@ export default function Home() {
           <motion.div variants={itemReveal}>
             <ServiceTiles
               label="concerns"
+              compact
               heading={
                 <>
                   <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by concern.</h2>

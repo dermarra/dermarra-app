@@ -120,116 +120,58 @@ export default function ConcernShop() {
     );
   }
 
-  const heroImageUrl = cloudinaryUrl(concern.cloudinary_public_id, { width: 1200 });
+  const heroImageUrl = cloudinaryUrl(concern.cloudinary_public_id, { width: 1400 });
+  const resultLabel = `${visibleProducts.length} ${visibleProducts.length === 1 ? "product" : "products"}`;
 
+  // Layout after The Ordinary's concern pages (owner, 2026-11-10): crumb,
+  // a split banner (the concern explained beside its photo), then a quiet
+  // toolbar and the product grid; the matching routine closes the page.
   return (
-    <div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative bg-mist overflow-hidden"
+    <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12 pt-6 sm:pt-8 pb-16">
+      <Breadcrumbs items={[{ label: "Shop", to: "/shop" }, { label: concern.name }]} />
+
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="mt-4 grid lg:grid-cols-2 rounded-lg overflow-hidden bg-bone-light"
       >
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20 relative z-10">
-          <Breadcrumbs
-            items={[{ label: "Home", to: "/" }, { label: "Shop", to: "/shop" }, { label: concern.name }]}
-          />
-          <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-2">
-            Shop by concern
-          </p>
-          <h1 className="font-display font-semibold text-4xl sm:text-5xl text-ink max-w-lg">{concern.name}</h1>
-          {concern.description && (
-            <p className="text-ink/70 mt-3 max-w-md">{concern.description}</p>
+        <div className="order-2 lg:order-1 flex flex-col justify-center px-6 sm:px-10 lg:px-14 py-10 lg:py-16">
+          <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-3">Skin concern</p>
+          <h1 className="font-display font-semibold text-4xl sm:text-5xl leading-[1.05] text-ink">{concern.name}</h1>
+          {concern.description && <p className="mt-5 text-ink/80 leading-relaxed max-w-xl">{concern.description}</p>}
+          {routines.length > 0 && (
+            <a href="#concern-routine" className="mt-8 self-start btn btn-secondary">
+              See the complete routine
+            </a>
           )}
         </div>
-        {heroImageUrl && (
-          <img
-            src={heroImageUrl}
-            alt={concern.name}
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
-          />
-        )}
-      </motion.div>
+        <div className="order-1 lg:order-2 relative aspect-[4/3] lg:aspect-auto lg:min-h-[440px] bg-mist">
+          {heroImageUrl ? (
+            <img src={heroImageUrl} alt={concern.name} className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <img src="/brand/icon-dark.svg" alt="" className="w-1/3 h-auto" />
+            </span>
+          )}
+        </div>
+      </motion.section>
 
-      <div className="mx-auto max-w-6xl px-4 pt-12 sm:pt-16 pb-10">
-        {routines.length > 0 && (
-          <div className="mb-10">
-            <h2 className="font-display font-semibold text-3xl text-ink mb-4">Routines for {concern.name.toLowerCase()}</h2>
-            <div className="flex flex-col gap-4">
-              {routines.map((routine) => {
-                const routineImageUrl = cloudinaryUrl(routine.cloudinary_public_id, { width: 160 });
-                return (
-                  <div
-                    key={routine.id}
-                    className="rounded-lg border border-mist bg-bone-light p-5"
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-14 h-14 rounded-lg bg-mist overflow-hidden shrink-0">
-                          {routineImageUrl && (
-                            <img src={routineImageUrl} alt={routine.name} className="w-full h-full object-cover" />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-display text-xl text-ink">{routine.name}</h3>
-                          {routine.tagline && <p className="text-sm text-ink/70 mt-1">{routine.tagline}</p>}
-                        </div>
-                      </div>
-                      {user ? (
-                        <motion.button
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => addRoutineToCart(routine.id)}
-                          className="btn btn-primary btn-sm shrink-0"
-                        >
-                          {addedRoutineId === routine.id
-                            ? "Added to cart"
-                            : `Add to cart${routine.bundle_discount_percent > 0 ? ` · Save ${routine.bundle_discount_percent}%` : ""}`}
-                        </motion.button>
-                      ) : (
-                        <Link
-                          to="/login"
-                          state={{ from: location.pathname }}
-                          className="btn btn-primary btn-sm shrink-0"
-                        >
-                          Sign in to add
-                        </Link>
-                      )}
-                    </div>
-                    {routineAddError[routine.id] && (
-                      <p className="text-sm text-orange-700 mb-3">{routineAddError[routine.id]}</p>
-                    )}
-                    <RoutineStepRail steps={routine.steps} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <h2 className="font-display font-semibold text-3xl text-ink mb-4">Products</h2>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0">
             {STEP_FILTERS.map((f) => (
               <motion.button
                 key={f.value}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setStepType(f.value)}
-                className={`chip shrink-0 ${
-                  stepType === f.value ? "chip-on" : "chip-off"
-                }`}
+                className={`chip shrink-0 ${stepType === f.value ? "chip-on" : "chip-off"}`}
               >
                 {f.label}
               </motion.button>
             ))}
           </div>
-
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="field w-auto h-11 pr-10 self-start sm:self-auto"
-          >
+          <select value={sort} onChange={(e) => setSort(e.target.value)} className="field w-auto h-11 pr-10" aria-label="Sort products">
             {SORTS.map((s) => (
               <option key={s.value} value={s.value}>
                 Sort: {s.label}
@@ -237,9 +179,13 @@ export default function ConcernShop() {
             ))}
           </select>
         </div>
+        <p className="text-ink/70 text-sm" aria-live="polite">
+          {resultLabel}
+        </p>
+      </div>
 
         {visibleProducts.length === 0 ? (
-          <p className="text-ink/60 text-sm">No products yet for this filter.</p>
+          <p className="text-ink/70">No products yet for this filter.</p>
         ) : (
           <>
             <motion.div
@@ -270,7 +216,48 @@ export default function ConcernShop() {
             )}
           </>
         )}
-      </div>
+
+      {routines.length > 0 && (
+        <section id="concern-routine" className="mt-16 scroll-mt-28">
+          <h2 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2">The complete routine</h2>
+          <p className="text-ink/70 mb-6 max-w-2xl">
+            Every step for {concern.name.toLowerCase()}, in the right order -- add it as one bundle.
+          </p>
+          <div className="flex flex-col gap-4">
+            {routines.map((routine) => {
+              const routineImageUrl = cloudinaryUrl(routine.cloudinary_public_id, { width: 160 });
+              return (
+                <div key={routine.id} className="rounded-lg border border-mist bg-bone-light p-5 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-lg bg-mist overflow-hidden shrink-0">
+                        {routineImageUrl && <img src={routineImageUrl} alt="" className="w-full h-full object-cover" />}
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-semibold text-ink">{routine.name}</h3>
+                        {routine.tagline && <p className="text-ink/70 mt-1">{routine.tagline}</p>}
+                      </div>
+                    </div>
+                    {user ? (
+                      <button type="button" onClick={() => addRoutineToCart(routine.id)} className="btn btn-primary shrink-0 self-start">
+                        {addedRoutineId === routine.id
+                          ? "Added to cart"
+                          : `Add routine to cart${routine.bundle_discount_percent > 0 ? ` · Save ${routine.bundle_discount_percent}%` : ""}`}
+                      </button>
+                    ) : (
+                      <Link to="/login" state={{ from: location.pathname }} className="btn btn-primary shrink-0 self-start">
+                        Sign in to add the routine
+                      </Link>
+                    )}
+                  </div>
+                  {routineAddError[routine.id] && <p className="text-orange-700 mb-3">{routineAddError[routine.id]}</p>}
+                  <RoutineStepRail steps={routine.steps} />
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
