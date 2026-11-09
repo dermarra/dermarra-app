@@ -7,6 +7,7 @@ import Footer from "./components/Footer.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import ButterflyCursor from "./components/ButterflyCursor.jsx";
+import BackToTop from "./components/BackToTop.jsx";
 import { ping } from "./lib/visitTracker.js";
 import { useAuth } from "./context/AuthContext";
 
@@ -144,6 +145,7 @@ export default function App() {
         {!isAdmin && <Footer />}
       </main>
       {!isAdmin && <BottomNav />}
+      {!isAdmin && <BackToTop />}
       {!isAdmin && <ButterflyCursor />}
     </div>
   );

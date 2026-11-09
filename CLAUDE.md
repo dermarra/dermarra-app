@@ -156,6 +156,10 @@
   the pointer (`elementFromPoint`, walking up) and switches the wings to
   `altColor` (ink) when contrast with blue is < 2:1 -- i.e. over blue,
   orange, lime or gold; stays blue on white, tints and ink.
+- **Back to top** (`components/BackToTop.jsx`, owner 2026-11-10): round
+  bottom-right button on storefront routes (mounted beside ButterflyCursor),
+  shown after ~1 screen of scroll; on phones it sits above the BottomNav,
+  and higher on `/shop/:slug` to clear the sticky add-to-cart bar.
 - **Routine builder** (`/quiz`, `pages/RoutineQuiz.jsx`): the questions run
   as an "Accordion in Motion" (`QuestionAccordion` in the same file; native
   port of the owner's Framer "Accordion in Motion" / Follow Morph Accordion,

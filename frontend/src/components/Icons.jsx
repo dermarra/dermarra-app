@@ -15,6 +15,7 @@ import {
   SlArrowDown,
   SlArrowLeft,
   SlArrowRight,
+  SlArrowUp,
   SlBadge,
   SlBookOpen,
   SlBag,
@@ -81,6 +82,7 @@ export const FacebookIcon = sl(SlSocialFacebook);
 export const ChevronRightIcon = sl(SlArrowRight);
 export const ChevronLeftIcon = sl(SlArrowLeft);
 export const ChevronDownIcon = sl(SlArrowDown);
+export const ChevronUpIcon = sl(SlArrowUp);
 export const HomeIcon = sl(SlHome);
 export const ShopIcon = sl(SlBasket);
 export const QuizIcon = sl(SlMagicWand);
