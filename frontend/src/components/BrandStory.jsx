@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { itemReveal } from "./Reveal.jsx";
 
 /** "The Dermarra story" -- the meaning of the name and the mark, from the
@@ -10,17 +10,20 @@ import { itemReveal } from "./Reveal.jsx";
  * rotated; it turns with the page scroll. (The D-construction drawing was removed at the owner's
  * request, 2026-11-09.) */
 
-// Scroll-linked (owner, 2026-11-10): the icon turns continuously as the
-// section passes through the viewport -- an upright butterfly (-135deg,
-// i.e. -45deg plus a quarter turn) as it enters, the "+" exactly when it is
-// centred on screen, turning on past it as it leaves. A light spring
-// smooths wheel steps. Reduced motion: shown still, as the "+".
+// Scroll-linked, in quarter turns (owner, 2026-11-10): the icon only ever
+// rests as the "+" -- the butterfly heading NE, SE, SW or NW -- and snaps a
+// further 90deg (a spring) for each quarter of its pass through the
+// viewport. One full turn from entering to leaving. Reduced motion: still.
 function TiltingMark() {
   const reduce = useReducedMotion();
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const angle = useTransform(scrollYProgress, [0, 0.5, 1], [-135, 0, 135]);
-  const rotate = useSpring(angle, { stiffness: 120, damping: 24, mass: 0.6 });
+  const step = useMotionValue(0);
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    const next = Math.round(Math.min(1, Math.max(0, p)) * 4) * 90;
+    if (next !== step.get()) step.set(next);
+  });
+  const rotate = useSpring(step, { stiffness: 140, damping: 16, mass: 0.8 });
   return (
     <figure ref={ref} className="flex flex-col items-center">
       <motion.img
