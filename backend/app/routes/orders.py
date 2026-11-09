@@ -63,7 +63,7 @@ def checkout():
     unavailable = [reason for reason in (unavailable_reason(i.variant, i.routine) for i in cart.items) if reason]
     if unavailable:
         return jsonify({
-            "error": f"some items are no longer available -- remove them from your cart: {'; '.join(unavailable)}"
+            "error": f"some items are no longer available. Remove them from your cart: {'; '.join(unavailable)}"
         }), 400
 
     subtotal_cents = 0
@@ -71,7 +71,7 @@ def checkout():
     for item in cart.items:
         unit_price = cart_item_unit_price_cents(item)
         if item.variant:
-            name = f"{item.variant.product.name} — {item.variant.label}"
+            name = f"{item.variant.product.name} ({item.variant.label})"
             product_id = item.variant.product_id
         else:
             name = f"{item.routine.name} (Full Routine)"
@@ -186,7 +186,7 @@ def cancel_order(order_id):
         except Exception as e:
             current_app.logger.error(f"M-Pesa status query failed during cancel: {e}")
             return jsonify({
-                "error": "Couldn't confirm payment status with M-Pesa right now -- please try again in a moment."
+                "error": "Couldn't confirm payment status with M-Pesa right now. Please try again in a moment."
             }), 502
 
         result_code = result.get("ResultCode")

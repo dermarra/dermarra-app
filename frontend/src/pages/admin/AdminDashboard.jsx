@@ -44,7 +44,7 @@ const STATUS = {
 };
 
 const kes = (cents) => `KES ${Math.round((cents || 0) / 100).toLocaleString("en-KE")}`;
-const pct = (ratio) => (ratio == null ? "—" : `${(ratio * 100).toFixed(ratio >= 0.1 || ratio === 0 ? 0 : 1)}%`);
+const pct = (ratio) => (ratio == null ? "No data" : `${(ratio * 100).toFixed(ratio >= 0.1 || ratio === 0 ? 0 : 1)}%`);
 
 function periodLabel(range) {
   return { today: "yesterday", "7d": "previous 7 days", "30d": "previous 30 days", "90d": "previous 90 days" }[range];
@@ -142,7 +142,7 @@ const TODO_ITEMS = [
   { key: "stuck_payments", label: "Payments stuck >10 min", to: "/admin/orders", urgent: true,
     help: "Open the order and use “Refresh payment status”." },
   { key: "unallocated_paid_orders", label: "Paid orders without stock", to: "/admin/orders", urgent: true,
-    help: "Paid after the items sold out — check before shipping." },
+    help: "Paid after the items sold out. Check before shipping." },
   { key: "out_of_stock_sizes", label: "Sizes out of stock", to: "/admin/inventory?status=out_of_stock", urgent: true },
   { key: "low_stock_sizes", label: "Sizes running low", to: "/admin/inventory?status=low_stock" },
   { key: "expiring_batches", label: "Batches expiring ≤30 days", to: "/admin/inventory" },
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
   const periodText = data
     ? data.period.days === 1
       ? "Today, Kenyan time."
-      : `${new Date(`${data.period.start}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" })} – ${new Date(`${data.period.end}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}, Kenyan time.`
+      : `${new Date(`${data.period.start}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short" })} to ${new Date(`${data.period.end}T00:00:00`).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}, Kenyan time.`
     : "Loading…";
 
   const header = (
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
           label="Average order"
           Icon={ReceiptIcon}
           tone="orange"
-          value={kpis.paid_orders ? kes(kpis.average_order_cents) : "—"}
+          value={kpis.paid_orders ? kes(kpis.average_order_cents) : "No orders"}
           delta={kpis.paid_orders ? (
             <Delta current={kpis.average_order_cents} previous={prev.average_order_cents} range={range} />
           ) : <p className="text-sm mt-1 text-ink/70">No paid orders yet</p>}

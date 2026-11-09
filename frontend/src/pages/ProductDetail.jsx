@@ -136,7 +136,7 @@ export default function ProductDetail() {
       setAdded(true);
       setTimeout(() => setAdded(false), 2200);
     } catch (err) {
-      setAddError(err.response?.data?.error || "Couldn't add this to your cart -- please try again.");
+      setAddError(err.response?.data?.error || "Couldn't add this to your cart. Please try again.");
     } finally {
       setAdding(false);
     }

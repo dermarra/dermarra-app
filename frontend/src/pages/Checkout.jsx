@@ -250,7 +250,7 @@ export default function Checkout() {
       >
         <h1 className="font-display font-semibold text-3xl text-ink mb-2">Payment didn&apos;t go through</h1>
         <p className="text-ink/70">
-          {failureReason || "The M-Pesa transaction was cancelled or failed."} Your order is saved -- you can
+          {failureReason || "The M-Pesa transaction was cancelled or failed."} Your order is saved, so you can
           retry the payment now.
         </p>
         <form onSubmit={retryPayment} className="mt-6 flex flex-col gap-3 max-w-xs mx-auto">

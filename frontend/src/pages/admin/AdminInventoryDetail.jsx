@@ -68,7 +68,7 @@ const emptyReceiveForm = {
 const emptyAdjustForm = { batch_id: "", type: "DAMAGE", quantity: "", reason: "" };
 
 function formatKES(cents) {
-  if (cents == null) return "—";
+  if (cents == null) return "Not set";
   return `KES ${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
@@ -177,7 +177,7 @@ export default function AdminInventoryDetail() {
       <div>
         <BackLink to="/admin/inventory">Back to inventory</BackLink>
         <PageHeader
-          title={`${variant.product_name} — ${variant.label}`}
+          title={`${variant.product_name} (${variant.label})`}
           description="Log each production run as a batch. Stock always sells from the batch that expires first."
           actions={
             mayManage && (
@@ -206,7 +206,7 @@ export default function AdminInventoryDetail() {
 
       <Panel title="Batches" description="One per production run, oldest expiry sold first.">
         {batches.length === 0 ? (
-          <EmptyState>No batches yet -- log the first production run.</EmptyState>
+          <EmptyState>No batches yet. Log the first production run.</EmptyState>
         ) : (
           <div className="overflow-x-auto">
             <table className={tableClass}>

@@ -168,7 +168,7 @@ export default function AdminIngredients() {
       {loading ? (
         <LoadingState>Loading ingredients…</LoadingState>
       ) : shown.length === 0 ? (
-        <EmptyState>{ingredients.length ? "No ingredients match." : "No ingredients yet -- add the first one."}</EmptyState>
+        <EmptyState>{ingredients.length ? "No ingredients match." : "No ingredients yet. Add the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {shown.map((ingredient, index) => {

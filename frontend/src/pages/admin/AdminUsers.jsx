@@ -182,7 +182,7 @@ export default function AdminUsers() {
                 subtitle={u.email}
                 stats={[
                   { label: "Orders", value: u.order_count },
-                  { label: "Spent", value: u.lifetime_value_cents != null ? formatKES(u.lifetime_value_cents) : "—" },
+                  { label: "Spent", value: u.lifetime_value_cents != null ? formatKES(u.lifetime_value_cents) : "Nothing yet" },
                   { label: "Joined", value: joined(u.created_at) },
                 ]}
                 badge={

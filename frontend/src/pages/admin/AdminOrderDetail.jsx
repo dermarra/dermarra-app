@@ -240,8 +240,8 @@ export default function AdminOrderDetail() {
             </Button>
           )}>
             <dl>
-              {row("Method", order.payment_method === "mpesa" ? "M-Pesa" : order.payment_method || "—")}
-              {row("Receipt", order.mpesa_receipt_number || "—")}
+              {row("Method", order.payment_method === "mpesa" ? "M-Pesa" : order.payment_method || "None")}
+              {row("Receipt", order.mpesa_receipt_number || "None yet")}
               {row("Paid", order.paid_at ? new Date(order.paid_at).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Not yet")}
             </dl>
             {order.status === "payment_failed" && order.payment_failure_reason && (

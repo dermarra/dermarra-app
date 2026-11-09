@@ -63,7 +63,7 @@ export default function ConcernShop() {
         setProducts(productsRes.data);
         setRoutines(routinesRes.data.filter((r) => r.primary_concern?.slug === slug));
       })
-      .catch(() => setLoadError("Couldn't load this page -- check your connection and try again."))
+      .catch(() => setLoadError("Couldn't load this page. Check your connection and try again."))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -88,7 +88,7 @@ export default function ConcernShop() {
     } catch (err) {
       setRoutineAddError((e) => ({
         ...e,
-        [routineId]: err.response?.data?.error || "Couldn't add this routine -- please try again.",
+        [routineId]: err.response?.data?.error || "Couldn't add this routine. Please try again.",
       }));
     }
   };
@@ -221,7 +221,7 @@ export default function ConcernShop() {
         <section id="concern-routine" className="mt-16 scroll-mt-28">
           <h2 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-2">The complete routine</h2>
           <p className="text-ink/70 mb-6 max-w-2xl">
-            Every step for {concern.name.toLowerCase()}, in the right order -- add it as one bundle.
+            Every step for {concern.name.toLowerCase()}, in the right order. Add it as one bundle.
           </p>
           <div className="flex flex-col gap-4">
             {routines.map((routine) => {

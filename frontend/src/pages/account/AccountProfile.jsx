@@ -271,7 +271,7 @@ function AddressSection() {
           </div>
         ) : (
           <p className="text-sm text-ink/60">
-            No saved address yet — add one to speed up checkout next time.
+            No saved address yet. Add one to speed up checkout next time.
           </p>
         )}
         <button

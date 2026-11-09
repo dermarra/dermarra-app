@@ -91,7 +91,7 @@ export default function AccountOrderDetail() {
           <p className="text-sm text-orange-700">Last attempt: {order.payment_failure_reason}</p>
         )}
         <p className="text-sm text-ink/80">
-          Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "—"}
+          Paid at: {order.paid_at ? new Date(order.paid_at).toLocaleString() : "Not paid yet"}
         </p>
       </section>
 

@@ -434,7 +434,7 @@ def adjust_stock(variant_id, *, batch_id, transaction_type, quantity, reason, cr
         raise InventoryError("this adjustment would take on-hand stock below zero")
     if signed_qty < 0 and new_on_hand < inv.reserved:
         raise InventoryError(
-            f"{inv.reserved} unit(s) are reserved for unpaid orders -- this adjustment would leave "
+            f"{inv.reserved} unit(s) are reserved for unpaid orders, and this adjustment would leave "
             f"only {new_on_hand} on hand. Wait for those orders to be paid or released first."
         )
 

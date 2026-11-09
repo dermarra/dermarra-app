@@ -159,7 +159,7 @@ def _slug_error(data):
     slug = data.get("slug") or ""
     if not _SLUG_RE.match(slug):
         return (
-            f"slug {slug!r} isn't valid -- use lowercase letters and numbers joined by hyphens, "
+            f"slug {slug!r} isn't valid. Use lowercase letters and numbers joined by hyphens, "
             "e.g. anti-ageing-serum (it becomes the page URL)"
         )
     return None
@@ -251,7 +251,7 @@ def delete_concern(concern_id):
     if routines:
         names = ", ".join(r.name for r in routines)
         return jsonify({
-            "error": f"this concern is the primary concern of: {names} -- reassign those routines first"
+            "error": f"this concern is the primary concern of: {names}. Reassign those routines first"
         }), 400
     image_id = concern.cloudinary_public_id
     db.session.delete(concern)  # product tag links (product_concerns) are removed with it
@@ -806,10 +806,10 @@ def delete_product(product_id):
     )
     if has_inventory_history:
         return jsonify({
-            "error": "this product has inventory history and can't be deleted -- set is_active to false instead"
+            "error": "this product has inventory history and can't be deleted. Deactivate it instead"
         }), 400
     blocker = _variant_delete_blocker(variant_ids) or (
-        "this product appears in past orders -- deactivate it instead"
+        "this product appears in past orders. Deactivate it instead"
         if OrderItem.query.filter_by(product_id=product.id).first() else None
     )
     if blocker:
@@ -836,11 +836,11 @@ def _variant_delete_blocker(variant_ids):
     steps = RoutineStep.query.filter(RoutineStep.variant_id.in_(variant_ids)).all()
     if steps:
         names = ", ".join(sorted({s.routine.name for s in steps}))
-        return f"used in routine(s): {names} -- change those routine steps first, or deactivate instead"
+        return f"used in routine(s): {names}. Change those routine steps first, or deactivate it instead"
     if OrderItem.query.filter(OrderItem.variant_id.in_(variant_ids)).first():
-        return "appears in past orders -- deactivate it instead"
+        return "appears in past orders. Deactivate it instead"
     if InventoryReservation.query.filter(InventoryReservation.variant_id.in_(variant_ids)).first():
-        return "has stock reservations from orders -- deactivate it instead"
+        return "has stock reservations from orders. Deactivate it instead"
     return None
 
 
@@ -926,7 +926,7 @@ def delete_product_variant(product_id, variant_id):
     has_inventory_history = InventoryTransaction.query.filter_by(variant_id=variant.id).first() is not None
     if has_inventory_history:
         return jsonify({
-            "error": "this variant has inventory history and can't be deleted -- set is_active to false instead"
+            "error": "this size has inventory history and can't be deleted. Deactivate it instead"
         }), 400
     blocker = _variant_delete_blocker([variant.id])
     if blocker:
@@ -1097,7 +1097,7 @@ def update_routine(routine_id):
 def delete_routine(routine_id):
     routine = Routine.query.get_or_404(routine_id)
     if OrderItem.query.filter_by(routine_id=routine.id).first():
-        return jsonify({"error": "this routine appears in past orders -- deactivate it instead"}), 400
+        return jsonify({"error": "this routine appears in past orders. Deactivate it instead"}), 400
     image_id = routine.cloudinary_public_id
     CartItem.query.filter_by(routine_id=routine.id).delete(synchronize_session=False)
     db.session.delete(routine)  # steps cascade
@@ -1127,7 +1127,7 @@ def set_routine_steps(routine_id):
             return jsonify({"error": f"step {index}: product size not found"}), 400
         if not variant.is_active or not variant.product.is_active:
             return jsonify({
-                "error": f"step {index}: {variant.product.name} ({variant.label}) is inactive -- "
+                "error": f"step {index}: {variant.product.name} ({variant.label}) is inactive. "
                          "pick a size that's on sale"
             }), 400
         if step.get("time_of_day", "both") not in ("am", "pm", "both"):
@@ -1218,7 +1218,7 @@ def refresh_order_payment_status(order_id):
         result = payment_service.check_with_daraja(order, throttle=False)
     except Exception:
         return jsonify({
-            "error": "Couldn't confirm payment status with M-Pesa right now -- please try again in a moment."
+            "error": "Couldn't confirm payment status with M-Pesa right now. Please try again in a moment."
         }), 502
 
     if result is not None:
@@ -1284,7 +1284,7 @@ def send_order_invoice(order_id):
     try:
         brevo_service.send_order_invoice_email(order.user, order)
     except Exception:
-        return jsonify({"error": "couldn't send the invoice email right now -- please try again"}), 502
+        return jsonify({"error": "couldn't send the invoice email right now. Please try again"}), 502
 
     return jsonify({"sent": True}), 200
 
@@ -1381,7 +1381,7 @@ def update_user_admin_status(user_id):
 
     actor = g.admin_user
     if user.id == actor.id:
-        return jsonify({"error": "you can't change your own access -- ask another super admin"}), 400
+        return jsonify({"error": "you can't change your own access. Ask another super admin"}), 400
 
     new_role = None
     if data["admin_role_id"]:
@@ -1398,7 +1398,7 @@ def update_user_admin_status(user_id):
             AdminRole.is_super.is_(True), User.is_admin.is_(True)
         ).count()
         if supers <= 1:
-            return jsonify({"error": "this is the last super admin -- make someone else super admin first"}), 400
+            return jsonify({"error": "this is the last super admin. Make someone else super admin first"}), 400
 
     user.admin_role_id = new_role.id if new_role else None
     user.is_admin = new_role is not None

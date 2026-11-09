@@ -92,7 +92,7 @@ export default function Cart() {
             const imageUrl = cloudinaryUrl(image, { width: 200 });
             const productUrl = item.product?.slug ? `/shop/${item.product.slug}` : null;
             const name = item.product
-              ? `${item.product.name}${item.variant ? ` — ${item.variant.label}` : ""}`
+              ? `${item.product.name}${item.variant ? ` (${item.variant.label})` : ""}`
               : `${item.routine.name} (Full Routine)`;
             const priceCents = cartItemUnitPriceCents(item);
             const undiscountedPriceCents = cartItemUndiscountedCents(item);

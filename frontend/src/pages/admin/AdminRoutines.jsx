@@ -132,7 +132,7 @@ export default function AdminRoutines() {
   };
 
   const handleDelete = async (routineId) => {
-    if (!window.confirm("Delete this routine? This can't be undone -- deactivate it instead to just hide it.")) return;
+    if (!window.confirm("Delete this routine? This can't be undone. Deactivate it instead to just hide it.")) return;
     setRowState((s) => ({ ...s, [routineId]: "deleting" }));
     try {
       await client.delete(`/admin/routines/${routineId}`);
@@ -154,7 +154,7 @@ export default function AdminRoutines() {
   const variantOptions = products.flatMap((p) =>
     (p.variants || []).map((v) => {
       const onSale = p.is_active && v.is_active;
-      return { id: v.id, label: `${p.name} — ${v.label}${onSale ? "" : " (inactive)"}`, onSale };
+      return { id: v.id, label: `${p.name} (${v.label})${onSale ? "" : " (inactive)"}`, onSale };
     })
   );
   const sellableOptions = variantOptions.filter((v) => v.onSale);
@@ -364,7 +364,7 @@ export default function AdminRoutines() {
         submitLabel="Save steps"
         wide
       >
-        {steps.length === 0 && <EmptyState>No steps yet -- add the first product.</EmptyState>}
+        {steps.length === 0 && <EmptyState>No steps yet. Add the first product.</EmptyState>}
         <ol className="flex flex-col gap-3">
           {steps.map((step, index) => (
             <li key={index} className="flex flex-wrap items-center gap-3 p-4 bg-bone-light border border-mist rounded-lg">
@@ -429,7 +429,7 @@ export default function AdminRoutines() {
       {loading ? (
         <LoadingState>Loading routines…</LoadingState>
       ) : shown.length === 0 ? (
-        <EmptyState>{routines.length ? "No routines match." : "No routines yet -- add the first one."}</EmptyState>
+        <EmptyState>{routines.length ? "No routines match." : "No routines yet. Add the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {shown.map((routine, index) => {
@@ -445,7 +445,7 @@ export default function AdminRoutines() {
                 stats={[
                   { label: "Steps", value: routine.steps.length, tone: noSteps ? "warn" : undefined },
                   { label: "Saving", value: `${routine.bundle_discount_percent || 0}%` },
-                  { label: "Price", value: noSteps ? "—" : kes(routinePrice(routine)) },
+                  { label: "Price", value: noSteps ? "No steps" : kes(routinePrice(routine)) },
                   { label: "Skin type", value: routine.skin_type ? routine.skin_type[0].toUpperCase() + routine.skin_type.slice(1) : "Any" },
                 ]}
                 badge={

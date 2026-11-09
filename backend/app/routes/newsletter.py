@@ -19,12 +19,12 @@ def subscribe():
         newsletter_service.subscribe(email, full_name)
     except newsletter_service.NewsletterNotConfigured:
         current_app.logger.warning("Newsletter signup attempted but BREVO_NEWSLETTER_LIST_ID is not set")
-        return jsonify({"error": "newsletter signup isn't configured yet -- please try again later"}), 503
+        return jsonify({"error": "newsletter signup isn't configured yet. Please try again later"}), 503
     except ApiException as e:
         current_app.logger.error("Brevo newsletter signup failed: %s %s", e.status, e.body)
-        return jsonify({"error": "couldn't sign you up right now -- please try again"}), 502
+        return jsonify({"error": "couldn't sign you up right now. Please try again"}), 502
     except Exception:  # noqa: BLE001
         current_app.logger.exception("newsletter signup failed")
-        return jsonify({"error": "couldn't sign you up right now -- please try again"}), 502
+        return jsonify({"error": "couldn't sign you up right now. Please try again"}), 502
 
     return jsonify({"subscribed": True}), 200

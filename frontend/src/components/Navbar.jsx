@@ -107,7 +107,7 @@ export default function Navbar() {
           <Logo className={`h-9 sm:h-10 lg:h-12 transition-[filter] duration-500 ${coloured ? "brightness-0" : ""}`} />
         </Link>
 
-        <nav aria-label="Main" className="hidden md:flex items-center justify-center gap-8 lg:gap-12 xl:gap-14 text-lg font-medium">
+        <nav aria-label="Main" className="hidden md:flex items-center justify-center gap-6 lg:gap-12 xl:gap-14 text-lg font-medium whitespace-nowrap">
           <Link to="/shop" className={`${linkTone} transition-colors`}>Shop</Link>
           <Link to="/quiz" className={`${linkTone} transition-colors`}>Find your routine</Link>
           <Link to="/blog" className={`${linkTone} transition-colors`}>Blog</Link>

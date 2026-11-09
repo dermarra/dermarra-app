@@ -268,7 +268,7 @@ export default function AdminCoupons() {
       {loading ? (
         <LoadingState>Loading coupons…</LoadingState>
       ) : shown.length === 0 ? (
-        <EmptyState>{coupons.length ? "No coupons match." : "No coupons yet -- add the first one."}</EmptyState>
+        <EmptyState>{coupons.length ? "No coupons match." : "No coupons yet. Add the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {shown.map((coupon, index) => {

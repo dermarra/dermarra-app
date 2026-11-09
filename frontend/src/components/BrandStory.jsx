@@ -34,7 +34,7 @@ function TiltingMark() {
         style={reduce ? undefined : { rotate }}
       />
       <figcaption className="mt-6 text-center text-ink/70 max-w-xs">
-        Tilted 45°, the butterfly takes flight — and becomes the <strong className="text-ink">+</strong> of healing.
+        Tilted 45°, the butterfly takes flight and becomes the <strong className="text-ink">+</strong> of healing.
       </figcaption>
     </figure>
   );
@@ -53,16 +53,16 @@ export default function BrandStory() {
           </motion.h2>
           <motion.div variants={itemReveal} className="flex flex-col gap-4 text-ink/80 leading-relaxed">
             <p>
-              Dermarra takes its name from the <strong className="text-ink">dermis</strong> — the living layer of your
+              Dermarra takes its name from the <strong className="text-ink">dermis</strong>, the living layer of your
               skin. Our mark is built from the first letter of that name: four uppercase{" "}
               <strong className="text-ink">D</strong>s, joined at the centre, form a butterfly.
             </p>
             <p>
-              The butterfly stands for our multi-step system — <strong className="text-ink">cleanse, treat, repair and protect</strong>{" "}
-              — a transformation that happens in stages, the way a butterfly forms.
+              The butterfly stands for our multi-step system: <strong className="text-ink">cleanse, treat, repair and protect</strong>{" "}
+              a transformation that happens in stages, the way a butterfly forms.
             </p>
             <p>
-              Tilt the butterfly 45° in any direction and it comes alive, seemingly in motion — and forms the{" "}
+              Tilt the butterfly 45° in any direction and it comes alive, seemingly in motion, and forms the{" "}
               <strong className="text-ink">+</strong> of medicine and healing. A story of transformation, and of the
               intentional, clinical precision that goes into every Dermarra product.
             </p>

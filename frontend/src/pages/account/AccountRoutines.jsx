@@ -31,7 +31,7 @@ export default function AccountRoutines() {
         setRoutines(routinesRes.data.filter((r) => purchasedIds.has(r.id)));
       }
     )
-      .catch(() => setError("Couldn't load your routines -- please refresh to try again."))
+      .catch(() => setError("Couldn't load your routines. Please refresh to try again."))
       .finally(() => setLoading(false));
   }, []);
 

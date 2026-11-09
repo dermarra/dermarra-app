@@ -150,7 +150,7 @@ export default function AdminConcerns() {
           namePlaceholder="e.g. Hyperpigmentation"
           nameHelp="Short name, used as the page heading."
         />
-        <Field label="Quiz wording" help="How a customer would describe it -- the quiz shows this on the answer tile.">
+        <Field label="Quiz wording" help="How a customer would describe it. The quiz shows this on the answer tile.">
           <textarea
             placeholder="e.g. Dark spots or patches that won't fade"
             value={form.description}
@@ -174,7 +174,7 @@ export default function AdminConcerns() {
       {loading ? (
         <LoadingState>Loading concerns…</LoadingState>
       ) : shown.length === 0 ? (
-        <EmptyState>{concerns.length ? "No concerns match." : "No concerns yet -- add the first one."}</EmptyState>
+        <EmptyState>{concerns.length ? "No concerns match." : "No concerns yet. Add the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {shown.map((concern, index) => {

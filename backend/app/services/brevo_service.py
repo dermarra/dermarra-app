@@ -100,7 +100,7 @@ def send_password_reset_email(user, reset_url):
         html_content=_email_shell(
             f"<p>Hi {_e(user.full_name)},</p>"
             "<p>Someone requested a password reset for this account. If that was you, "
-            "click the link below -- it expires in 30 minutes:</p>"
+            "click the link below. It expires in 30 minutes:</p>"
             f'<p><a href="{reset_url}" style="color:{_LINK};">{reset_url}</a></p>'
             "<p>If you didn't request this, you can safely ignore this email.</p>"
         ),
@@ -130,7 +130,7 @@ def _discount_row_html(order):
 
 def send_order_confirmation_email(user, order):
     items_html = "".join(
-        f"<li>{_e(item.name_snapshot)} x{item.quantity} — "
+        f"<li>{_e(item.name_snapshot)} x{item.quantity}: "
         f"KES {item.unit_price_cents_snapshot * item.quantity / 100:.0f}</li>"
         for item in order.items
     )
@@ -152,7 +152,7 @@ def send_order_confirmation_email(user, order):
 _SHIPPING_STATUS_COPY = {
     "shipped": (
         "Your order is on its way",
-        "Good news -- your order has shipped.",
+        "Good news: your order has shipped.",
     ),
     "delivered": (
         "Your order has been delivered",
@@ -177,7 +177,7 @@ def send_shipping_update_email(user, order):
     email = sib_api_v3_sdk.SendSmtpEmail(
         to=[{"email": user.email, "name": user.full_name}],
         sender=_sender(),
-        subject=f"{subject_line} -- order #{order.id[:8]}",
+        subject=f"{subject_line}, order #{order.id[:8]}",
         html_content=_email_shell(
             f"<p>Hi {_e(user.full_name)},</p>"
             f"<p>{intro}</p>"

@@ -49,7 +49,7 @@ export default function AuthPromoPanel() {
       <div className="h-full min-h-[320px] bg-mist/50 flex flex-col items-center justify-center text-center px-10 py-12">
         <Logo className="h-9" />
         <p className="text-ink/60 text-sm mt-2 max-w-[220px]">
-          Skin health, engineered as a system -- cleanse, treat, repair, protect.
+          Skin health, engineered as a system: cleanse, treat, repair, protect.
         </p>
       </div>
     );

@@ -20,14 +20,14 @@ export default function NewsletterForm({ variant = "dark", source, stacked = fal
       setEmail("");
     } catch (err) {
       setStatus("error");
-      setError(err.response?.data?.error || "Couldn't sign you up -- please try again.");
+      setError(err.response?.data?.error || "Couldn't sign you up. Please try again.");
     }
   };
 
   if (status === "sent") {
     return (
       <p role="status" className={`font-semibold ${dark ? "text-lime" : "text-lime-900"}`}>
-        You&apos;re on the list -- look out for our next email.
+        You&apos;re on the list. Look out for our next email.
       </p>
     );
   }

@@ -32,7 +32,7 @@ const STATE = {
   draft: { label: "Draft", tone: "neutral" },
 };
 const emptyForm = { name: "", slug: "", category_id: "", excerpt: "", cover_public_id: null, body_html: "", seo_description: "", mode: "draft", when: "" };
-const fmt = (iso) => (iso ? new Date(iso).toLocaleString("en-KE", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
+const fmt = (iso) => (iso ? new Date(iso).toLocaleString("en-KE", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Not set");
 // <input type="datetime-local"> wants "YYYY-MM-DDTHH:MM" in local time.
 const toLocalInput = (iso) => {
   if (!iso) return "";
@@ -340,7 +340,7 @@ export default function AdminBlog() {
       {loading ? (
         <LoadingState>Loading posts…</LoadingState>
       ) : shown.length === 0 ? (
-        <EmptyState>{posts.length ? "No posts match." : "No posts yet -- write the first one."}</EmptyState>
+        <EmptyState>{posts.length ? "No posts match." : "No posts yet. Write the first one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {shown.map((post, index) => {

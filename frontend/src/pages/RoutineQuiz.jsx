@@ -39,6 +39,9 @@ const SKIN_TYPES = [
 ];
 
 const MAX_CONCERNS = 3;
+// Same step line as the homepage step cards: this step's brand colour for
+// the steps so far, ink for the rest (lime, orange, blue, gold).
+const STEP_LINE = ["#BBD531", "#F16722", "#1D9CD7", "#CD902D"];
 const RANK_LABELS = ["Primary concern", "Secondary concern", "Tertiary concern"];
 
 const WHY = {
@@ -46,14 +49,14 @@ const WHY = {
     title: "Why we ask about your skin type",
     body: [
       "Skin type changes which textures suit you: a rich barrier cream that comforts dry skin can feel heavy on oily skin, and a light gel that suits oily skin can leave dry skin tight.",
-      "If you're not sure, think about how your skin feels a few hours after washing it -- or choose “Not sure” and we'll match on your concerns alone.",
+      "If you're not sure, think about how your skin feels a few hours after washing it, or choose “Not sure” and we'll match on your concerns alone.",
     ],
   },
   concerns: {
     title: "Why we ask about your concerns",
     body: [
       "Every Dermarra routine is built around a main concern, so the actives in each step work towards the same result instead of competing.",
-      "Choose up to three. On the next screen you'll put them in order -- the one you rank first is the one your routine is built around.",
+      "Choose up to three. On the next screen you'll put them in order. The one you rank first is the one your routine is built around.",
     ],
   },
   rank: {
@@ -189,7 +192,7 @@ function ConcernTile({ concern, index, selected, disabled, onToggle }) {
           </motion.span>
         )}
       </span>
-      <span lang="en" className="block mt-2 text-base leading-snug text-ink hyphens-auto [overflow-wrap:break-word]">{concern.name.trim()}</span>
+      <span lang="en" className="block mt-2 text-base leading-snug text-ink [overflow-wrap:break-word]">{concern.name.trim()}</span>
     </button>
   );
 }
@@ -253,7 +256,7 @@ function StepSection({ group, number, steps }) {
       <div>
         <p className="flex gap-1.5" aria-hidden="true">
           {[0, 1, 2, 3].map((d) => (
-            <span key={d} className={`w-2.5 h-2.5 rounded-full border border-ink ${d < number ? "bg-ink" : ""}`} />
+            <span key={d} className="h-[3px] w-6 rounded-full" style={{ backgroundColor: d < number ? STEP_LINE[(number - 1) % STEP_LINE.length] : "#231F20" }} />
           ))}
         </p>
         <h3 className="mt-4 text-3xl">
@@ -266,8 +269,11 @@ function StepSection({ group, number, steps }) {
           const img = cloudinaryUrl(step.product.cloudinary_public_id, { width: 480 });
           return (
             <li key={step.id}>
-              <Link to={`/shop/${step.product.slug}`} className="group block">
-                <span className="relative block aspect-square bg-bone-light overflow-hidden">
+              <Link
+                to={`/shop/${step.product.slug}`}
+                className="group flex flex-col h-full rounded-lg border border-mist bg-bone-light overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+              >
+                <span className="relative block aspect-square bg-mist overflow-hidden">
                   {img && (
                     <img
                       src={img}
@@ -276,21 +282,21 @@ function StepSection({ group, number, steps }) {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}
-                  <span className="absolute top-3 left-3 px-2.5 py-1 bg-white text-ink text-xs font-semibold uppercase tracking-wide">
+                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-white text-ink text-xs font-semibold uppercase tracking-wide">
                     {step.time_of_day === "both" ? "AM + PM" : step.time_of_day.toUpperCase()}
                   </span>
                 </span>
-                {step.product.key_actives && (
-                  <span className="block mt-4 font-mono text-xs uppercase tracking-wide text-lime-800">
-                    {step.product.key_actives}
-                  </span>
-                )}
-                <span className="block mt-1 text-xl font-medium leading-snug group-hover:underline underline-offset-4">
+                <span className="flex flex-1 flex-col p-4">
+                <span className="block font-mono text-xs uppercase tracking-wide text-lime-800 leading-5 h-5 truncate">
+                  {step.product.key_actives}
+                </span>
+                <span className="block mt-1 text-xl font-semibold leading-snug min-h-[2.75em] line-clamp-2 group-hover:underline underline-offset-4">
                   {step.product.name}
                 </span>
-                <span className="mt-3 pt-3 border-t border-mist flex items-baseline justify-between gap-3">
+                <span className="mt-auto pt-3 border-t border-mist flex items-baseline justify-between gap-3">
                   <span className="font-semibold">{kes(step.variant.price_cents)}</span>
                   <span className="text-ink/70">{step.variant.label}</span>
+                </span>
                 </span>
               </Link>
             </li>
@@ -334,7 +340,7 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
       setAdded(true);
       setTimeout(() => setAdded(false), 2500);
     } catch (err) {
-      setAddError(err.response?.data?.error || "Couldn't add this to your cart -- please try again.");
+      setAddError(err.response?.data?.error || "Couldn't add this to your cart. Please try again.");
     }
   };
 
@@ -373,7 +379,7 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
             Retake the routine builder <ChevronRightIcon className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="aspect-[3/2] bg-blue overflow-hidden">
+        <div className="aspect-[3/2] rounded-lg bg-blue overflow-hidden">
           {img && <img src={img} alt={routine.name} className="w-full h-full object-cover" />}
         </div>
       </div>
@@ -391,9 +397,7 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
             <button
               type="button"
               onClick={handleAdd}
-              className={`inline-flex items-center gap-2 px-7 py-4 text-sm font-semibold transition-colors ${
-                added ? "bg-lime text-ink" : "bg-orange text-ink hover:bg-orange-400"
-              }`}
+              className={`btn ${added ? "bg-lime text-ink" : "btn-primary"}`}
             >
               {added ? <CheckIcon className="w-4 h-4" /> : null}
               {added
@@ -404,7 +408,7 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
             <Link
               to="/login"
               state={{ from: "/quiz" }}
-              className="inline-flex px-7 py-4 bg-orange text-ink text-sm font-semibold hover:bg-orange-400 transition-colors"
+              className="btn btn-primary"
             >
               Sign in to add this routine to your cart
             </Link>
@@ -423,9 +427,7 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
             type="button"
             onClick={() => setTime(value)}
             aria-pressed={time === value}
-            className={`w-28 py-3 border text-sm font-semibold transition-colors ${
-              time === value ? "bg-ink border-ink text-white" : "bg-white border-ink text-ink hover:bg-bone-light"
-            }`}
+            className={`chip w-28 ${time === value ? "chip-on" : "chip-off"}`}
           >
             {label}
           </button>
@@ -436,7 +438,7 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
         sections.map((s, i) => <StepSection key={s.group.key} group={s.group} number={i + 1} steps={s.steps} />)
       ) : (
         <p className="py-14 border-t border-mist text-ink/70">
-          No {time.toUpperCase()} steps in this routine -- switch to {time === "am" ? "PM" : "AM"}.
+          No {time.toUpperCase()} steps in this routine. Switch to {time === "am" ? "PM" : "AM"}.
         </p>
       )}
     </motion.div>
@@ -704,7 +706,7 @@ export default function RoutineQuiz() {
         error:
           lastError && !/no routine/i.test(lastError)
             ? lastError
-            : "We don't have a routine for these concerns yet -- new routines are on the way.",
+            : "We don't have a routine for these concerns yet. New routines are on the way.",
       }
     );
     setMatching(false);
@@ -816,7 +818,7 @@ export default function RoutineQuiz() {
             ))}
           </div>
           <p className={`mt-6 text-sm ${limitHit ? "text-orange-700" : "text-ink/70"}`} aria-live="polite">
-            {limitHit ? "You can choose up to 3 -- remove one to pick another." : `${picked.length} of ${MAX_CONCERNS} selected`}
+            {limitHit ? "You can choose up to 3. Remove one to pick another." : `${picked.length} of ${MAX_CONCERNS} selected`}
           </p>
         </>
       );

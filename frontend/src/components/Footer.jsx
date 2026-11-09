@@ -27,9 +27,9 @@ export default function Footer() {
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12 py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] gap-10">
         <div>
           <Link to="/" aria-label="Dermarra Skincare home" className="flex items-center gap-5 max-w-sm">
-            <img src="/brand/shield.svg" alt="" className="w-16 sm:w-20 h-auto shrink-0 select-none" draggable="false" />
+            <img src="/brand/shield.svg" alt="" className="w-24 sm:w-28 h-auto shrink-0 select-none" draggable="false" />
             <span className="text-base leading-snug text-ink/80">
-              Skin health, engineered as a system — cleanse, treat, repair, protect.
+              Skin health, engineered as a system: cleanse, treat, repair, protect.
             </span>
           </Link>
           {SOCIAL_LINKS.length > 0 && <div className="flex gap-3 mt-6">

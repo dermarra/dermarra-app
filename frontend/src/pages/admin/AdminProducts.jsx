@@ -443,7 +443,7 @@ export default function AdminProducts() {
   };
 
   const handleDelete = async (productId) => {
-    if (!window.confirm("Delete this product and all its sizes and photos? This can't be undone -- deactivate it instead to just hide it.")) return;
+    if (!window.confirm("Delete this product and all its sizes and photos? This can't be undone. Deactivate it instead to just hide it.")) return;
     setRowState((s) => ({ ...s, [productId]: "deleting" }));
     try {
       await client.delete(`/admin/products/${productId}`);
@@ -700,8 +700,8 @@ export default function AdminProducts() {
                 }}
                 className={`${selectClass} h-12`}
               >
-                <option value="name:asc">Name A–Z</option>
-                <option value="name:desc">Name Z–A</option>
+                <option value="name:asc">Name A to Z</option>
+                <option value="name:desc">Name Z to A</option>
                 <option value="price:asc">Price: low to high</option>
                 <option value="price:desc">Price: high to low</option>
                 <option value="stock:asc">Stock: lowest first</option>
@@ -733,7 +733,7 @@ export default function AdminProducts() {
             setForm={setForm}
             urlPrefix="/shop/"
             namePlaceholder="e.g. Anti Ageing Serum"
-            nameHelp="Without the size -- sizes are added below."
+            nameHelp="Without the size. Sizes are added below."
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Routine step" help="Decides where it shows under Shop by Step.">
@@ -924,7 +924,7 @@ export default function AdminProducts() {
       {loading ? (
         <LoadingState>Loading products…</LoadingState>
       ) : visibleProducts.length === 0 ? (
-        <EmptyState>{products.length ? "No products match." : "No products yet -- add the first one."}</EmptyState>
+        <EmptyState>{products.length ? "No products match." : "No products yet. Add the first one."}</EmptyState>
       ) : (
         <motion.div key={`${sortKey}-${sortDir}`} initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {visibleProducts.map((product, index) => {
@@ -952,7 +952,7 @@ export default function AdminProducts() {
                 stats={[
                   {
                     label: sizes > 1 ? "Price from" : "Price",
-                    value: product.price_from_cents == null ? "—" : `KES ${Math.round(product.price_from_cents / 100).toLocaleString("en-KE")}`,
+                    value: product.price_from_cents == null ? "No sizes" : `KES ${Math.round(product.price_from_cents / 100).toLocaleString("en-KE")}`,
                   },
                   { label: "Sizes", value: sizes, tone: sizes === 0 ? "warn" : undefined },
                   { label: "On hand", value: onHand(product).toLocaleString("en-KE") },

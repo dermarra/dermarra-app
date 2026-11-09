@@ -49,7 +49,7 @@ export default function IngredientShop() {
         }
         setProducts(productsRes.data);
       })
-      .catch(() => setLoadError("Couldn't load this page -- check your connection and try again."))
+      .catch(() => setLoadError("Couldn't load this page. Check your connection and try again."))
       .finally(() => setLoading(false));
   }, [slug]);
 

@@ -26,7 +26,7 @@ export default function Shop() {
     client
       .get("/products", { params })
       .then(({ data }) => setProducts(data))
-      .catch(() => setLoadError("Couldn't load products -- check your connection and try again."))
+      .catch(() => setLoadError("Couldn't load products. Check your connection and try again."))
       .finally(() => setLoading(false));
   }, [stepType]);
 

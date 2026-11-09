@@ -40,7 +40,7 @@ export default function ImageUploadField({ value, onChange, folder, aspect, remo
       });
       onChange(data.public_id);
     } catch (err) {
-      setError(err.response?.data?.error || "Upload failed -- please try again.");
+      setError(err.response?.data?.error || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -49,7 +49,7 @@ export default function ImageUploadField({ value, onChange, folder, aspect, remo
   const takeFile = (file) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("That file isn't an image -- choose a JPG, PNG or WebP.");
+      setError("That file isn't an image. Choose a JPG, PNG or WebP.");
       return;
     }
     setError(null);

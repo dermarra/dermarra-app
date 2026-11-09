@@ -210,7 +210,7 @@ export default function AdminHeroSlides() {
       {loading ? (
         <LoadingState>Loading slides…</LoadingState>
       ) : shown.length === 0 ? (
-        <EmptyState>{slides.length ? "No slides match." : "No slides yet -- the homepage is showing its default hero."}</EmptyState>
+        <EmptyState>{slides.length ? "No slides match." : "No slides yet. The homepage hero shows only the headline until you add one."}</EmptyState>
       ) : (
         <motion.div initial="hidden" animate="show" variants={containerReveal} className="flex flex-col gap-3">
           {shown.map((slide, index) => {

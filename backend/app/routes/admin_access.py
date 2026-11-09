@@ -107,7 +107,7 @@ def delete_role(role_id):
     members = role.members.filter(User.is_admin.is_(True)).count()
     if members:
         who = "1 person has" if members == 1 else f"{members} people have"
-        return jsonify({"error": f"{who} this role -- move them first"}), 400
+        return jsonify({"error": f"{who} this role. Move them first"}), 400
     g.activity_summary = f"Deleted the {role.name} role"
     db.session.delete(role)
     db.session.commit()
@@ -145,7 +145,7 @@ def register_cli(app):
             raise click.ClickException(f"no account with email {email}")
         role = AdminRole.query.filter_by(is_super=True).first()
         if not role:
-            raise click.ClickException("no super-admin role -- run `flask db upgrade` first")
+            raise click.ClickException("no super-admin role. Run `flask db upgrade` first")
         user.admin_role_id = role.id
         user.is_admin = True
         db.session.commit()

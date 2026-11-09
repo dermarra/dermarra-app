@@ -59,7 +59,7 @@ export default function ProductCard({ product }) {
     if (!product.in_stock || !product.default_variant_id) return "Out of stock";
     if (!user) return "Sign in to add to cart";
     if (status === "added") return "Added to cart";
-    if (status === "error") return "Couldn't add -- try again";
+    if (status === "error") return "Couldn't add, try again";
     if (status === "adding") return "Adding…";
     return "Add to cart";
   };

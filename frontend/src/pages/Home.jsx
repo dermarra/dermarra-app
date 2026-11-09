@@ -17,7 +17,7 @@ const STEP_COPY = {
   cleanser: "Strip nothing but the day. A pH-correct cleanse that keeps the barrier intact.",
   serum: "Actives dosed at the concentration that actually changes skin, in the right order.",
   barrier_cream: "Rebuild the lipid barrier the actives just worked through.",
-  spf: "Broad-spectrum SPF, every morning — the step that makes the other three worth it.",
+  spf: "Broad-spectrum SPF, every morning. The step that makes the other three worth it.",
 };
 
 const HERO_COLORS = ["#1D9CD7", "#F16722", "#BBD531", "#CD902D"]; // blue, orange, lime, gold
@@ -29,7 +29,7 @@ const PRINCIPLES = [
     key: "barrier",
     title: "Barrier-first",
     description:
-      "Every product is designed to protect, restore, and strengthen your skin barrier first — long-term skin health over short-term cosmetic gains.",
+      "Every product is designed to protect, restore, and strengthen your skin barrier first, for long-term skin health over short-term cosmetic gains.",
     icon: DropletIcon,
     fill: "bg-lime",
     to: "/shop",
@@ -49,7 +49,7 @@ const PRINCIPLES = [
     key: "precision",
     title: "Clinical precision",
     description:
-      "Every formula is built on scientifically proven actives at optimal concentrations — no unnecessary complexity, no unproven trends.",
+      "Every formula is built on scientifically proven actives at optimal concentrations. No unnecessary complexity, no unproven trends.",
     icon: ChemistryIcon,
     fill: "bg-orange",
     to: "/shop",
@@ -156,8 +156,8 @@ export default function Home() {
           <motion.p variants={itemReveal} className="text-ink/70 leading-relaxed">
             We design science-led, result-oriented skin solutions built on a simple idea: skin
             needs a coordinated system, not a shelf of standalone products. Every Dermarra
-            routine is engineered around cleansing, treatment, barrier repair and protection —
-            in the right order, at the right concentration — for real, measurable outcomes
+            routine is engineered around cleansing, treatment, barrier repair and protection,
+            in the right order, at the right concentration, for real, measurable outcomes
             instead of short-term appearance fixes.
           </motion.p>
         </div>
@@ -214,7 +214,7 @@ export default function Home() {
                 <>
                   <h2 className="text-3xl sm:text-4xl text-ink mb-2 max-w-xl">Shop by step.</h2>
                   <p className="text-lg text-ink/80 max-w-xl">
-                    Only need one thing? Our 4-step system -- cleanse, treat, repair, protect -- works
+                    Only need one thing? Our 4-step system of cleanse, treat, repair and protect works
             just as well one product at a time.
                   </p>
                 </>

@@ -153,7 +153,7 @@ def forgot_password():
         send_password_reset_email(user, reset_url)
     except Exception:
         # Used to be swallowed, telling the user a link was sent when it wasn't.
-        return jsonify({"error": "We couldn't send the reset email right now -- please try again shortly."}), 502
+        return jsonify({"error": "We couldn't send the reset email right now. Please try again shortly."}), 502
 
     return jsonify({"message": f"We've sent a password reset link to {email}. It expires in 30 minutes."}), 200
 
@@ -169,7 +169,7 @@ def reset_password():
 
     user = verify_password_reset_token(token)
     if not user:
-        return jsonify({"error": "this reset link is invalid or has expired -- request a new one"}), 400
+        return jsonify({"error": "this reset link is invalid or has expired. Request a new one"}), 400
 
     user.set_password(new_password)
     db.session.commit()

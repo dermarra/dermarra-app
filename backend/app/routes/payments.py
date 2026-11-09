@@ -45,7 +45,7 @@ def initiate_stk_push():
 
     amount_kes = round(order.total_cents / 100)
     if amount_kes < 1:
-        return jsonify({"error": "M-Pesa can't charge less than KES 1 -- this order can't be paid by M-Pesa"}), 400
+        return jsonify({"error": "M-Pesa can't charge less than KES 1, so this order can't be paid by M-Pesa"}), 400
 
     # Hold the stock *before* asking for money: a retry after a failed
     # attempt (reservations released) or after the 20-minute hold lapsed
@@ -72,7 +72,7 @@ def initiate_stk_push():
         return jsonify({"error": f"M-Pesa rejected the payment request: {e}"}), 502
     except Exception as e:
         current_app.logger.error(f"M-Pesa STK push failed for order {order.id}: {e}")
-        return jsonify({"error": "could not reach M-Pesa -- please try again"}), 502
+        return jsonify({"error": "could not reach M-Pesa. Please try again"}), 502
 
     if result.get("ResponseCode") != "0":
         return jsonify({"error": result.get("ResponseDescription", "STK push was rejected")}), 502
@@ -86,7 +86,10 @@ def initiate_stk_push():
     order.status = "payment_pending"
     db.session.commit()
 
-    return jsonify({"message": "STK push sent -- enter your M-Pesa PIN on your phone", "order": order.to_dict()}), 200
+    return jsonify({
+        "message": "Payment request sent. Enter your M-Pesa PIN on your phone",
+        "order": order.to_dict(),
+    }), 200
 
 
 @payments_bp.get("/mpesa/status/<order_id>")

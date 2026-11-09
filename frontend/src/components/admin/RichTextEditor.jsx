@@ -102,7 +102,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Start w
       const alt = window.prompt("Describe the photo for people who can't see it (alt text):", "") || "";
       chain().setImage({ src: imageUrl(data.public_id), alt }).run();
     } catch (err) {
-      setError(err.response?.data?.error || "Upload failed -- please try again.");
+      setError(err.response?.data?.error || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

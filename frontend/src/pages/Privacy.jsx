@@ -67,14 +67,14 @@ const SHARING = [
 ];
 
 const RIGHTS = [
-  ["Be informed", "how your data is used -- this page."],
+  ["Be informed", "how your data is used. This page tells you."],
   ["Access", "a copy of the personal data we hold about you."],
   ["Correct", "data that is wrong or out of date. You can change your profile and saved address yourself under Account."],
   ["Delete", "data that is false, misleading or no longer needed, or your whole account. We will keep only what the law makes us keep (see How long we keep it)."],
   ["Object", "to our use of your data for a legitimate interest, or to direct marketing at any time."],
   ["Withdraw consent", "for the newsletter at any time, using the unsubscribe link in any email or by writing to us. This doesn't affect what we did before."],
   ["Data portability", "receive your data in a common, machine-readable format, or have it sent to another business."],
-  ["Not be subject to decisions made only by automated means", "that significantly affect you. We make no such decisions -- the skin quiz only suggests a routine."],
+  ["Not be subject to decisions made only by automated means", "that significantly affect you. We make no such decisions: the skin quiz only suggests a routine."],
 ];
 
 const SECTIONS = [
@@ -209,9 +209,9 @@ export default function Privacy() {
 
           <H2 id="abroad">Data stored outside Kenya</H2>
           <p>
-            Several of the services above store or process data outside Kenya. Under ss. 48&ndash;49 of the Act we only
-            transfer personal data abroad to providers that give appropriate safeguards for its security and protection --
-            through their data-processing terms and security commitments -- and only as far as is needed to run the shop.
+            Several of the services above store or process data outside Kenya. Under sections 48 and 49 of the Act we only
+            transfer personal data abroad to providers that give appropriate safeguards for its security and protection,
+            through their data-processing terms and security commitments, and only as far as is needed to run the shop.
             You can ask us for details of these safeguards.
           </p>
 
@@ -260,7 +260,7 @@ export default function Privacy() {
           <p>
             We build data protection into the shop by design (s. 41 DPA). The website is served only over an encrypted
             connection (HTTPS); passwords are stored as one-way hashes; password-reset links expire after 30 minutes and
-            work once; and only staff who need it can see customer data -- each staff member has a role that limits what
+            work once; and only staff who need it can see customer data. Each staff member has a role that limits what
             they can open, and changes they make are logged.
           </p>
           <p>
@@ -284,13 +284,13 @@ export default function Privacy() {
           <p>
             To use any of these rights, email <Mail /> from the address on your account (or tell us the phone number you
             ordered with). We may ask you to confirm who you are before acting. It&apos;s free, and we aim to respond within
-            7 days, and always within the time the Regulations allow. If we can&apos;t do what you ask -- for example
-            because the law makes us keep an order record -- we&apos;ll tell you why.
+            7 days, and always within the time the Regulations allow. If we can&apos;t do what you ask (for example
+            because the law makes us keep an order record), we&apos;ll tell you why.
           </p>
 
           <H2 id="marketing">Marketing emails</H2>
           <p>
-            We only send our newsletter if you ask for it -- the tick box at sign-up and checkout is never ticked for you.
+            We only send our newsletter if you ask for it. The tick box at sign-up and checkout is never ticked for you.
             Every newsletter has an unsubscribe link. Order emails (confirmation, shipping updates, invoices, password
             resets) are part of your purchase and not marketing, so they keep coming while you have an open order.
           </p>
@@ -321,7 +321,7 @@ export default function Privacy() {
           <H2 id="changes">Changes to this policy</H2>
           <p>
             We&apos;ll update this page when what we do with data changes, and change the date at the top. If a change
-            matters to you -- such as a new use of your data -- we&apos;ll tell you by email or on the site before it
+            matters to you, such as a new use of your data, we&apos;ll tell you by email or on the site before it
             applies.
           </p>
           <p className="mt-10 text-ink/70">

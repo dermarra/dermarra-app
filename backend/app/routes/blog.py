@@ -276,7 +276,7 @@ def delete_blog_category(category_id):
     used = BlogPost.query.filter_by(category_id=cat.id).count()
     if used:
         who = "1 post uses" if used == 1 else f"{used} posts use"
-        return jsonify({"error": f"{who} this category -- move them first"}), 400
+        return jsonify({"error": f"{who} this category. Move them first"}), 400
     g.activity_summary = f"Deleted the blog category {cat.name}"
     db.session.delete(cat)
     db.session.commit()

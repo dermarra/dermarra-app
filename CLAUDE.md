@@ -101,6 +101,13 @@
   (free near-match for Gotham, the owner's reference -- Gotham itself is
   licensed); `.font-display` is bold by default; IBM Plex Mono stays for
   ingredient strengths.
+- **No dashes in any text people read (owner, 2026-11-10)**: no em/en
+  dashes or "--" in storefront, admin, error messages or emails; they read
+  as AI-written. Use a comma, colon, full stop or brackets instead ("Product
+  (30ml)", "1 Nov to 7 Nov", "A to Z"); empty values show a word ("None",
+  "Not set"), not "—". No CSS `hyphens-auto` either. Ordinary compound words
+  ("in-house", "4-step") keep their hyphen. Code comments and server logs
+  are exempt.
 - **Type rules (owner, 2026-11-06)**: normal text >= 18px, button/badge text
   >= 14px, nav links >= 16px, headings >= 36px -- enforced in the
   `fontSize` scale itself (`xs`=14, `sm`=`base`=18, `3xl`=36 is the smallest
@@ -125,8 +132,9 @@
   description beside its photo), step chips + sort + result count, product
   grid, then "The complete routine" (bundle add). Shown as a static carousel (owner,
   2026-11-06): 4 cards per view from `xl` (3 `lg`, 2 `sm`, 1 + peek on
-  phones). Round prev/next buttons sit **on the left and right edges,
-  centred on the cards** (owner, 2026-11-10), move one card and wrap round;
+  phones). Plain prev/next arrows (no circle) sit **in the page margin left
+  and right of the cards, vertically centred, never on a card** (owner,
+  2026-11-10; hidden on phones), move one card and wrap round;
   when there's more than fits, the row also **slides one card every 4.5s**
   (stepwise, not continuous; paused on hover/focus, off screen and under
   reduced motion). Arrows hidden when all cards fit. Homepage sections use the navbar's
@@ -178,7 +186,7 @@
   backgrounds), `icon-dark.svg` / `icon-light.svg`; `logo-email.png` is a
   raster for emails (Gmail blocks SVG). Use `components/Logo.jsx`, never a
   text "Dermarra+". Favicon = the dark multicolour icon. `shield.svg` = the
-  "mark of quality" shield (footer, with the tagline beside it, not below).
+  "mark of quality" shield (footer, `w-24 sm:w-28`, tagline beside it).
   **The four-colour stripe is gone everywhere** (owner, 2026-11-09).
 - **Storefront look (owner, 2026-11-09)**: **no dark backgrounds on the
   shop** (admin keeps its ink sidebar) -- footer is white, closing CTA blue.

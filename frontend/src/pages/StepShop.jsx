@@ -44,7 +44,7 @@ export default function StepShop() {
           .get("/products", { params: { step_type: match.step_type } })
           .then(({ data: productsData }) => setProducts(productsData));
       })
-      .catch(() => setLoadError("Couldn't load this page -- check your connection and try again."))
+      .catch(() => setLoadError("Couldn't load this page. Check your connection and try again."))
       .finally(() => setLoading(false));
   }, [key]);
 

@@ -58,7 +58,7 @@ export default function ResetPassword() {
 
           {!token ? (
             <p className="text-sm text-orange-700">
-              This reset link is missing its token -- request a new one from the{" "}
+              This reset link is missing its token. Request a new one from the{" "}
               <Link to="/forgot-password" className="text-orange-700 font-medium hover:text-orange-700">
                 forgot password
               </Link>{" "}

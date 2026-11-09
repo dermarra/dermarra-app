@@ -42,7 +42,7 @@ export default function BlogPost() {
       <div className="mx-auto max-w-2xl px-5 py-20 text-center">
         <h1 className="text-4xl">Post not found</h1>
         <p className="mt-3 text-ink/70">It may have moved, or isn&apos;t published yet.</p>
-        <Link to="/blog" className="inline-block mt-6 px-6 py-3 rounded-lg bg-orange text-ink font-semibold">
+        <Link to="/blog" className="btn btn-primary mt-6">
           Back to the Blog
         </Link>
       </div>

@@ -22,9 +22,9 @@ import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
  * fonts and sizes follow the site's type rules.
  *
  * Shown as a carousel: 4 cards per view from `xl`, 3 from `lg`, 2 from
- * `sm`, one-and-a-peek on phones. Round prev/next buttons sit on the left
- * and right edges, centred on the cards, move one card and wrap round at
- * the ends; when there's more than fits, it also slides one card every
+ * `sm`, one-and-a-peek on phones. Plain prev/next arrows sit in the page
+ * margin left and right of the cards (vertically centred, hidden on
+ * phones), move one card and wrap round at the ends; when there's more than fits, it also slides one card every
  * 4.5s (paused on hover/focus/off-screen/reduced motion). Hidden when
  * everything fits. Swipe / trackpad scroll still work.
  *
@@ -121,7 +121,7 @@ function Tile({ tile, index, variant }) {
             {tile.category}
           </p>
         )}
-        <h3 id={titleId} lang="en" className="text-2xl font-semibold tracking-tight leading-tight min-h-[2.5em] line-clamp-2 hyphens-auto [overflow-wrap:break-word]">
+        <h3 id={titleId} lang="en" className="text-2xl font-semibold tracking-tight leading-tight min-h-[2.5em] line-clamp-2 [overflow-wrap:break-word]">
           {tile.title}
         </h3>
         {/* Always 4 lines tall (clamped) so titles, tags and buttons line up across a row. */}
@@ -155,6 +155,10 @@ function Tile({ tile, index, variant }) {
   );
 }
 
+// Plain arrows in the page margin either side of the cards -- no circle,
+// never over a card (owner, 2026-11-10). Tall, narrow hit area so it fits
+// the 32-48px gutter; hidden on phones (swipe + the peeking card + the
+// auto-slide carry the "there's more" cue there).
 function ArrowButton({ dir, onClick, label, className = "" }) {
   const Icon = dir === "prev" ? ChevronLeftIcon : ChevronRightIcon;
   return (
@@ -162,9 +166,9 @@ function ArrowButton({ dir, onClick, label, className = "" }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`absolute top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white border border-ink text-ink shadow-md flex items-center justify-center transition-colors hover:bg-ink hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${className}`}
+      className={`hidden sm:flex absolute top-1/2 -translate-y-1/2 z-10 w-8 h-20 items-center justify-center text-ink/70 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue rounded-lg ${className}`}
     >
-      <Icon className="w-4 h-4" />
+      <Icon className="w-6 h-6" />
     </button>
   );
 }
@@ -253,8 +257,8 @@ export default function ServiceTiles({ tiles, heading, label = "cards", variant 
         </div>
         {scrollable && (
           <>
-            <ArrowButton dir="prev" onClick={() => manual(-1)} label={`Previous ${label}`} className="left-0 -translate-x-1/3 sm:-translate-x-1/2" />
-            <ArrowButton dir="next" onClick={() => manual(1)} label={`Next ${label}`} className="right-0 translate-x-1/3 sm:translate-x-1/2" />
+            <ArrowButton dir="prev" onClick={() => manual(-1)} label={`Previous ${label}`} className="right-full mr-0.5 lg:mr-2" />
+            <ArrowButton dir="next" onClick={() => manual(1)} label={`Next ${label}`} className="left-full ml-0.5 lg:ml-2" />
           </>
         )}
       </div>
