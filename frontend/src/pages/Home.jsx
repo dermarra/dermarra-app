@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import client from "../api/client";
+import client, { cloudinaryUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import HeroCarousel from "../components/HeroCarousel.jsx";
+import SwatchAccordion from "../components/SwatchAccordion.jsx";
 import BrandStory from "../components/BrandStory.jsx";
 import ServiceTiles, { BRAND_ACCENTS, productSummary } from "../components/ServiceTiles.jsx";
 import Reveal, { containerReveal, itemReveal } from "../components/Reveal.jsx";
@@ -19,6 +19,14 @@ const STEP_COPY = {
   barrier_cream: "Rebuild the lipid barrier the actives just worked through.",
   spf: "Broad-spectrum SPF, every morning — the step that makes the other three worth it.",
 };
+
+const STEP_LABEL = {
+  cleanser: "Step 01 · Cleanse",
+  serum: "Step 02 · Treat",
+  barrier_cream: "Step 03 · Repair",
+  spf: "Step 04 · Protect",
+};
+const HERO_COLORS = ["#1D9CD7", "#F16722", "#BBD531", "#CD902D"]; // blue, orange, lime, gold
 
 // "Why Dermarra" cards (FluidCardStack). Solid brand fills with brand-black
 // text (5.2-9.8:1). No gradients.
@@ -69,7 +77,6 @@ const STEP_ACCENTS = { cleanser: "#BBD531", serum: "#F16722", barrier_cream: "#1
 
 export default function Home() {
   const { user } = useAuth();
-  const [heroSlides, setHeroSlides] = useState([]);
   const [concerns, setConcerns] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [stepGroups, setStepGroups] = useState([]);
@@ -80,7 +87,6 @@ export default function Home() {
     // Each section just stays hidden/empty if its request fails -- the
     // .catch keeps that from surfacing as an unhandled rejection.
     const ignore = () => {};
-    client.get("/hero-slides").then(({ data }) => setHeroSlides(data)).catch(ignore);
     client.get("/products/concerns").then(({ data }) => setConcerns(data)).catch(ignore);
     client.get("/products/ingredients").then(({ data }) => setIngredients(data.slice(0, 6))).catch(ignore);
     client.get("/products/step-groups").then(({ data }) => setStepGroups(data)).catch(ignore);
@@ -88,52 +94,55 @@ export default function Home() {
     client.get("/coupons/featured").then(({ data }) => setFeaturedCoupon(data)).catch(ignore);
   }, []);
 
+  // Hero panels: one per product, cycling the four brand colours. Products
+  // without a photo show the Dermarra butterfly until one is uploaded.
+  const heroItems = products.map((p, i) => ({
+    key: p.id,
+    title: p.name,
+    description: p.description || p.short_description || STEP_COPY[p.step_type],
+    tags: [STEP_LABEL[p.step_type], ...(p.key_actives || "").split(",").map((t) => t.trim()).filter(Boolean)].filter(Boolean).slice(0, 3),
+    image: cloudinaryUrl(p.cloudinary_public_id, { width: 1600 }),
+    to: `/shop/${p.slug}`,
+    button: p.price_from_cents ? `Shop now · KES ${(p.price_from_cents / 100).toLocaleString("en-KE")}` : "Shop now",
+    color: HERO_COLORS[i % HERO_COLORS.length],
+  }));
+  const heroHeight = typeof window === "undefined" ? 560 : Math.max(480, Math.min(640, window.innerHeight - 360));
+
   return (
     <div className="overflow-x-hidden">
-      {/* ---------- Hero ---------- */}
-      {heroSlides.length > 0 ? (
-        <HeroCarousel slides={heroSlides} />
-      ) : (
-        <section data-nav="blue" className="relative px-5 sm:px-8 lg:px-12 pt-10 pb-16 sm:pt-16 sm:pb-24 mx-auto max-w-[1440px] overflow-hidden">
-
-          <motion.div initial="hidden" animate="show" variants={containerReveal} className="relative">
-            <motion.p
-              variants={itemReveal}
-              className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-3"
-            >
+      {/* ---------- Hero: the products, as a swatch accordion ----------
+          No data-nav here: the navbar stays white over the hero (owner,
+          2026-11-09) and takes a brand colour from the next section on. */}
+      <section className="px-5 sm:px-8 lg:px-12 pt-8 sm:pt-12 pb-12 sm:pb-16 mx-auto max-w-[1440px]">
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={containerReveal}
+          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8 sm:mb-10"
+        >
+          <div className="max-w-3xl">
+            <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-3">
               Barrier-first · Clinically precise
             </motion.p>
-            <motion.h1
-              variants={itemReveal}
-              className="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] leading-tight text-ink max-w-2xl"
-            >
-              Skin health, engineered as a system — not a shelf of standalone products.
+            <motion.h1 variants={itemReveal} className="font-display font-semibold text-4xl sm:text-5xl leading-[1.05] text-ink">
+              Skin health, engineered as a system.
             </motion.h1>
-            <motion.p variants={itemReveal} className="mt-5 text-lg sm:text-xl text-ink/80 max-w-xl">
-              Cleanse, treat, repair, protect. Every Dermarra routine is built around your skin
-              concern, in the right order, at the right concentration.
-            </motion.p>
-            <motion.div variants={itemReveal} className="mt-6 flex gap-3">
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Link
-                  to="/quiz"
-                  className="btn btn-primary"
-                >
-                  Find your routine
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Link
-                  to="/shop"
-                  className="btn btn-secondary"
-                >
-                  Shop all products
-                </Link>
-              </motion.div>
-            </motion.div>
+          </div>
+          <motion.div variants={itemReveal} className="flex flex-wrap gap-3 shrink-0">
+            <Link to="/quiz" className="btn btn-primary">
+              Find your routine
+            </Link>
+            <Link to="/shop" className="btn btn-secondary">
+              Shop all products
+            </Link>
           </motion.div>
-        </section>
-      )}
+        </motion.div>
+        {heroItems.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }}>
+            <SwatchAccordion items={heroItems} height={heroHeight} />
+          </motion.div>
+        )}
+      </section>
 
       {/* Each section's data-nav colour is what the navbar turns while it's
           under it (Navbar.jsx). Cycles blue, orange, lime, gold. */}

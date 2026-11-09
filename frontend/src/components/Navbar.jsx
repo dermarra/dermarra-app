@@ -101,9 +101,10 @@ export default function Navbar() {
           large but light, not bold. */}
       <div className="mx-auto w-full max-w-[1440px] h-16 sm:h-20 px-5 sm:px-8 lg:px-12 grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-10">
         <Link to="/" aria-label="Dermarra Skincare home" className="shrink-0">
-          {/* 80px wide (owner, 2026-11-09). On a brand colour the multicolour
-              icon would lose one petal, so it goes one-colour ink there. */}
-          <Logo className={`w-20 h-auto transition-[filter] duration-500 ${coloured ? "brightness-0" : ""}`} />
+          {/* On a brand colour the multicolour icon would lose one petal, so it
+              goes one-colour ink there. (80px wide was too small -- owner,
+              2026-11-09.) */}
+          <Logo className={`h-9 sm:h-10 lg:h-12 transition-[filter] duration-500 ${coloured ? "brightness-0" : ""}`} />
         </Link>
 
         <nav aria-label="Main" className="hidden md:flex items-center justify-center gap-8 lg:gap-12 xl:gap-14 text-lg font-medium">

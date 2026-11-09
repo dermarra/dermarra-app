@@ -9,7 +9,7 @@ const MAX_SLIDES = 4;
 
 /** The side panel on Login/Signup/ForgotPassword/ResetPassword -- reuses
  * the same admin-managed hero slides shown on the homepage carousel (see
- * HeroCarousel.jsx / AdminHeroSlides.jsx) rather than a separate content
+ * AdminHeroSlides.jsx) rather than a separate content
  * model, so admins manage one carousel, not two. Styled as a contained
  * illustration + headline + dots (like a product feature panel), not a
  * full-bleed photo hero -- this sits inside a compact card, not the full
