@@ -1,28 +1,34 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { itemReveal } from "./Reveal.jsx";
 
 /** "The Dermarra story" -- the meaning of the name and the mark, from the
  * owner's brand notes (2026-11-09). Beside the text, TiltingMark: the logo
  * icon shown upright as a butterfly, which turns 45 degrees into the "+" of
- * medicine and healing when it scrolls into view (and back on hover). The
+ * medicine and healing as the page scrolls past it. The
  * official icon file *is* the "+" position, so the butterfly is that file
- * rotated -45deg. (The D-construction drawing was removed at the owner's
+ * rotated; it turns with the page scroll. (The D-construction drawing was removed at the owner's
  * request, 2026-11-09.) */
 
+// Scroll-linked (owner, 2026-11-10): the icon turns continuously as the
+// section passes through the viewport -- an upright butterfly (-135deg,
+// i.e. -45deg plus a quarter turn) as it enters, the "+" exactly when it is
+// centred on screen, turning on past it as it leaves. A light spring
+// smooths wheel steps. Reduced motion: shown still, as the "+".
 function TiltingMark() {
   const reduce = useReducedMotion();
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const angle = useTransform(scrollYProgress, [0, 0.5, 1], [-135, 0, 135]);
+  const rotate = useSpring(angle, { stiffness: 120, damping: 24, mass: 0.6 });
   return (
-    <figure className="flex flex-col items-center">
+    <figure ref={ref} className="flex flex-col items-center">
       <motion.img
         src="/brand/icon-dark.svg"
-        alt="The Dermarra butterfly turning 45 degrees into a plus sign"
+        alt="The Dermarra butterfly turning into a plus sign"
         draggable="false"
         className="w-48 sm:w-60 h-auto select-none"
-        initial={reduce ? false : { rotate: -45 }}
-        whileInView={{ rotate: 0 }}
-        whileHover={reduce ? undefined : { rotate: -45 }}
-        viewport={{ once: false, amount: 0.8 }}
-        transition={{ type: "spring", stiffness: 60, damping: 12, delay: 0.2 }}
+        style={reduce ? undefined : { rotate }}
       />
       <figcaption className="mt-6 text-center text-ink/70 max-w-xs">
         Tilted 45°, the butterfly takes flight — and becomes the <strong className="text-ink">+</strong> of healing.
