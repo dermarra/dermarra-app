@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { motion, AnimatePresence, Reorder, useReducedMotion } from "framer-motion";
 import client, { cloudinaryUrl } from "../api/client";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -9,21 +9,21 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   MenuIcon,
   XIcon,
 } from "../components/Icons.jsx";
 
-/** Routine builder, modelled on The Ordinary's regimen builder:
- *  - one question per screen, split in two by a hairline: the question
- *    (counter "01 / 03", large heading, helper, "Why we ask") on the left,
- *    the answers on the right, both vertically centred;
- *  - a full-width progress line over a footer of text-link Back / Next;
- *  - skin type as outlined pills, top-3 concerns as photo tiles with a check
- *    overlay, then ranking the chosen concerns (drag, or the arrow buttons);
- *  - a results page: greeting, the ranked concerns, then the routine grouped
- *    by step (Prep / Treat / Seal / Protect) with an AM / PM toggle.
+/** Routine builder (/quiz). The questions run as an "Accordion in Motion"
+ * (see QuestionAccordion below; owner, 2026-11-10): numbered questions on
+ * the left -- skin type, top-3 concerns, then ranking them when more than
+ * one is picked -- each moved on with a Next button; the answers panel on
+ * the right follows the open question (pills, photo tiles, the drag/arrow
+ * ranking list). Then a results page: greeting, the ranked concerns, and
+ * the routine grouped by step (Prep / Treat / Seal / Protect) with an
+ * AM / PM toggle.
  *
  * Only asks what the matcher uses: POST /routines/quiz takes one concern and
  * an optional skin type. The concern ranked first is sent; if no routine
@@ -189,7 +189,7 @@ function ConcernTile({ concern, index, selected, disabled, onToggle }) {
           </motion.span>
         )}
       </span>
-      <span className="block mt-2 text-base leading-snug text-ink [overflow-wrap:anywhere]">{concern.name.trim()}</span>
+      <span lang="en" className="block mt-2 text-base leading-snug text-ink hyphens-auto [overflow-wrap:break-word]">{concern.name.trim()}</span>
     </button>
   );
 }
@@ -445,6 +445,196 @@ function Results({ routine, ranked, matchedIndex, stepGroups, user, onRetake }) 
 
 // ---------------------------------------------------------------- page
 
+// ---------------------------------------------------------------- accordion
+
+/** The questions as an "Accordion in Motion" -- a native port of the
+ * owner-supplied Framer component (framer.com/m/Accordion-in-Motion-1FSSD6.js,
+ * "Follow Morph Accordion"). Left: numbered questions; the open one shows
+ * its helper, "Why we ask" and the Next button (no autoplay -- the customer
+ * moves on with Next). Right: the answers panel, which follows the open
+ * question down the page and morphs (scale + corner radius) as it changes.
+ * Below lg the answers sit inside the open question instead.
+ * Earlier questions can be reopened from their header; later ones only
+ * through Next, so the answers stay consistent. */
+const ACC_SPRING = { type: "spring", duration: 0.7, bounce: 0.12 };
+const ITEM_GAP = 8;
+
+function useIsDesktop() {
+  const query = "(min-width: 1024px)";
+  const [desktop, setDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const update = () => setDesktop(mql.matches);
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  return desktop;
+}
+
+function QuestionAccordion({ questions, openKey, onOpen, canOpen, answers, answered, matching, nextLabel, onNext, onWhy }) {
+  const desktop = useIsDesktop();
+  const reduced = useReducedMotion();
+  const transition = reduced ? { duration: 0 } : ACC_SPRING;
+  const openIndex = Math.max(0, questions.findIndex((q) => q.key === openKey));
+  const headerRefs = useRef([]);
+  const contentRefs = useRef([]);
+  const panelRefs = useRef([]);
+  const buttonRefs = useRef([]);
+  const [m, setM] = useState({ headers: [], contents: [], panels: [] });
+
+  const measure = useCallback(() => {
+    const next = {
+      headers: questions.map((_, i) => headerRefs.current[i]?.offsetHeight || 0),
+      contents: questions.map((_, i) => contentRefs.current[i]?.offsetHeight || 0),
+      panels: questions.map((_, i) => panelRefs.current[i]?.offsetHeight || 0),
+    };
+    setM((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+  }, [questions]);
+
+  useLayoutEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    [...headerRefs.current, ...contentRefs.current, ...panelRefs.current].forEach((el) => el && ro.observe(el));
+    return () => ro.disconnect();
+  }, [measure, desktop, questions.length]);
+
+  // Where the answers panel sits: level with the open question, but never
+  // running past the bottom of the list.
+  let top = 0;
+  for (let j = 0; j < openIndex; j += 1) top += (m.headers[j] || 0) + ITEM_GAP;
+  let listH = 0;
+  for (let j = 0; j < questions.length; j += 1) listH += (m.headers[j] || 0) + (j > 0 ? ITEM_GAP : 0);
+  listH += m.contents[openIndex] || 0;
+  const panelH = m.panels[openIndex] || 0;
+  const shift = Math.max(0, Math.min(top, Math.max(0, listH - panelH)));
+
+  const onKeyDown = (e, i) => {
+    const n = { ArrowDown: Math.min(questions.length - 1, i + 1), ArrowUp: Math.max(0, i - 1), Home: 0, End: questions.length - 1 }[e.key];
+    if (n === undefined) return;
+    e.preventDefault();
+    buttonRefs.current[n]?.focus();
+  };
+
+  return (
+    <div className="flex gap-10 xl:gap-16 items-start">
+      <div className="flex-1 min-w-0 flex flex-col" style={{ gap: ITEM_GAP }}>
+        {questions.map((q, i) => {
+          const isOpen = i === openIndex;
+          const reachable = isOpen || canOpen(i);
+          const hId = `rq-h-${q.key}`;
+          const pId = `rq-p-${q.key}`;
+          return (
+            <motion.div
+              key={q.key}
+              initial={false}
+              animate={{ backgroundColor: isOpen ? "#F5F4F1" : "rgba(245,244,241,0)" }}
+              transition={{ duration: reduced ? 0 : 0.3 }}
+              className="relative rounded-lg overflow-hidden"
+            >
+              <h2 ref={(el) => (headerRefs.current[i] = el)} className="m-0">
+                <button
+                  ref={(el) => (buttonRefs.current[i] = el)}
+                  id={hId}
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={pId}
+                  aria-disabled={!reachable || undefined}
+                  onClick={() => reachable && !isOpen && onOpen(q.key)}
+                  onKeyDown={(e) => onKeyDown(e, i)}
+                  className={`w-full min-h-[76px] flex items-center gap-5 px-5 sm:px-7 py-4 text-left rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue ${
+                    reachable ? "cursor-pointer" : "cursor-default"
+                  } ${!isOpen && reachable ? "hover:bg-ink/[0.04]" : ""}`}
+                >
+                  <motion.span
+                    aria-hidden="true"
+                    initial={false}
+                    animate={{ backgroundColor: isOpen ? "#231F20" : "rgba(35,31,32,0.07)", color: isOpen ? "#FFFFFF" : "#231F20" }}
+                    transition={{ duration: reduced ? 0 : 0.3 }}
+                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold tabular-nums"
+                  >
+                    {q.summary && !isOpen ? <CheckIcon className="w-3.5 h-3.5" /> : String(i + 1).padStart(2, "0")}
+                  </motion.span>
+                  <span className="flex-1 min-w-0">
+                    <span className={`block text-xl sm:text-2xl font-semibold leading-snug ${reachable ? "text-ink" : "text-ink/70"}`}>{q.title}</span>
+                    {q.summary && !isOpen && <span className="block mt-1 text-ink/70 truncate">{q.summary}</span>}
+                  </span>
+                  <motion.span
+                    aria-hidden="true"
+                    initial={false}
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={transition}
+                    className="shrink-0 text-ink"
+                  >
+                    <ChevronDownIcon className="w-4 h-4" />
+                  </motion.span>
+                </button>
+              </h2>
+              <motion.div
+                id={pId}
+                role="region"
+                aria-labelledby={hId}
+                aria-hidden={!isOpen}
+                initial={false}
+                animate={{ height: isOpen ? "auto" : 0 }}
+                transition={transition}
+                className="overflow-hidden"
+              >
+                <div ref={(el) => (contentRefs.current[i] = el)} className="px-5 sm:px-7 pb-6 sm:pl-[86px] flex flex-col gap-5">
+                  {q.helper && <p className="text-ink/70 max-w-xl">{q.helper}</p>}
+                  {!desktop && isOpen && <div className="rounded-lg bg-white p-4 sm:p-5">{answers(q.key)}</div>}
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <button
+                      type="button"
+                      onClick={onNext}
+                      disabled={!isOpen || !answered || matching}
+                      tabIndex={isOpen ? 0 : -1}
+                      className="btn btn-primary"
+                    >
+                      {nextLabel} {!matching && <ArrowRightIcon className="w-4 h-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onWhy}
+                      tabIndex={isOpen ? 0 : -1}
+                      className="font-medium underline underline-offset-[6px] decoration-1 hover:decoration-2"
+                    >
+                      Why we ask
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {desktop && (
+        <div className="relative w-[48%] shrink-0 self-stretch" aria-live="polite" style={{ minHeight: Math.max(listH, panelH) }}>
+          <motion.div className="absolute inset-x-0 top-0" initial={false} animate={{ y: shift }} transition={transition}>
+            {questions.map((q, i) => {
+              const active = i === openIndex;
+              return (
+                <motion.div
+                  key={q.key}
+                  ref={(el) => (panelRefs.current[i] = el)}
+                  aria-hidden={!active}
+                  initial={false}
+                  animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 0.86, borderRadius: active ? 8 : 200 }}
+                  transition={transition}
+                  className={`${active ? "relative z-[2]" : "absolute inset-x-0 top-0 z-[1] pointer-events-none"} overflow-hidden bg-bone-light p-6 xl:p-8`}
+                  {...(active ? {} : { inert: "" })}
+                >
+                  {answers(q.key)}
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RoutineQuiz() {
   const { user } = useAuth();
   const [concerns, setConcerns] = useState(null);
@@ -470,8 +660,9 @@ export default function RoutineQuiz() {
       .catch(() => setStepGroups([]));
   }, []);
 
+  // Only the results page starts at the top; the questions stay in place.
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    if (stepKey === "result") window.scrollTo({ top: 0 });
   }, [stepKey]);
 
   const concernIndex = (c) => concerns?.findIndex((x) => x.id === c.id) ?? 0;
@@ -559,157 +750,115 @@ export default function RoutineQuiz() {
   }
 
   const isNoMatch = stepKey === "result";
-  const QUESTION = {
-    skin: { title: "How would you describe your skin type?", helper: "Select the answer that fits you best." },
-    concerns: { title: "Identify your top 3 skin concerns.", helper: "Select up to three." },
-    rank: { title: "Rank your concerns from highest to lowest priority.", helper: null },
-    result: { title: "We don't have a routine for that yet.", helper: result?.error },
-  }[stepKey];
-  const total = steps.length;
-  const progress = isNoMatch ? 100 : ((position + (answered ? 1 : 0)) / total) * 100;
+  const skinLabel = SKIN_TYPES.find((t) => t.value === skinType)?.label;
+  const pickedNames = picked.map((id) => concerns?.find((c) => c.id === id)?.name).filter(Boolean);
+  const questions = [
+    {
+      key: "skin",
+      title: "How would you describe your skin type?",
+      helper: "Select the answer that fits you best.",
+      summary: skinType === undefined ? null : skinLabel,
+    },
+    {
+      key: "concerns",
+      title: "What are your top skin concerns?",
+      helper: "Choose up to three.",
+      summary: pickedNames.length ? pickedNames.join(", ") : null,
+    },
+    ...(picked.length > 1
+      ? [
+          {
+            key: "rank",
+            title: "Which matters most to you?",
+            helper: "Drag them into order, or use the arrows. Your routine is built around the first one.",
+            summary: null,
+          },
+        ]
+      : []),
+  ];
   const nextLabel = matching
     ? "Finding your routine…"
     : stepKey === "rank" || (stepKey === "concerns" && picked.length <= 1)
     ? "See my routine"
     : "Next";
 
-  return (
-    <div className="flex flex-col min-h-[calc(100svh-5rem)] sm:min-h-[calc(100svh-6rem)] bg-white">
-      <div className="flex-1 grid lg:grid-cols-2">
-        {/* Question */}
-        <section className="relative flex flex-col px-5 sm:px-10 lg:px-20 pt-8 pb-10 lg:py-12 lg:border-r border-mist">
-          {!isNoMatch && (
-            <p className="text-sm tabular-nums">
-              {String(position + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
-            </p>
-          )}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={stepKey}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="flex-1 flex flex-col justify-center pt-8 lg:pt-0"
-            >
-              <h1 className="text-4xl sm:text-5xl leading-[1.1] max-w-xl">{QUESTION.title}</h1>
-              {QUESTION.helper && <p className="mt-4 text-ink/70 max-w-md">{QUESTION.helper}</p>}
-              {isNoMatch ? (
-                <button
-                  type="button"
-                  onClick={retake}
-                  className="mt-10 self-start font-medium underline underline-offset-[6px] decoration-1"
-                >
-                  Start again
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setWhyOpen(true)}
-                  className="mt-10 self-start font-medium underline underline-offset-[6px] decoration-1 hover:decoration-2"
-                >
-                  Why we ask
-                </button>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </section>
-
-        {/* Answers */}
-        <section className="flex items-center px-5 sm:px-10 lg:px-20 pb-12 lg:py-12">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={stepKey}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="w-full"
-            >
-              {stepKey === "skin" && (
-                <div role="group" aria-label="Skin type" className="flex flex-wrap gap-3">
-                  {SKIN_TYPES.map((t) => (
-                    <Pill key={t.label} selected={skinType === t.value} onClick={() => setSkinType(t.value)}>
-                      {t.label}
-                    </Pill>
-                  ))}
-                </div>
-              )}
-
-              {stepKey === "concerns" &&
-                (concerns === null ? (
-                  <p className="text-ink/70">Loading concerns…</p>
-                ) : concerns.length === 0 ? (
-                  <p className="text-ink/70">Concerns couldn&apos;t be loaded. Refresh the page to try again.</p>
-                ) : (
-                  <>
-                    <div
-                      role="group"
-                      aria-label="Skin concerns"
-                      className="grid gap-x-4 gap-y-6 [grid-template-columns:repeat(auto-fill,minmax(min(100%,120px),1fr))] max-w-3xl"
-                    >
-                      {concerns.map((c, i) => (
-                        <ConcernTile
-                          key={c.id}
-                          concern={c}
-                          index={i}
-                          selected={picked.includes(c.id)}
-                          disabled={!picked.includes(c.id) && picked.length >= MAX_CONCERNS}
-                          onToggle={() => togglePick(c.id)}
-                        />
-                      ))}
-                    </div>
-                    <p className={`mt-6 text-sm ${limitHit ? "text-orange-700" : "text-ink/70"}`} aria-live="polite">
-                      {limitHit
-                        ? "You can choose up to 3 -- remove one to pick another."
-                        : `${picked.length} of ${MAX_CONCERNS} selected`}
-                    </p>
-                  </>
-                ))}
-
-              {stepKey === "rank" && <RankList ranked={ranked} setRanked={setRanked} concernIndex={concernIndex} />}
-            </motion.div>
-          </AnimatePresence>
-        </section>
-      </div>
-
-      {/* Progress line + Back / Next. Sits above the mobile bottom nav. */}
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:bottom-0 z-20 bg-white">
-        <div
-          className="h-[3px] bg-mist"
-          role="progressbar"
-          aria-label="Routine builder progress"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(progress)}
-        >
-          <motion.div
-            className="h-full bg-blue"
-            initial={false}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-          />
+  const answers = (key) => {
+    if (key === "skin") {
+      return (
+        <div role="group" aria-label="Skin type" className="flex flex-wrap gap-3">
+          {SKIN_TYPES.map((t) => (
+            <Pill key={t.label} selected={skinType === t.value} onClick={() => setSkinType(t.value)}>
+              {t.label}
+            </Pill>
+          ))}
         </div>
-        <div className="flex items-center justify-between gap-4 px-5 sm:px-8 h-20">
-          <button
-            type="button"
-            onClick={back}
-            className={`inline-flex items-center gap-3 text-lg ${position <= 0 && !isNoMatch ? "invisible" : ""}`}
+      );
+    }
+    if (key === "concerns") {
+      if (concerns === null) return <p className="text-ink/70">Loading concerns…</p>;
+      if (concerns.length === 0) return <p className="text-ink/70">Concerns couldn&apos;t be loaded. Refresh the page to try again.</p>;
+      return (
+        <>
+          <div
+            role="group"
+            aria-label="Skin concerns"
+            className="grid gap-x-4 gap-y-6 [grid-template-columns:repeat(auto-fill,minmax(min(100%,120px),1fr))]"
           >
-            <ArrowLeftIcon className="w-4 h-4" /> Back
-          </button>
-          {!isNoMatch && (
-            <button
-              type="button"
-              onClick={next}
-              disabled={!answered || matching}
-              className="inline-flex items-center gap-3 text-lg disabled:text-ink/35"
-            >
-              {nextLabel} {!matching && <ArrowRightIcon className="w-4 h-4" />}
+            {concerns.map((c, i) => (
+              <ConcernTile
+                key={c.id}
+                concern={c}
+                index={i}
+                selected={picked.includes(c.id)}
+                disabled={!picked.includes(c.id) && picked.length >= MAX_CONCERNS}
+                onToggle={() => togglePick(c.id)}
+              />
+            ))}
+          </div>
+          <p className={`mt-6 text-sm ${limitHit ? "text-orange-700" : "text-ink/70"}`} aria-live="polite">
+            {limitHit ? "You can choose up to 3 -- remove one to pick another." : `${picked.length} of ${MAX_CONCERNS} selected`}
+          </p>
+        </>
+      );
+    }
+    return <RankList ranked={ranked} setRanked={setRanked} concernIndex={concernIndex} />;
+  };
+
+  return (
+    <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-20">
+      <header className="mb-8 sm:mb-12 max-w-3xl">
+        <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-3">Routine builder</p>
+        <h1 className="font-display font-semibold text-4xl sm:text-5xl leading-[1.05] text-ink">Build your routine.</h1>
+        <p className="mt-4 text-ink/70 max-w-xl">A few questions about your skin, then the routine that fits it.</p>
+      </header>
+
+      {isNoMatch ? (
+        <div className="rounded-lg bg-bone-light p-8 sm:p-10 max-w-2xl">
+          <h2 className="text-3xl font-semibold text-ink">We don&apos;t have a routine for that yet.</h2>
+          {result?.error && <p className="mt-3 text-ink/70">{result.error}</p>}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button type="button" onClick={back} className="btn btn-secondary">
+              <ArrowLeftIcon className="w-4 h-4" /> Change my answers
             </button>
-          )}
+            <button type="button" onClick={retake} className="btn btn-primary">
+              Start again
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <QuestionAccordion
+          questions={questions}
+          openKey={stepKey}
+          onOpen={(key) => setStepKey(key)}
+          canOpen={(i) => i < position}
+          answers={answers}
+          answered={answered}
+          matching={matching}
+          nextLabel={nextLabel}
+          onNext={next}
+          onWhy={() => setWhyOpen(true)}
+        />
+      )}
 
       <WhyDrawer open={whyOpen} onClose={closeWhy} why={WHY[stepKey]} />
     </div>

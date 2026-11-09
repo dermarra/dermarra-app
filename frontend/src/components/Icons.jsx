@@ -12,6 +12,7 @@
  * closest Simple Line icon (see below); the "saved" heart is the same line
  * heart on a filled background (see ProductCard). */
 import {
+  SlArrowDown,
   SlArrowLeft,
   SlArrowRight,
   SlBadge,
@@ -79,6 +80,7 @@ export const InstagramIcon = sl(SlSocialInstagram);
 export const FacebookIcon = sl(SlSocialFacebook);
 export const ChevronRightIcon = sl(SlArrowRight);
 export const ChevronLeftIcon = sl(SlArrowLeft);
+export const ChevronDownIcon = sl(SlArrowDown);
 export const HomeIcon = sl(SlHome);
 export const ShopIcon = sl(SlBasket);
 export const QuizIcon = sl(SlMagicWand);

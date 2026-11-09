@@ -149,12 +149,17 @@
   the pointer (`elementFromPoint`, walking up) and switches the wings to
   `altColor` (ink) when contrast with blue is < 2:1 -- i.e. over blue,
   orange, lime or gold; stays blue on white, tints and ink.
-- **Routine builder** (`/quiz`, `pages/RoutineQuiz.jsx`) follows The
-  Ordinary's regimen builder: white split screen (question left, answers
-  right), "01 / 03" counter, "Why we ask" drawer, progress line + text
-  Back/Next footer. Steps: skin type (pills) -> top-3 concerns (photo tiles)
-  -> rank them (framer-motion `Reorder` + up/down buttons; skipped for one
-  concern). Matching sends the #1 concern and falls back down the ranking on
+- **Routine builder** (`/quiz`, `pages/RoutineQuiz.jsx`): the questions run
+  as an "Accordion in Motion" (`QuestionAccordion` in the same file; native
+  port of the owner's Framer "Accordion in Motion" / Follow Morph Accordion,
+  framer.com/m/Accordion-in-Motion-1FSSD6.js, owner 2026-11-10): numbered
+  questions on the left (skin type -> top-3 concerns -> rank, the rank step
+  only when 2+ are picked), each moved on with a **Next button** (no
+  autoplay); the answers panel on the right follows the open question and
+  morphs (scale + radius); below lg the answers sit inside the open
+  question. Earlier questions reopen from their header (showing a tick +
+  the answer when closed); later ones only via Next. "Why we ask" drawer
+  kept. Matching sends the #1 concern and falls back down the ranking on
   404. Results: greeting, ranked concerns, routine grouped by StepGroup
   (Prep/Treat/Seal/Protect via `step_type`) with an AM/PM toggle.
 - **Logos** live in `frontend/public/brand/` (official files): `logo-dark.svg`
