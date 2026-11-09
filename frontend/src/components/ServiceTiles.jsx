@@ -67,15 +67,13 @@ function Tile({ tile, index }) {
             {tile.category}
           </p>
         )}
-        <h3 id={titleId} lang="en" className="text-2xl font-semibold tracking-tight leading-tight hyphens-auto [overflow-wrap:break-word]">
+        <h3 id={titleId} lang="en" className="text-2xl font-semibold tracking-tight leading-tight min-h-[2.5em] line-clamp-2 hyphens-auto [overflow-wrap:break-word]">
           {tile.title}
         </h3>
-        {tile.description && (
-          // Clamped so one long admin description can't stretch a whole row.
-          <p className="mt-2.5 text-ink/75 leading-relaxed line-clamp-4" title={tile.description}>
-            {tile.description}
-          </p>
-        )}
+        {/* Always 4 lines tall (clamped) so titles, tags and buttons line up across a row. */}
+        <p className="mt-2.5 text-ink/75 leading-relaxed line-clamp-4 min-h-[6.5em]" title={tile.description || undefined}>
+          {tile.description}
+        </p>
 
         {tile.tags?.length > 0 && (
           <ul className="flex flex-wrap gap-1.5 mt-5" aria-label="Products">

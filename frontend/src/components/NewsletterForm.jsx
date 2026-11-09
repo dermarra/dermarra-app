@@ -2,8 +2,9 @@ import { useState } from "react";
 import client from "../api/client";
 
 /** Newsletter sign-up (Brevo list via POST /api/newsletter/subscribe).
- * variant "dark": the footer (on ink). variant "light": the end-of-post box. */
-export default function NewsletterForm({ variant = "dark", source }) {
+ * variant "dark": on ink. variant "light": on white (footer, end-of-post box);
+ * `stacked` puts the button under the field for narrow columns. */
+export default function NewsletterForm({ variant = "dark", source, stacked = false }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [error, setError] = useState(null);
@@ -32,7 +33,7 @@ export default function NewsletterForm({ variant = "dark", source }) {
   }
 
   return (
-    <form onSubmit={submit} className={dark ? "flex flex-col gap-2" : "flex flex-col sm:flex-row gap-3"}>
+    <form onSubmit={submit} className={dark || stacked ? "flex flex-col gap-2" : "flex flex-col sm:flex-row gap-3"}>
       <label className="flex-1">
         <span className="sr-only">Email address</span>
         <input

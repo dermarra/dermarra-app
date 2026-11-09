@@ -50,7 +50,7 @@ class BlogPost(db.Model):
     cover_public_id = db.Column(db.String(255))
     category_id = db.Column(db.String(36), db.ForeignKey("blog_categories.id", ondelete="SET NULL"), index=True)
     author_id = db.Column(db.String(36), db.ForeignKey("users.id", ondelete="SET NULL"))
-    author_name = db.Column(db.String(255))  # snapshot shown as the byline
+    author_name = db.Column(db.String(255))  # internal record only -- not shown or sent publicly (owner, 2026-11-09)
     status = db.Column(db.String(20), nullable=False, default="draft")  # draft | published
     published_at = db.Column(db.DateTime, index=True)
     seo_description = db.Column(db.String(300))
@@ -79,7 +79,6 @@ class BlogPost(db.Model):
             "excerpt": self.excerpt,
             "cover_public_id": self.cover_public_id,
             "category": self.category.to_dict() if self.category else None,
-            "author_name": self.author_name,
             "status": self.status,
             "state": self.state,
             "published_at": self.published_at.isoformat() if self.published_at else None,

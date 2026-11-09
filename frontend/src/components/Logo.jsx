@@ -8,5 +8,5 @@
  * Height drives size; the wordmark's aspect ratio is ~5.2:1. */
 export default function Logo({ variant = "dark", iconOnly = false, className = "h-7", title = "Dermarra Skincare" }) {
   const file = iconOnly ? `icon-${variant}.svg` : `logo-${variant}.svg`;
-  return <img src={`/brand/${file}`} alt={title} className={`w-auto select-none ${className}`} draggable="false" />;
+  return <img src={`/brand/${file}`} alt={title} className={`select-none ${/(^|\s)!?w-/.test(className) ? "" : "w-auto "}${className}`} draggable="false" />;
 }

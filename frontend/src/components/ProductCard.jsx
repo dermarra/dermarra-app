@@ -65,7 +65,7 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <div className="relative flex flex-col rounded-sm border border-mist bg-bone-light overflow-hidden">
+    <div className="relative flex flex-col h-full rounded-sm border border-mist bg-bone-light overflow-hidden">
       {/* Sibling of the Link, not inside it -- a button nested in an <a> is
           invalid HTML and confuses keyboard/screen-reader users. */}
       <motion.button
@@ -85,7 +85,7 @@ export default function ProductCard({ product }) {
       </motion.button>
       <Link
         to={`/shop/${product.slug}`}
-        className="group flex flex-col focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange"
+        className="group flex flex-1 flex-col focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange"
       >
         <div className="relative aspect-square bg-mist overflow-hidden">
           {imageUrl && (
@@ -102,14 +102,16 @@ export default function ProductCard({ product }) {
             </span>
           )}
         </div>
-        <div className="p-4 flex flex-col gap-1.5">
-          {product.key_actives && (
-            <span className="font-mono text-xs font-medium tracking-wide text-lime-800 uppercase">
-              {product.key_actives}
-            </span>
-          )}
-          <h3 className="text-xl font-semibold text-ink leading-snug">{product.name}</h3>
-          <span className="text-base font-semibold text-ink">{price ? `From KES ${price}` : "Currently unavailable"}</span>
+        {/* Fixed-height lines (actives: 1, name: 2) so every card's price and
+            button sit at the same height, whatever the text length. */}
+        <div className="p-4 flex flex-1 flex-col gap-1.5">
+          <span className="font-mono text-xs font-medium tracking-wide text-lime-800 uppercase leading-5 h-5 truncate" title={product.key_actives || undefined}>
+            {product.key_actives}
+          </span>
+          <h3 className="text-xl font-semibold text-ink leading-snug min-h-[2.75em] line-clamp-2" title={product.name}>
+            {product.name}
+          </h3>
+          <span className="mt-auto text-base font-semibold text-ink">{price ? `From KES ${price}` : "Currently unavailable"}</span>
         </div>
       </Link>
 

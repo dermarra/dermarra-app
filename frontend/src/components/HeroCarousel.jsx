@@ -6,19 +6,14 @@ import { ChevronLeftIcon, ChevronRightIcon } from "./Icons.jsx";
 
 const AUTO_ADVANCE_MS = 6000;
 
-/** Admin-managed homepage hero carousel -- fills the viewport below the
- * navbar (h-16 = 4rem, see Navbar.jsx) and animates each slide's text in
- * on change. Renders nothing if there are no active slides -- the caller
- * (Home.jsx) falls back to a static hero in that case. */
+/** Admin-managed homepage hero carousel. Split layout, no dark scrim
+ * (owner, 2026-11-09: no dark backgrounds on the storefront): the slide's
+ * text sits on a solid brand-blue panel in ink, the photo beside it (above
+ * it on phones). The section is data-nav="blue", so the navbar turns the
+ * same blue while it is under it. Renders nothing without slides -- Home.jsx
+ * falls back to a static hero. */
 export default function HeroCarousel({ slides }) {
   const [index, setIndex] = useState(0);
-
-  // Lets the Navbar know a full-bleed hero is on the page, so it can float
-  // transparently over it (see Navbar.jsx) and turn solid once scrolled past.
-  useEffect(() => {
-    window.dispatchEvent(new Event("hero:change"));
-    return () => window.dispatchEvent(new Event("hero:change"));
-  }, []);
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -33,26 +28,28 @@ export default function HeroCarousel({ slides }) {
   const goTo = (i) => setIndex(((i % slides.length) + slides.length) % slides.length);
 
   return (
-    // Full viewport height: the navbar floats over the top of it.
-    <section id="site-hero" className="relative h-[100svh] min-h-[520px] overflow-hidden bg-ink">
-      <AnimatePresence mode="wait">
-        {imageUrl && (
-          <motion.img
-            key={slide.id}
-            src={imageUrl}
-            alt={slide.title}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 0.55, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-      </AnimatePresence>
-      {/* Solid scrim (no gradients in the brand system) keeps white text readable on any photo. */}
-      <div className="absolute inset-0 bg-ink/55" />
+    <section
+      data-nav="blue"
+      className="relative grid lg:grid-cols-2 bg-blue text-ink lg:h-[calc(100svh-5rem)] lg:min-h-[560px] overflow-hidden"
+    >
+      <div className="relative order-1 lg:order-2 aspect-[4/3] lg:aspect-auto lg:h-full bg-blue-100 overflow-hidden">
+        <AnimatePresence mode="wait">
+          {imageUrl && (
+            <motion.img
+              key={slide.id}
+              src={imageUrl}
+              alt={slide.title}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+        </AnimatePresence>
+      </div>
 
-      <div className="relative z-10 h-full flex flex-col justify-end sm:justify-center mx-auto max-w-6xl px-4 pt-36 sm:pt-40 pb-20 sm:pb-0">
+      <div className="relative order-2 lg:order-1 flex flex-col justify-center px-5 sm:px-8 lg:px-12 xl:pl-[max(3rem,calc((100vw-1440px)/2+3rem))] py-12 sm:py-16 lg:py-20">
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
@@ -60,22 +57,15 @@ export default function HeroCarousel({ slides }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
+            className="max-w-xl"
           >
             {slide.eyebrow && (
-              <p className="text-sm sm:text-base font-semibold tracking-[0.18em] text-orange uppercase mb-4">{slide.eyebrow}</p>
+              <p className="text-sm sm:text-base font-semibold tracking-[0.18em] uppercase mb-4">{slide.eyebrow}</p>
             )}
-            <h1 className="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-white max-w-3xl">
-              {slide.title}
-            </h1>
-            {slide.subtitle && (
-              <p className="mt-5 text-lg sm:text-xl font-medium text-white max-w-xl">{slide.subtitle}</p>
-            )}
+            <h1 className="font-display font-semibold text-4xl sm:text-5xl lg:text-6xl leading-[1.05]">{slide.title}</h1>
+            {slide.subtitle && <p className="mt-5 text-lg sm:text-xl font-medium">{slide.subtitle}</p>}
             {slide.cta_label && slide.cta_link && (
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-block mt-8"
-              >
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-block mt-8">
                 <Link
                   to={slide.cta_link}
                   className="block px-8 py-4 rounded-full bg-orange text-ink text-base sm:text-lg font-semibold hover:bg-orange-400 transition-colors"
@@ -86,39 +76,37 @@ export default function HeroCarousel({ slides }) {
             )}
           </motion.div>
         </AnimatePresence>
-      </div>
 
-      {slides.length > 1 && (
-        <>
-          <button
-            onClick={() => goTo(index - 1)}
-            aria-label="Previous slide"
-            className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-bone-light/20 hover:bg-bone-light/30 items-center justify-center text-bone-light transition-colors"
-          >
-            <ChevronLeftIcon className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => goTo(index + 1)}
-            aria-label="Next slide"
-            className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-bone-light/20 hover:bg-bone-light/30 items-center justify-center text-bone-light transition-colors"
-          >
-            <ChevronRightIcon className="w-5 h-5" />
-          </button>
-
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-            {slides.map((s, i) => (
-              <button
-                key={s.id}
-                onClick={() => goTo(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-6 bg-orange" : "w-1.5 bg-bone-light/50"
-                }`}
-              />
-            ))}
+        {slides.length > 1 && (
+          <div className="mt-10 flex items-center gap-4">
+            <button
+              onClick={() => goTo(index - 1)}
+              aria-label="Previous slide"
+              className="w-11 h-11 rounded-full border border-ink flex items-center justify-center hover:bg-ink hover:text-white transition-colors"
+            >
+              <ChevronLeftIcon className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => goTo(index + 1)}
+              aria-label="Next slide"
+              className="w-11 h-11 rounded-full border border-ink flex items-center justify-center hover:bg-ink hover:text-white transition-colors"
+            >
+              <ChevronRightIcon className="w-4 h-4" />
+            </button>
+            <div className="flex gap-2 ml-2">
+              {slides.map((s, i) => (
+                <button
+                  key={s.id}
+                  onClick={() => goTo(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  aria-current={i === index ? "true" : undefined}
+                  className={`h-1.5 rounded-full transition-all ${i === index ? "w-6 bg-ink" : "w-1.5 bg-ink/35"}`}
+                />
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </section>
   );
 }

@@ -156,8 +156,26 @@
   / `logo-light.svg` (wordmark + multicolour icon, for light / ink
   backgrounds), `icon-dark.svg` / `icon-light.svg`; `logo-email.png` is a
   raster for emails (Gmail blocks SVG). Use `components/Logo.jsx`, never a
-  text "Dermarra+". Favicon = the dark multicolour icon.
-  `components/BrandStripe.jsx` = the four-colour solid stripe.
+  text "Dermarra+". Favicon = the dark multicolour icon. `shield.svg` = the
+  "mark of quality" shield (footer, with the tagline beside it, not below).
+  **The four-colour stripe is gone everywhere** (owner, 2026-11-09).
+- **Storefront look (owner, 2026-11-09)**: **no dark backgrounds on the
+  shop** (admin keeps its ink sidebar) -- footer is white, the hero is a split
+  layout (text on solid blue, photo beside it, no scrim), closing CTA blue.
+  Navbar logo is **80px wide** (`w-20`; `Logo.jsx` drops its `w-auto` when a
+  width class is passed). **Navbar takes the colour of the landing section
+  under it**: sections carry `data-nav="blue|orange|lime|gold"` (Home cycles
+  them) and `Navbar.jsx` picks the one crossing its bottom edge; white
+  elsewhere; the logo goes one-colour ink (`brightness-0`) on a colour so no
+  petal disappears. **Brand story** (`components/BrandStory.jsx`, Home "Our
+  story"): dermis -> four Ds form the butterfly -> cleanse/treat/repair/
+  protect transformation -> tilted 45deg it becomes the "+" of healing; the
+  official icon file *is* the "+" position, shown rotated -45deg and turning
+  upright into view, plus the owner's D-construction drawing redrawn in ink
+  lines. **Card text has fixed-height lines** so prices/buttons align
+  (ProductCard: actives 1 line, name 2; ServiceTiles: title 2, description 4).
+  **Blog posts show no author** (owner, 2026-11-09): `author_name` is kept in
+  the DB but no longer sent by the API.
 - The admin area is its own app shell (`AdminLayout.jsx`: ink sidebar,
   white top bar, `bg-blue-50` canvas); `App.jsx` hides the storefront
   navbar/footer/bottom-nav on `/admin/*`.

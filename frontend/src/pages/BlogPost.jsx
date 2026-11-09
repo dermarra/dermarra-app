@@ -66,8 +66,6 @@ export default function BlogPost() {
         <h1 className="mt-3 text-4xl sm:text-5xl leading-[1.08]">{post.title}</h1>
         {post.excerpt && <p className="mt-5 text-xl text-ink/75 leading-relaxed">{post.excerpt}</p>}
         <p className="mt-5 text-ink/70">
-          {post.author_name && <span className="font-semibold text-ink">{post.author_name}</span>}
-          {post.author_name && " · "}
           {postDate(post.published_at)} · {post.reading_minutes} min read
         </p>
       </header>

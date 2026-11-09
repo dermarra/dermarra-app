@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import client from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import HeroCarousel from "../components/HeroCarousel.jsx";
-import BrandStripe from "../components/BrandStripe.jsx";
+import BrandStory from "../components/BrandStory.jsx";
 import ServiceTiles, { BRAND_ACCENTS, productSummary } from "../components/ServiceTiles.jsx";
 import Reveal, { containerReveal, itemReveal } from "../components/Reveal.jsx";
 import FluidCardStack from "../components/FluidCardStack.jsx";
@@ -94,7 +94,7 @@ export default function Home() {
       {heroSlides.length > 0 ? (
         <HeroCarousel slides={heroSlides} />
       ) : (
-        <section className="relative px-5 sm:px-8 lg:px-12 pt-10 pb-16 sm:pt-16 sm:pb-24 mx-auto max-w-[1440px] overflow-hidden">
+        <section data-nav="blue" className="relative px-5 sm:px-8 lg:px-12 pt-10 pb-16 sm:pt-16 sm:pb-24 mx-auto max-w-[1440px] overflow-hidden">
 
           <motion.div initial="hidden" animate="show" variants={containerReveal} className="relative">
             <motion.p
@@ -135,8 +135,11 @@ export default function Home() {
         </section>
       )}
 
-      {/* ---------- The Dermarra story ---------- */}
-      <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]">
+      {/* Each section's data-nav colour is what the navbar turns while it's
+          under it (Navbar.jsx). Cycles blue, orange, lime, gold. */}
+
+      {/* ---------- Why Dermarra ---------- */}
+      <Reveal as={motion.section} data-nav="orange" className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]">
         <div className="max-w-2xl">
           <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] text-blue-700 uppercase mb-3">
             Why Dermarra
@@ -158,9 +161,14 @@ export default function Home() {
         </motion.div>
       </Reveal>
 
+      {/* ---------- Our story: the name and the mark ---------- */}
+      <Reveal as={motion.section} data-nav="lime" className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]">
+        <BrandStory />
+      </Reveal>
+
       {/* ---------- Shop by concern ---------- */}
       {concerns.length > 0 && (
-        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
+        <Reveal as={motion.section} data-nav="gold" className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <motion.div variants={itemReveal}>
             <ServiceTiles
               label="concerns"
@@ -190,7 +198,7 @@ export default function Home() {
 
       {/* ---------- Shop by step ---------- */}
       {stepGroups.length > 0 && (
-        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
+        <Reveal as={motion.section} data-nav="blue" className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <motion.div variants={itemReveal}>
             <ServiceTiles
               label="steps"
@@ -221,7 +229,7 @@ export default function Home() {
 
       {/* ---------- Shop by ingredient ---------- */}
       {ingredients.length > 0 && (
-        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
+        <Reveal as={motion.section} data-nav="orange" className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <motion.div variants={itemReveal}>
             <ServiceTiles
               label="ingredients"
@@ -251,7 +259,7 @@ export default function Home() {
 
       {/* ---------- Become a member ---------- */}
       {!user && (
-        <Reveal as={motion.section} className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
+        <Reveal as={motion.section} data-nav="lime" className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
           <div className="rounded-2xl bg-lime px-6 py-12 sm:py-14 text-center text-ink">
           <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] uppercase mb-3">
             Join the family
@@ -288,16 +296,12 @@ export default function Home() {
       )}
 
       {/* ---------- Closing CTA ---------- */}
-      <Reveal
-        as={motion.section}
-        className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]"
-      >
+      <Reveal as={motion.section} data-nav="blue" className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]">
         <motion.div
           variants={itemReveal}
-          className="relative overflow-hidden rounded-2xl bg-ink px-6 pt-14 pb-12 sm:pb-16 text-center"
+          className="relative overflow-hidden rounded-2xl bg-blue px-6 pt-14 pb-12 sm:pb-16 text-center"
         >
-          <BrandStripe className="absolute inset-x-0 top-0 h-2" />
-          <h2 className="relative text-3xl sm:text-3xl text-white max-w-xl mx-auto">
+          <h2 className="relative text-3xl sm:text-4xl text-ink max-w-xl mx-auto">
             Not sure where to start? Answer three questions.
           </h2>
           <motion.div

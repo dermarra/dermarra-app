@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import client from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo.jsx";
-import BrandStripe from "../../components/BrandStripe.jsx";
 import { can, PAGE_PERMS } from "../../lib/permissions.js";
 import {
   BookIcon,
@@ -191,7 +190,6 @@ function AdminSidebar({ collapsed, counts, user, onSignOut, onNavigate, onExpand
   if (collapsed) {
     return (
       <div className="flex flex-col h-full w-20 bg-ink text-white">
-        <BrandStripe className="h-1.5" />
         <Link to="/admin/dashboard" aria-label="Admin dashboard" className="flex justify-center pt-6 pb-5">
           <Logo variant="light" iconOnly className="h-9" />
         </Link>
@@ -275,7 +273,6 @@ function AdminSidebar({ collapsed, counts, user, onSignOut, onNavigate, onExpand
   // ---------------------------------------------------------------- expanded
   return (
     <div className="flex flex-col h-full w-72 bg-ink text-white">
-      <BrandStripe className="h-1.5" />
       <div className="px-6 pt-7 pb-5">
         <Link to="/admin/dashboard" onClick={go} aria-label="Admin dashboard" className="inline-block">
           <Logo variant="light" className="h-9" />

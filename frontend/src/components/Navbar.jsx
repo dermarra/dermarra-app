@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { BagIcon, UserIcon } from "./Icons.jsx";
 import Logo from "./Logo.jsx";
-import BrandStripe from "./BrandStripe.jsx";
 
 function CartLink({ className }) {
   const { itemCount } = useCart();
@@ -30,6 +29,8 @@ function CartLink({ className }) {
   );
 }
 
+const TONES = { blue: "bg-blue", orange: "bg-orange", lime: "bg-lime", gold: "bg-gold" };
+
 const AUTH_PATHS = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 export default function Navbar() {
@@ -48,50 +49,61 @@ export default function Navbar() {
     ? location.state?.from
     : `${location.pathname}${location.search}`;
 
-  // When a full-bleed hero (HeroCarousel, #site-hero) is on the page, the
-  // bar floats transparently over it with the white logo, then turns solid
-  // white once the hero has scrolled out from under it.
-  const [hasHero, setHasHero] = useState(false);
-  const [overHero, setOverHero] = useState(false);
+  // Landing-page sections carry data-nav="blue|orange|lime|gold"; the bar
+  // takes the colour of whichever section is passing beneath it (white
+  // everywhere else). Text on all four is ink (5.2-9.8:1, see CLAUDE.md).
+  const [tone, setTone] = useState(null);
   useEffect(() => {
+    let frame = 0;
     const update = () => {
-      const hero = document.getElementById("site-hero");
-      setHasHero(Boolean(hero));
-      setOverHero(Boolean(hero) && hero.getBoundingClientRect().bottom > 96);
+      frame = 0;
+      const bar = document.getElementById("site-navbar");
+      const edge = bar ? bar.getBoundingClientRect().bottom : 80;
+      let next = null;
+      for (const el of document.querySelectorAll("[data-nav]")) {
+        const r = el.getBoundingClientRect();
+        if (r.top <= edge && r.bottom > edge) {
+          next = el.dataset.nav;
+          break;
+        }
+      }
+      setTone(next);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
     };
     update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    window.addEventListener("hero:change", update);
+    // Sections render after their data loads, so re-check as the page grows.
+    const observer = new ResizeObserver(schedule);
+    observer.observe(document.body);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      window.removeEventListener("hero:change", update);
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
     };
   }, [location.pathname]);
 
-  const linkTone = overHero ? "text-white hover:text-blue" : "text-ink hover:text-blue-700";
+  const coloured = Boolean(TONES[tone]);
+  const linkTone = "text-ink hover:text-ink/70";
 
   return (
     <header
-      className={`${hasHero ? "fixed inset-x-0" : "sticky"} top-0 z-30 border-b transition-colors duration-300 ${
-        overHero ? "bg-transparent border-transparent" : "bg-white border-mist shadow-sm"
+      id="site-navbar"
+      className={`sticky top-0 z-30 border-b transition-colors duration-500 ${
+        coloured ? `${TONES[tone]} border-transparent` : "bg-white border-mist"
       }`}
     >
-      <BrandStripe className="h-1.5" />
       {/* Three zones, like The Ordinary: logo left, primary links centred
           with generous gaps, account/cart right. Regular-weight links --
           large but light, not bold. */}
-      <div
-        className={`mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-10 transition-[height] duration-300 ${
-          overHero ? "h-24 sm:h-32" : "h-20 sm:h-24"
-        }`}
-      >
+      <div className="mx-auto w-full max-w-[1440px] h-16 sm:h-20 px-5 sm:px-8 lg:px-12 grid grid-cols-[auto_1fr_auto] items-center gap-6 lg:gap-10">
         <Link to="/" aria-label="Dermarra Skincare home" className="shrink-0">
-          <Logo
-            variant={overHero ? "light" : "dark"}
-            className={`transition-[height] duration-300 ${overHero ? "h-11 sm:h-14 lg:h-16" : "h-9 sm:h-11 lg:h-12"}`}
-          />
+          {/* 80px wide (owner, 2026-11-09). On a brand colour the multicolour
+              icon would lose one petal, so it goes one-colour ink there. */}
+          <Logo className={`w-20 h-auto transition-[filter] duration-500 ${coloured ? "brightness-0" : ""}`} />
         </Link>
 
         <nav aria-label="Main" className="hidden md:flex items-center justify-center gap-8 lg:gap-12 xl:gap-14 text-lg font-medium">
@@ -104,7 +116,7 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center justify-end gap-5 lg:gap-7 text-lg font-medium">
-          <CartLink className={`${overHero ? "text-white" : "text-ink"} transition-colors`} />
+          <CartLink className="text-ink" />
           {user ? (
             <>
               <Link
@@ -118,7 +130,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={signOut}
-                className={`hidden md:inline ${overHero ? "text-white/85 hover:text-white" : "text-ink/70 hover:text-ink"} transition-colors`}
+                className={`hidden md:inline ${coloured ? "text-ink" : "text-ink/70"} hover:text-ink transition-colors`}
               >
                 Sign out
               </button>
@@ -127,11 +139,7 @@ export default function Navbar() {
             <Link
               to="/login"
               state={returnTo ? { from: returnTo } : undefined}
-              className={`hidden md:inline-flex px-6 py-2.5 rounded-full border-2 transition-colors ${
-                overHero
-                  ? "border-white text-white hover:bg-white hover:text-ink"
-                  : "border-ink text-ink hover:bg-ink hover:text-white"
-              }`}
+              className="hidden md:inline-flex px-6 py-2.5 rounded-full border-2 border-ink text-ink hover:bg-ink hover:text-white transition-colors"
             >
               Sign in
             </Link>
