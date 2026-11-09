@@ -171,8 +171,8 @@
   story"): dermis -> four Ds form the butterfly -> cleanse/treat/repair/
   protect transformation -> tilted 45deg it becomes the "+" of healing; the
   official icon file *is* the "+" position, shown rotated -45deg and turning
-  upright into view, plus the owner's D-construction drawing redrawn in ink
-  lines. **Card text has fixed-height lines** so prices/buttons align
+  upright into view (the D-construction drawing was removed, owner,
+  2026-11-09). **Card text has fixed-height lines** so prices/buttons align
   (ProductCard: actives 1 line, name 2; ServiceTiles: title 2, description 4).
   **One control standard, shop and admin (owner, 2026-11-09, modelled on
   the blog newsletter box)**: 8px corners on every button, field and card
