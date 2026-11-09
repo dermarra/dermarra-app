@@ -23,7 +23,7 @@ function Tool({ label, active, disabled, onClick, children }) {
       disabled={disabled}
       onMouseDown={(e) => e.preventDefault()} // keep the text selection
       onClick={onClick}
-      className={`h-10 min-w-[2.5rem] px-2.5 rounded-md text-[15px] font-semibold transition-colors disabled:opacity-30 ${
+      className={`h-10 min-w-[2.5rem] px-2.5 rounded-lg text-[15px] font-semibold transition-colors disabled:opacity-30 ${
         active ? "bg-ink text-white" : "text-ink hover:bg-blue-50"
       }`}
     >

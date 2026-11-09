@@ -26,11 +26,11 @@ export default class ErrorBoundary extends Component {
         <div className="mt-6 flex justify-center gap-3">
           <button
             onClick={() => window.location.reload()}
-            className="px-5 py-3 rounded-full bg-orange text-ink font-semibold"
+            className="btn btn-primary"
           >
             Reload page
           </button>
-          <a href="/" className="px-5 py-3 rounded-sm border border-mist text-ink/70 font-semibold">
+          <a href="/" className="btn btn-secondary">
             Go home
           </a>
         </div>

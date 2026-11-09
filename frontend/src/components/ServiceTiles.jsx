@@ -39,9 +39,9 @@ function Tile({ tile, index }) {
       to={tile.to}
       aria-labelledby={titleId}
       style={{ "--st-accent": tile.accent || BRAND_ACCENTS[index % BRAND_ACCENTS.length] }}
-      className="st-card group relative flex flex-col h-full min-w-0 bg-white text-ink border border-mist rounded-2xl isolate transition-[transform,box-shadow] duration-[350ms] ease-[cubic-bezier(.2,.75,.25,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue"
+      className="st-card group relative flex flex-col h-full min-w-0 bg-white text-ink border border-mist rounded-lg isolate transition-[transform,box-shadow] duration-[350ms] ease-[cubic-bezier(.2,.75,.25,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue"
     >
-      <div className="relative h-56 shrink-0 overflow-hidden rounded-t-2xl bg-[var(--st-accent)]">
+      <div className="relative h-56 shrink-0 overflow-hidden rounded-t-lg bg-[var(--st-accent)]">
         {imageUrl && (
           <img
             src={imageUrl}
@@ -52,7 +52,7 @@ function Tile({ tile, index }) {
             className="st-image absolute inset-0 w-full h-full object-cover transition-transform duration-[560ms] ease-[cubic-bezier(.2,.75,.25,1)]"
           />
         )}
-        <span className="absolute top-3 left-3 inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded-md bg-white text-ink text-xs font-semibold tabular-nums">
+        <span className="absolute top-3 left-3 inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded-lg bg-white text-ink text-xs font-semibold tabular-nums">
           {number}
         </span>
       </div>
@@ -80,7 +80,7 @@ function Tile({ tile, index }) {
             {tile.tags.map((tag) => (
               <li
                 key={tag}
-                className="inline-flex items-center max-w-full px-2.5 py-1 rounded-md bg-bone-light text-ink/75 text-xs font-medium"
+                className="inline-flex items-center max-w-full px-2.5 py-1 rounded-lg bg-bone-light text-ink/75 text-xs font-medium"
               >
                 {tag}
               </li>
@@ -90,7 +90,7 @@ function Tile({ tile, index }) {
 
         <div className="mt-auto pt-6 min-w-0">
           {tile.detail && <p className="mb-2.5 text-ink/70">{tile.detail}</p>}
-          <span className="st-cta relative isolate flex items-center justify-between gap-3 min-h-[3rem] px-4 py-3 overflow-hidden rounded-xl bg-bone-light text-ink text-base font-semibold before:absolute before:inset-0 before:-z-10 before:bg-[var(--st-accent)] before:origin-left before:scale-x-0 before:transition-transform before:duration-[350ms] before:ease-[cubic-bezier(.2,.75,.25,1)]">
+          <span className="st-cta relative isolate flex items-center justify-between gap-3 min-h-[3rem] px-4 py-3 overflow-hidden rounded-lg bg-bone-light text-ink text-base font-semibold before:absolute before:inset-0 before:-z-10 before:bg-[var(--st-accent)] before:origin-left before:scale-x-0 before:transition-transform before:duration-[350ms] before:ease-[cubic-bezier(.2,.75,.25,1)]">
             <span className="min-w-0">{tile.cta}</span>
             <ChevronRightIcon className="st-arrow w-4 h-4 shrink-0 transition-transform duration-[350ms] ease-[cubic-bezier(.2,.75,.25,1)]" />
           </span>

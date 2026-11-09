@@ -392,7 +392,7 @@ export default function AdminRoutines() {
                     type="button"
                     onClick={() => updateStep(index, "time_of_day", value)}
                     aria-pressed={step.time_of_day === value}
-                    className={`h-9 px-3.5 rounded-md text-[15px] font-semibold ${step.time_of_day === value ? "bg-ink text-white" : "text-ink hover:bg-blue-50"}`}
+                    className={`h-9 px-3.5 rounded-lg text-[15px] font-semibold ${step.time_of_day === value ? "bg-ink text-white" : "text-ink hover:bg-blue-50"}`}
                   >
                     {text}
                   </button>

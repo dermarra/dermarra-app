@@ -101,7 +101,7 @@ export default function ConcernShop() {
         <p className="text-ink/70">{loadError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold"
+          className="btn btn-primary mt-4"
         >
           Try again
         </button>
@@ -113,7 +113,7 @@ export default function ConcernShop() {
     return (
       <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">We couldn&apos;t find that concern.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
+        <Link to="/shop" className="btn btn-primary mt-4">
           Shop all products
         </Link>
       </div>
@@ -161,11 +161,11 @@ export default function ConcernShop() {
                 return (
                   <div
                     key={routine.id}
-                    className="rounded-sm border border-mist bg-bone-light p-5"
+                    className="rounded-lg border border-mist bg-bone-light p-5"
                   >
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-14 h-14 rounded-sm bg-mist overflow-hidden shrink-0">
+                        <div className="w-14 h-14 rounded-lg bg-mist overflow-hidden shrink-0">
                           {routineImageUrl && (
                             <img src={routineImageUrl} alt={routine.name} className="w-full h-full object-cover" />
                           )}
@@ -180,7 +180,7 @@ export default function ConcernShop() {
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}
                           onClick={() => addRoutineToCart(routine.id)}
-                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-semibold hover:bg-orange-400 transition-colors whitespace-nowrap"
+                          className="btn btn-primary btn-sm shrink-0"
                         >
                           {addedRoutineId === routine.id
                             ? "Added to cart"
@@ -190,7 +190,7 @@ export default function ConcernShop() {
                         <Link
                           to="/login"
                           state={{ from: location.pathname }}
-                          className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-semibold hover:bg-orange-400 transition-colors whitespace-nowrap"
+                          className="btn btn-primary btn-sm shrink-0"
                         >
                           Sign in to add
                         </Link>
@@ -216,8 +216,8 @@ export default function ConcernShop() {
                 key={f.value}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setStepType(f.value)}
-                className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-colors ${
-                  stepType === f.value ? "bg-ink text-bone-light border-ink" : "border-mist text-ink/70"
+                className={`chip shrink-0 ${
+                  stepType === f.value ? "chip-on" : "chip-off"
                 }`}
               >
                 {f.label}
@@ -228,7 +228,7 @@ export default function ConcernShop() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="border border-mist rounded-sm px-3 py-2 text-sm bg-bone text-ink self-start sm:self-auto"
+            className="field w-auto h-11 pr-10 self-start sm:self-auto"
           >
             {SORTS.map((s) => (
               <option key={s.value} value={s.value}>
@@ -262,7 +262,7 @@ export default function ConcernShop() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                  className="px-6 py-3 rounded-sm border border-mist text-ink/70 text-sm font-semibold"
+                  className="btn btn-secondary"
                 >
                   Load more
                 </motion.button>

@@ -53,7 +53,7 @@ export default function AccountRoutines() {
 
   if (routines.length === 0) {
     return (
-      <div className="border border-mist rounded-sm bg-bone-light p-6 text-center">
+      <div className="border border-mist rounded-lg bg-bone-light p-6 text-center">
         <p className="text-sm text-ink/60">You haven&apos;t purchased a routine yet.</p>
       </div>
     );
@@ -69,11 +69,11 @@ export default function AccountRoutines() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="border border-mist rounded-sm bg-bone-light p-5"
+          className="border border-mist rounded-lg bg-bone-light p-5"
         >
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex items-start gap-3">
-              <div className="w-14 h-14 rounded-sm bg-mist overflow-hidden shrink-0">
+              <div className="w-14 h-14 rounded-lg bg-mist overflow-hidden shrink-0">
                 {routineImageUrl && (
                   <img src={routineImageUrl} alt={routine.name} className="w-full h-full object-cover" />
                 )}
@@ -87,7 +87,7 @@ export default function AccountRoutines() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => reorder(routine)}
-              className="shrink-0 px-4 py-2 rounded-full bg-orange text-ink text-xs font-semibold whitespace-nowrap"
+              className="btn btn-primary btn-sm shrink-0"
             >
               {addedId === routine.id ? "Added ✓" : "Reorder"}
             </motion.button>

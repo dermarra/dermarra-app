@@ -9,7 +9,7 @@ export default function AccountWishlist() {
 
   if (products.length === 0) {
     return (
-      <div className="border border-mist rounded-sm bg-bone-light p-6 text-center">
+      <div className="border border-mist rounded-lg bg-bone-light p-6 text-center">
         <p className="text-sm text-ink/60">Nothing saved yet -- tap the heart on any product to add it here.</p>
       </div>
     );

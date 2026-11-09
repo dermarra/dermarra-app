@@ -210,7 +210,7 @@ export default function AdminCoupons() {
                   type="button"
                   onClick={() => setForm({ ...form, discount_type: value })}
                   aria-pressed={form.discount_type === value}
-                  className={`h-10 px-4 rounded-md text-[15px] font-semibold ${form.discount_type === value ? "bg-ink text-white" : "text-ink hover:bg-blue-50"}`}
+                  className={`h-10 px-4 rounded-lg text-[15px] font-semibold ${form.discount_type === value ? "bg-ink text-white" : "text-ink hover:bg-blue-50"}`}
                 >
                   {text}
                 </button>

@@ -177,7 +177,7 @@ export default function ThumbnailSlider({ images, alt = "" }) {
             <Arrow dir="prev" onClick={() => goTo(index - 1)} disabled={index === 0} />
             <Arrow dir="next" onClick={() => goTo(index + 1)} disabled={index === count - 1} />
             <span
-              className="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-white text-ink text-xs font-semibold tabular-nums"
+              className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-white text-ink text-xs font-semibold tabular-nums"
               aria-live="polite"
             >
               {index + 1} / {count}

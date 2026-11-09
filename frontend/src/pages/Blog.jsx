@@ -42,7 +42,7 @@ export default function Blog() {
 
   const [first, ...rest] = posts;
   const pill = (active) =>
-    `h-11 px-5 rounded-full border text-[15px] font-semibold transition-colors ${active ? "bg-ink border-ink text-white" : "bg-white border-ink/20 text-ink hover:border-ink"}`;
+    `chip ${active ? "chip-on" : "chip-off"}`;
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12 pt-12 sm:pt-16 pb-16">
@@ -89,7 +89,7 @@ export default function Blog() {
           )}
           {page < pages && (
             <div className="mt-14 flex justify-center">
-              <button type="button" onClick={more} className="h-12 px-6 rounded-lg border border-ink text-ink text-[15px] font-semibold hover:bg-ink hover:text-white transition-colors">
+              <button type="button" onClick={more} className="btn btn-secondary">
                 Show more posts
               </button>
             </div>

@@ -137,7 +137,7 @@ function Pill({ selected, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`inline-flex items-center gap-2.5 px-6 py-3 rounded-full border text-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${
+      className={`chip h-[52px] px-6 gap-2.5 text-lg font-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${
         selected ? "bg-ink border-ink text-white font-medium" : "bg-white border-ink text-ink hover:bg-bone-light"
       }`}
     >
@@ -208,7 +208,7 @@ function RankList({ ranked, setRanked, concernIndex }) {
           <Reorder.Item
             key={c.id}
             value={c}
-            className="flex items-center gap-4 bg-white border border-mist cursor-grab active:cursor-grabbing select-none"
+            className="flex items-center gap-4 bg-white border border-mist rounded-lg overflow-hidden cursor-grab active:cursor-grabbing select-none"
             whileDrag={{ scale: 1.02, boxShadow: "0 12px 28px rgba(35,31,32,.14)" }}
           >
             <ConcernThumb concern={c} index={concernIndex(c)} className="relative w-24 h-24 shrink-0" />

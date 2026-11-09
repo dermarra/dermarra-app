@@ -37,12 +37,12 @@ export default function AccountOrderDetail() {
 
       <div className="flex items-center justify-between">
         <h2 className="font-display font-semibold text-3xl text-ink">Order #{order.id.slice(0, 8)}</h2>
-        <span className="text-xs font-mono uppercase border border-mist rounded-full px-3 py-1 text-ink/70">
+        <span className="text-xs font-mono uppercase border border-mist rounded-lg px-3 py-1 text-ink/70">
           {order.status.replace("_", " ")}
         </span>
       </div>
 
-      <section className="border border-mist rounded-sm bg-bone-light p-4">
+      <section className="border border-mist rounded-lg bg-bone-light p-4">
         <h3 className="text-xl font-semibold text-ink mb-3">Items</h3>
         <div className="flex flex-col gap-2">
           {order.items.map((item) => (
@@ -64,7 +64,7 @@ export default function AccountOrderDetail() {
         <OrderTotals order={order} />
       </section>
 
-      <section className="border border-mist rounded-sm bg-bone-light p-4">
+      <section className="border border-mist rounded-lg bg-bone-light p-4">
         <h3 className="text-xl font-semibold text-ink mb-3">Shipping</h3>
         <p className="text-sm text-ink/80">{order.shipping.name}</p>
         <p className="text-sm text-ink/80">{order.shipping.address_line1}</p>
@@ -82,7 +82,7 @@ export default function AccountOrderDetail() {
         )}
       </section>
 
-      <section className="border border-mist rounded-sm bg-bone-light p-4">
+      <section className="border border-mist rounded-lg bg-bone-light p-4">
         <h3 className="text-xl font-semibold text-ink mb-3">Payment</h3>
         <p className="text-sm text-ink/80">Method: {order.payment_method || "—"}</p>
         <p className="text-sm text-ink/80">Receipt: {order.mpesa_receipt_number || "—"}</p>
@@ -95,12 +95,12 @@ export default function AccountOrderDetail() {
       </section>
 
       {proofUrl && (
-        <section className="border border-mist rounded-sm bg-bone-light p-4">
+        <section className="border border-mist rounded-lg bg-bone-light p-4">
           <h3 className="text-xl font-semibold text-ink mb-3">Proof of delivery</h3>
           <img
             src={proofUrl}
             alt="Proof of delivery"
-            className="w-40 h-40 object-cover rounded-sm border border-mist"
+            className="w-40 h-40 object-cover rounded-lg border border-mist"
           />
         </section>
       )}

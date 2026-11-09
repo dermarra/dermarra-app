@@ -139,7 +139,7 @@ export default function Navbar() {
             <Link
               to="/login"
               state={returnTo ? { from: returnTo } : undefined}
-              className="hidden md:inline-flex px-6 py-2.5 rounded-full border-2 border-ink text-ink hover:bg-ink hover:text-white transition-colors"
+              className="btn btn-secondary btn-sm hidden md:inline-flex"
             >
               Sign in
             </Link>

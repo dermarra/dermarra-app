@@ -84,7 +84,7 @@ function Card({ title, subtitle, action, children, className = "" }) {
   return (
     <motion.section
       variants={itemReveal}
-      className={`bg-white border border-mist rounded-xl shadow-sm p-5 ${className}`}
+      className={`bg-white border border-mist rounded-lg shadow-sm p-5 ${className}`}
     >
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -107,7 +107,7 @@ function KpiTile({ label, value, hint, delta, hero = false, Icon, tone = "blue" 
   return (
     <motion.div
       variants={itemReveal}
-      className={`h-full rounded-xl p-5 ${hero ? "bg-blue text-ink" : "bg-white border border-mist shadow-sm"}`}
+      className={`h-full rounded-lg p-5 ${hero ? "bg-blue text-ink" : "bg-white border border-mist shadow-sm"}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -119,7 +119,7 @@ function KpiTile({ label, value, hint, delta, hero = false, Icon, tone = "blue" 
         {Icon && (
           <span
             aria-hidden="true"
-            className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-ink ${
+            className={`shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-ink ${
               hero ? "bg-white/35" : TONES[tone]
             }`}
           >
@@ -203,7 +203,7 @@ function RevenueTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-md border border-mist bg-white px-3 py-2 text-xs shadow-md">
+    <div className="rounded-lg border border-mist bg-white px-3 py-2 text-xs shadow-md">
       <p className="text-ink/70 mb-1">{p.full}</p>
       <p className="font-semibold text-ink tabular-nums">{kes(p.revenue_cents)}</p>
       <p className="text-ink/70">{p.paid_orders} paid order{p.paid_orders === 1 ? "" : "s"}</p>
@@ -226,7 +226,7 @@ function RevenueChart({ days, range }) {
       {empty ? (
         // No axes when there's nothing to plot -- an empty 0-4 grid behind
         // the message read as data.
-        <div className="h-64 rounded-md border border-dashed border-mist bg-blue-50 flex flex-col items-center justify-center text-center px-6">
+        <div className="h-64 rounded-lg border border-dashed border-mist bg-blue-50 flex flex-col items-center justify-center text-center px-6">
           <p className="text-sm font-semibold text-ink">No paid orders in this period yet</p>
           <p className="text-sm text-ink/70 mt-1">Revenue appears here per day as M-Pesa payments are confirmed.</p>
         </div>
@@ -501,7 +501,7 @@ export default function AdminDashboard() {
                   </div>
                   <Link
                     to={`/admin/inventory/${v.variant_id}`}
-                    className="shrink-0 px-3 py-1.5 rounded-md bg-blue hover:bg-blue-400 text-ink text-xs font-semibold"
+                    className="shrink-0 px-3 py-1.5 rounded-lg bg-blue hover:bg-blue-400 text-ink text-xs font-semibold"
                   >
                     Receive stock
                   </Link>

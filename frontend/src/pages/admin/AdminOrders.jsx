@@ -84,7 +84,7 @@ function Column({ status, orders }) {
       <div className={`h-1.5 ${COLUMN_BAR[status]}`} />
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-ink">{ORDER_STATUS[status].label}</h3>
-        <span className="min-w-[2rem] px-2 py-1 rounded-md bg-mist text-center text-xs font-semibold tabular-nums">{orders.length}</span>
+        <span className="min-w-[2rem] px-2 py-1 rounded-lg bg-mist text-center text-xs font-semibold tabular-nums">{orders.length}</span>
       </div>
       <div className="flex flex-col gap-2 px-3 pb-3 min-h-[6rem]">
         {orders.length === 0 && <p className="px-1 py-4 text-sm text-ink/70">Nothing here.</p>}

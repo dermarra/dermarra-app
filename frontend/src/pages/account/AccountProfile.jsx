@@ -12,7 +12,7 @@ import {
 } from "../../components/Icons.jsx";
 
 const inputClass =
-  "peer w-full border border-mist rounded-sm pl-10 pr-4 py-2.5 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors";
+  "peer field pl-10";
 const iconClass = "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700";
 
 function Card({ eyebrow, title, children }) {
@@ -21,7 +21,7 @@ function Card({ eyebrow, title, children }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="border border-mist rounded-sm bg-bone-light p-5"
+      className="border border-mist rounded-lg bg-bone-light p-5"
     >
       <p className="text-sm font-semibold tracking-[0.18em] text-lime-800 uppercase mb-1">{eyebrow}</p>
       <h2 className="font-display text-3xl text-ink mb-4">{title}</h2>
@@ -37,7 +37,7 @@ function SaveButton({ submitting, children = "Save" }) {
       whileTap={{ scale: 0.98 }}
       type="submit"
       disabled={submitting}
-      className="px-5 py-2.5 rounded-full bg-orange text-ink font-semibold text-sm disabled:opacity-50"
+      className="btn btn-primary"
     >
       {submitting ? "Saving…" : children}
     </motion.button>
@@ -83,7 +83,7 @@ function ProfileSection() {
         <p className="text-sm text-ink/60">{user.phone || "No phone number on file"}</p>
         <button
           onClick={openEdit}
-          className="mt-4 px-4 py-2 rounded-sm border border-mist text-ink/70 text-xs font-semibold"
+          className="btn btn-secondary btn-sm mt-4"
         >
           Edit profile
         </button>
@@ -120,7 +120,7 @@ function ProfileSection() {
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="px-4 py-2.5 rounded-sm border border-mist text-ink/70 text-sm"
+            className="btn btn-secondary"
           >
             Cancel
           </button>
@@ -276,7 +276,7 @@ function AddressSection() {
         )}
         <button
           onClick={openEdit}
-          className="mt-4 px-4 py-2 rounded-sm border border-mist text-ink/70 text-xs font-semibold"
+          className="btn btn-secondary btn-sm mt-4"
         >
           {hasAddress ? "Edit address" : "Add address"}
         </button>
@@ -322,14 +322,14 @@ function AddressSection() {
             value={form.city}
             onChange={(e) => setForm({ ...form, city: e.target.value })}
             placeholder="City"
-            className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-orange transition-colors"
+            className="field"
           />
           <input
             required
             value={form.postal_code}
             onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
             placeholder="Postal code"
-            className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-orange transition-colors"
+            className="field"
           />
         </div>
         <input
@@ -337,7 +337,7 @@ function AddressSection() {
           value={form.country}
           onChange={(e) => setForm({ ...form, country: e.target.value })}
           placeholder="Country"
-          className="border border-mist rounded-sm px-4 py-2.5 text-sm focus:border-orange transition-colors"
+          className="field"
         />
         <label className="relative block">
           <input
@@ -357,7 +357,7 @@ function AddressSection() {
           <button
             type="button"
             onClick={() => setEditing(false)}
-            className="px-4 py-2.5 rounded-sm border border-mist text-ink/70 text-sm"
+            className="btn btn-secondary"
           >
             Cancel
           </button>

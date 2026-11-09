@@ -70,7 +70,7 @@ export default function AuthPromoPanel() {
           className="w-full max-w-[260px] flex flex-col items-center"
         >
           {imageUrl && (
-            <div className="w-full aspect-[4/3] rounded-sm overflow-hidden bg-bone-light mb-8 shadow-sm">
+            <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-bone-light mb-8 shadow-sm">
               <img src={imageUrl} alt={slide.title} className="w-full h-full object-cover" />
             </div>
           )}
@@ -84,7 +84,7 @@ export default function AuthPromoPanel() {
           {slide.cta_label && slide.cta_link && (
             <Link
               to={slide.cta_link}
-              className="inline-block mt-5 px-5 py-2 rounded-full border border-mist text-sm font-semibold text-ink hover:bg-bone-light transition-colors"
+              className="btn btn-secondary btn-sm mt-5"
             >
               {slide.cta_label}
             </Link>

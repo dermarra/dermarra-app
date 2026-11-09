@@ -117,7 +117,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/quiz"
-                  className="block px-7 py-3.5 rounded-full bg-orange text-ink text-base font-semibold hover:bg-orange-400 transition-colors"
+                  className="btn btn-primary"
                 >
                   Find your routine
                 </Link>
@@ -125,7 +125,7 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   to="/shop"
-                  className="block px-7 py-3.5 rounded-full border-2 border-ink text-base font-semibold text-ink hover:bg-ink hover:text-white transition-colors"
+                  className="btn btn-secondary"
                 >
                   Shop all products
                 </Link>
@@ -260,7 +260,7 @@ export default function Home() {
       {/* ---------- Become a member ---------- */}
       {!user && (
         <Reveal as={motion.section} data-nav="lime" className="px-5 sm:px-8 lg:px-12 py-16 mx-auto max-w-[1440px]">
-          <div className="rounded-2xl bg-lime px-6 py-12 sm:py-14 text-center text-ink">
+          <div className="rounded-lg bg-lime px-6 py-12 sm:py-14 text-center text-ink">
           <motion.p variants={itemReveal} className="text-sm font-semibold tracking-[0.18em] uppercase mb-3">
             Join the family
           </motion.p>
@@ -272,7 +272,7 @@ export default function Home() {
             orders, and pick up your routine right where you left off.
           </motion.p>
           {featuredCoupon && (
-            <motion.p variants={itemReveal} className="mt-4 mx-auto w-fit rounded-full bg-white px-4 py-1.5 text-sm font-semibold">
+            <motion.p variants={itemReveal} className="mt-4 mx-auto w-fit rounded-lg bg-white px-4 py-2 text-sm font-semibold">
               Join now and use {featuredCoupon.code} for {featuredCoupon.discount_type === "percent"
                 ? `${featuredCoupon.discount_value}% off your first order.`
                 : `KES ${(featuredCoupon.discount_value / 100).toFixed(0)} off your first order.`}
@@ -286,7 +286,7 @@ export default function Home() {
           >
             <Link
               to="/signup"
-              className="inline-block px-8 py-4 rounded-full bg-ink text-white text-base font-semibold hover:bg-ink-soft transition-colors"
+              className="btn btn-dark"
             >
               Join Dermarra
             </Link>
@@ -299,7 +299,7 @@ export default function Home() {
       <Reveal as={motion.section} data-nav="blue" className="px-5 sm:px-8 lg:px-12 py-16 sm:py-20 mx-auto max-w-[1440px]">
         <motion.div
           variants={itemReveal}
-          className="relative overflow-hidden rounded-2xl bg-blue px-6 pt-14 pb-12 sm:pb-16 text-center"
+          className="relative overflow-hidden rounded-lg bg-blue px-6 pt-14 pb-12 sm:pb-16 text-center"
         >
           <h2 className="relative text-3xl sm:text-4xl text-ink max-w-xl mx-auto">
             Not sure where to start? Answer three questions.
@@ -311,7 +311,7 @@ export default function Home() {
           >
             <Link
               to="/quiz"
-              className="inline-block px-8 py-4 rounded-full bg-orange text-ink text-base font-semibold hover:bg-orange-400 transition-colors"
+              className="btn btn-primary"
             >
               Find your routine
             </Link>

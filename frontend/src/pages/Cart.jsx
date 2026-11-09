@@ -18,7 +18,7 @@ export default function Cart() {
     return (
       <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">Sign in to view your cart.</p>
-        <Link to="/login" state={{ from: "/cart" }} className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
+        <Link to="/login" state={{ from: "/cart" }} className="btn btn-primary mt-4">
           Sign in
         </Link>
       </div>
@@ -37,7 +37,7 @@ export default function Cart() {
           <BagIcon className="w-6 h-6 text-ink/40" />
         </div>
         <p className="text-ink/70">Your cart is empty.</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
+        <Link to="/shop" className="btn btn-primary mt-4">
           Shop products
         </Link>
       </motion.div>
@@ -112,14 +112,14 @@ export default function Cart() {
                   <Link
                     to={productUrl}
                     aria-label={`View ${item.product.name}`}
-                    className="group w-20 h-20 rounded-sm bg-mist overflow-hidden shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+                    className="group w-20 h-20 rounded-lg bg-mist overflow-hidden shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
                   >
                     {imageUrl && (
                       <img src={imageUrl} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                     )}
                   </Link>
                 ) : (
-                  <div className="w-20 h-20 rounded-sm bg-mist overflow-hidden shrink-0">
+                  <div className="w-20 h-20 rounded-lg bg-mist overflow-hidden shrink-0">
                     {imageUrl && <img src={imageUrl} alt={name} className="w-full h-full object-cover" />}
                   </div>
                 )}
@@ -177,13 +177,13 @@ export default function Cart() {
               onChange={(event) => setCouponCode(event.target.value)}
               placeholder="Coupon code"
               aria-label="Coupon code"
-              className="min-w-0 flex-1 border border-mist rounded-sm px-3 py-2 text-sm bg-bone text-ink uppercase focus:border-orange"
+              className="field min-w-0 flex-1 uppercase placeholder:normal-case"
               disabled={couponLoading || Boolean(cart.coupon)}
             />
             <button
               type="submit"
               disabled={couponLoading || !couponCode.trim() || Boolean(cart.coupon)}
-              className="px-3 py-2 rounded-sm border border-ink text-sm font-semibold text-ink disabled:opacity-40"
+              className="btn btn-secondary"
             >
               Apply
             </button>
@@ -205,7 +205,7 @@ export default function Cart() {
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/checkout"
-              className="block px-5 py-3 rounded-full bg-orange text-ink font-semibold hover:bg-orange-400 transition-colors"
+              className="btn btn-primary w-full"
             >
               Checkout
             </Link>

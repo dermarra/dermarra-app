@@ -221,7 +221,7 @@ function SortableImageTile({ image, onSetPrimary, onDelete, busy }) {
         <img src={url} alt="" className="w-full aspect-square object-cover bg-mist" />
       </div>
       {image.is_primary && (
-        <span className="absolute top-2 left-2 px-2 py-1 rounded-md bg-blue text-ink text-xs font-semibold leading-none">Main photo</span>
+        <span className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-blue text-ink text-xs font-semibold leading-none">Main photo</span>
       )}
       <div className="flex border-t border-mist">
         {!image.is_primary && (

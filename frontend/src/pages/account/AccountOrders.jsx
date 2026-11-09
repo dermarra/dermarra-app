@@ -118,7 +118,7 @@ export default function AccountOrders() {
 
   if (orders.length === 0) {
     return (
-      <div className="border border-mist rounded-sm bg-bone-light p-6 text-center">
+      <div className="border border-mist rounded-lg bg-bone-light p-6 text-center">
         <p className="text-sm text-ink/60">No orders yet.</p>
       </div>
     );
@@ -139,7 +139,7 @@ export default function AccountOrders() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="border border-mist rounded-sm bg-bone-light p-4"
+            className="border border-mist rounded-lg bg-bone-light p-4"
           >
             <Link to={`/account/orders/${order.id}`} className="flex justify-between items-start">
               <div>
@@ -180,7 +180,7 @@ export default function AccountOrders() {
                 {!state && (
                   <button
                     onClick={() => (inFlight ? pollStatus(order) : payNow(order))}
-                    className="text-xs px-3 py-1.5 rounded-full bg-orange text-ink font-semibold"
+                    className="btn btn-primary btn-sm"
                   >
                     {inFlight ? "Check payment status" : "Pay with M-Pesa"}
                   </button>
@@ -190,7 +190,7 @@ export default function AccountOrders() {
                   <button
                     onClick={() => cancelOrder(order)}
                     disabled={cancelling === "cancelling"}
-                    className="text-xs px-3 py-1.5 rounded-full border border-mist text-ink/70 disabled:opacity-50"
+                    className="btn btn-secondary btn-sm"
                   >
                     {cancelling === "cancelling" ? "Cancelling…" : "Cancel order"}
                   </button>

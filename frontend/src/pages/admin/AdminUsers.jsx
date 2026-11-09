@@ -175,7 +175,7 @@ export default function AdminUsers() {
                   <span className="flex flex-wrap items-center gap-2">
                     {u.full_name}
                     {isSelf && (
-                      <span className="px-2 py-1 rounded-md bg-blue-50 text-blue-800 text-xs font-bold tracking-[0.06em] leading-none">YOU</span>
+                      <span className="px-2 py-1 rounded-lg bg-blue-50 text-blue-800 text-xs font-bold tracking-[0.06em] leading-none">YOU</span>
                     )}
                   </span>
                 }

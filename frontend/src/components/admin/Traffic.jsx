@@ -62,7 +62,7 @@ export function VisitorsCard({ className = "" }) {
   );
 
   return (
-    <motion.section variants={itemReveal} className={`bg-white border border-mist rounded-xl shadow-sm p-5 ${className}`}>
+    <motion.section variants={itemReveal} className={`bg-white border border-mist rounded-lg shadow-sm p-5 ${className}`}>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
           <h3 className="text-xl font-bold text-ink">Shop visits</h3>
@@ -177,7 +177,7 @@ export function TeamCard({ className = "" }) {
   const activeCount = team?.filter((t) => t.active_now).length || 0;
 
   return (
-    <motion.section variants={itemReveal} className={`bg-white border border-mist rounded-xl shadow-sm p-5 ${className}`}>
+    <motion.section variants={itemReveal} className={`bg-white border border-mist rounded-lg shadow-sm p-5 ${className}`}>
       <h3 className="text-xl font-bold text-ink">Team</h3>
       <p className="text-sm text-ink/70 mt-0.5">{team ? `${activeCount} active now` : "Loading…"}</p>
       <ul className="mt-4 flex flex-col divide-y divide-mist">

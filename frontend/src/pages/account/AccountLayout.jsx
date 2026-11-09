@@ -21,7 +21,7 @@ export default function AccountLayout() {
         <p className="text-ink/70">Sign in to view your account.</p>
         <Link
           to="/login"
-          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold"
+          className="btn btn-primary mt-4"
         >
           Sign in
         </Link>
@@ -35,7 +35,7 @@ export default function AccountLayout() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-2xl bg-blue text-ink p-6 mb-6"
+        className="relative overflow-hidden rounded-lg bg-blue text-ink p-6 mb-6"
       >
         <p className="relative text-xs font-semibold tracking-widest uppercase mb-2">My account</p>
         <h1 className="relative text-3xl font-semibold">{user.full_name}</h1>
@@ -46,7 +46,7 @@ export default function AccountLayout() {
             logout();
             navigate("/", { replace: true });
           }}
-          className="relative mt-4 px-4 py-2 rounded-full bg-ink text-white text-xs font-semibold hover:bg-ink-soft"
+          className="btn btn-dark btn-sm relative mt-4"
         >
           Sign out
         </button>
@@ -58,8 +58,8 @@ export default function AccountLayout() {
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `shrink-0 px-5 py-2 rounded-full text-[16px] font-semibold border transition-colors ${
-                isActive ? "bg-ink text-bone-light border-ink" : "border-mist text-ink/70"
+              `chip shrink-0 ${
+                isActive ? "chip-on" : "chip-off"
               }`
             }
           >

@@ -65,7 +65,7 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <div className="relative flex flex-col h-full rounded-sm border border-mist bg-bone-light overflow-hidden">
+    <div className="relative flex flex-col h-full rounded-lg border border-mist bg-bone-light overflow-hidden">
       {/* Sibling of the Link, not inside it -- a button nested in an <a> is
           invalid HTML and confuses keyboard/screen-reader users. */}
       <motion.button
@@ -97,7 +97,7 @@ export default function ProductCard({ product }) {
             />
           )}
           {!product.in_stock && (
-            <span className="absolute top-2 left-2 text-xs font-semibold uppercase tracking-wide bg-bone-light/90 text-ink/60 px-2 py-1 rounded-sm">
+            <span className="absolute top-2 left-2 text-xs font-semibold uppercase tracking-wide bg-bone-light/90 text-ink/60 px-2 py-1 rounded-lg">
               Out of stock
             </span>
           )}
@@ -119,7 +119,7 @@ export default function ProductCard({ product }) {
         type="button"
         onClick={handleAdd}
         disabled={!product.in_stock || !product.default_variant_id || status === "adding"}
-        className={`w-full py-3.5 text-sm font-semibold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
+        className={`w-full h-[52px] text-[15px] font-semibold border-t transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 ${
           status === "added"
             ? "bg-lime text-ink border-lime"
             : status === "error"

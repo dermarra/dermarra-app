@@ -62,7 +62,7 @@ export default function Signup() {
                 placeholder="Full name"
                 value={form.fullName}
                 onChange={handleChange("fullName")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
+                className="peer field pl-10"
               />
               <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
@@ -74,7 +74,7 @@ export default function Signup() {
                 placeholder="Email"
                 value={form.email}
                 onChange={handleChange("email")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
+                className="peer field pl-10"
               />
               <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
@@ -85,7 +85,7 @@ export default function Signup() {
                 placeholder="Phone (optional)"
                 value={form.phone}
                 onChange={handleChange("phone")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
+                className="peer field pl-10"
               />
               <PhoneIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
             </label>
@@ -98,7 +98,7 @@ export default function Signup() {
                 placeholder="Password (min. 8 characters)"
                 value={form.password}
                 onChange={handleChange("password")}
-                className="peer w-full border border-mist rounded-sm pl-10 pr-10 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
+                className="peer field pl-10 pr-10"
               />
               <LockIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
               <button
@@ -128,7 +128,7 @@ export default function Signup() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={submitting}
-              className="py-3 rounded-full bg-orange text-ink font-semibold text-sm disabled:opacity-50"
+              className="btn btn-primary w-full"
             >
               {submitting ? "Creating account…" : "Create account"}
             </motion.button>

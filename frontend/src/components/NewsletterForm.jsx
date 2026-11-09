@@ -42,13 +42,13 @@ export default function NewsletterForm({ variant = "dark", source, stacked = fal
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`w-full rounded-lg px-4 py-3 text-base bg-white text-ink placeholder:text-ink/60 ${dark ? "" : "border border-ink/20 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30"}`}
+          className="field"
         />
       </label>
       <button
         type="submit"
         disabled={status === "sending"}
-        className="px-6 py-3 rounded-lg bg-orange text-ink font-semibold text-[15px] hover:bg-orange-400 disabled:opacity-50 transition-colors"
+        className="btn btn-primary"
       >
         {status === "sending" ? "Signing up…" : "Subscribe"}
       </button>

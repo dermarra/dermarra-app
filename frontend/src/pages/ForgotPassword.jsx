@@ -60,7 +60,7 @@ export default function ForgotPassword() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors"
+                  className="peer field pl-10"
                 />
                 <MailIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700" />
               </label>
@@ -80,7 +80,7 @@ export default function ForgotPassword() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={submitting}
-                className="py-3 rounded-full bg-orange text-ink font-semibold text-sm disabled:opacity-50"
+                className="btn btn-primary w-full"
               >
                 {submitting ? "Sending…" : "Send reset link"}
               </motion.button>

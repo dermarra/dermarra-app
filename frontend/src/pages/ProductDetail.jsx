@@ -109,7 +109,7 @@ export default function ProductDetail() {
     return (
       <div className="mx-auto max-w-2xl px-4 pt-14 sm:pt-20 pb-12 text-center">
         <p className="text-ink/70">{loadError}</p>
-        <Link to="/shop" className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold">
+        <Link to="/shop" className="btn btn-primary mt-4">
           Shop all products
         </Link>
       </div>
@@ -231,10 +231,10 @@ export default function ProductDetail() {
                     type="button"
                     onClick={() => setSelectedVariantId(v.id)}
                     aria-pressed={v.id === selectedVariant?.id}
-                    className={`px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${
+                    className={`chip ${
                       v.id === selectedVariant?.id
-                        ? "bg-ink border-ink text-white"
-                        : "bg-white border-ink/30 text-ink hover:border-ink"
+                        ? "chip-on"
+                        : "chip-off"
                     } ${v.in_stock ? "" : "line-through decoration-1 text-ink/50"}`}
                   >
                     {v.label}
@@ -245,7 +245,7 @@ export default function ProductDetail() {
           )}
 
           <div className="hidden sm:flex gap-3 mt-8">
-            <div className="flex items-center border border-ink/30 h-14" role="group" aria-label="Quantity">
+            <div className="flex items-center border border-ink/20 rounded-lg h-[52px] overflow-hidden" role="group" aria-label="Quantity">
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -273,9 +273,7 @@ export default function ProductDetail() {
               type="button"
               onClick={handleAdd}
               disabled={adding || !selectedVariant || !variantInStock}
-              className={`flex-1 h-14 text-sm font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 ${
-                added ? "bg-lime text-ink" : "bg-orange text-ink hover:bg-orange-400"
-              }`}
+              className={`btn flex-1 ${added ? "bg-lime text-ink" : "btn-primary"}`}
             >
               {added ? <CheckIcon className="w-4 h-4" /> : variantInStock && <BagIcon className="w-4 h-4" />}
               {buttonLabel()}

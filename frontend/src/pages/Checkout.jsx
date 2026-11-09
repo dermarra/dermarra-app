@@ -21,10 +21,10 @@ const emptyShipping = {
 };
 
 const inputClass =
-  "peer w-full border border-mist rounded-sm pl-10 pr-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors";
+  "peer field pl-10";
 const iconClass = "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40 peer-focus:text-orange-700";
 const plainInputClass =
-  "border border-mist rounded-sm px-4 py-3 text-sm bg-bone text-ink placeholder:text-ink/40 focus:border-orange transition-colors";
+  "field";
 
 export default function Checkout() {
   const { cart, refreshCart } = useCart();
@@ -166,7 +166,7 @@ export default function Checkout() {
         <Link
           to="/login"
           state={{ from: "/cart" }}
-          className="inline-block mt-4 px-5 py-3 rounded-full bg-orange text-ink font-semibold"
+          className="btn btn-primary mt-4"
         >
           Sign in
         </Link>
@@ -206,7 +206,7 @@ export default function Checkout() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => navigate(`/account/orders/${order.id}`)}
-          className="mt-6 px-6 py-3 rounded-full bg-orange text-ink font-semibold"
+          className="btn btn-primary mt-6"
         >
           View order
         </motion.button>
@@ -270,7 +270,7 @@ export default function Checkout() {
             whileTap={{ scale: 0.97 }}
             type="submit"
             disabled={retrying}
-            className="px-6 py-3 rounded-full bg-orange text-ink font-semibold disabled:opacity-50"
+            className="btn btn-primary"
           >
             {retrying ? "Sending prompt…" : `Retry payment · KES ${((order?.total_cents ?? 0) / 100).toFixed(0)}`}
           </motion.button>
@@ -294,7 +294,7 @@ export default function Checkout() {
       </p>
       <h1 className="font-display font-semibold text-3xl sm:text-4xl text-ink mb-4">Checkout</h1>
 
-      <div className="rounded-sm border border-mist bg-bone-light p-4 mb-6 text-sm">
+      <div className="rounded-lg border border-mist bg-bone-light p-4 mb-6 text-sm">
         <div className="flex justify-between text-ink/70"><span>Subtotal ({cart.items.length} item{cart.items.length !== 1 ? "s" : ""})</span><span>KES {(subtotal / 100).toFixed(0)}</span></div>
         {discount > 0 && <div className="flex justify-between text-lime-800 mt-1"><span>Discount</span><span>- KES {(discount / 100).toFixed(0)}</span></div>}
         <div className="flex justify-between font-semibold text-ink mt-2 pt-2 border-t border-mist"><span>Total</span><span>KES {(total / 100).toFixed(0)}</span></div>
@@ -363,7 +363,7 @@ export default function Checkout() {
           whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={step === "creating_order"}
-          className="mt-2 py-3 rounded-full bg-orange text-ink font-semibold disabled:opacity-50"
+          className="btn btn-primary w-full mt-2"
         >
           {step === "creating_order" ? "Preparing order…" : `Pay with M-Pesa · KES ${(total / 100).toFixed(0)}`}
         </motion.button>

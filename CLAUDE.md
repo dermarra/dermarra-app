@@ -174,6 +174,15 @@
   upright into view, plus the owner's D-construction drawing redrawn in ink
   lines. **Card text has fixed-height lines** so prices/buttons align
   (ProductCard: actives 1 line, name 2; ServiceTiles: title 2, description 4).
+  **One control standard, shop and admin (owner, 2026-11-09, modelled on
+  the blog newsletter box)**: 8px corners on every button, field and card
+  (`rounded-lg`; `rounded-full` only for true circles -- icon buttons, dots,
+  count badges); buttons and text boxes 52px tall, button text 15px
+  semibold. Storefront uses the `.btn` + `.btn-primary|-secondary|-dark`
+  (`.btn-sm` = 40px, for rows/nav), `.chip` + `.chip-on|-off` (filters, size
+  pills) and `.field` classes in `index.css` -- don't hand-roll pill
+  buttons or `rounded-sm` inputs again. Admin `Kit.jsx` matches (`lg`
+  button and `inputClass` 52px, `md` 40px).
   **Blog posts show no author** (owner, 2026-11-09): `author_name` is kept in
   the DB but no longer sent by the API.
 - The admin area is its own app shell (`AdminLayout.jsx`: ink sidebar,

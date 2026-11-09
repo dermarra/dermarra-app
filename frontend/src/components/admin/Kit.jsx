@@ -21,7 +21,7 @@ import { itemReveal } from "../Reveal.jsx";
 
 const BUTTON_BASE =
   "inline-flex items-center justify-center gap-2 rounded-lg text-[15px] leading-none font-semibold whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue";
-const BUTTON_SIZE = { lg: "h-12 px-5", md: "h-10 px-4" };
+const BUTTON_SIZE = { lg: "h-[52px] px-6", md: "h-10 px-4" }; // = storefront .btn / .btn-sm
 const BUTTON_VARIANT = {
   primary: "bg-blue text-ink hover:bg-blue-400",
   secondary: "bg-white text-ink border border-ink hover:bg-ink hover:text-white",
@@ -52,7 +52,7 @@ export function Button({ variant = "quiet", size = "md", to, className = "", typ
 
 /** Text inputs / selects / textareas in admin forms share this look. */
 export const inputClass =
-  "w-full min-w-0 rounded-lg border border-ink/20 bg-white px-4 py-2.5 text-base font-normal text-ink placeholder:text-ink/60 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30";
+  "w-full min-w-0 rounded-lg border border-ink/20 bg-white px-4 py-[11px] min-h-[52px] text-base font-normal text-ink placeholder:text-ink/60 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30";
 
 export const selectClass = `${inputClass} admin-select`; // arrow: .admin-select in index.css
 
@@ -116,7 +116,7 @@ export function FilterTabs({ options, value, onChange, label = "Filter" }) {
             type="button"
             onClick={() => onChange(o.value)}
             aria-pressed={active}
-            className={`h-10 px-4 rounded-md text-[15px] font-semibold whitespace-nowrap transition-colors ${
+            className={`h-10 px-4 rounded-lg text-[15px] font-semibold whitespace-nowrap transition-colors ${
               active ? "bg-ink text-white" : "text-ink hover:bg-blue-50"
             }`}
           >
@@ -135,7 +135,7 @@ export function FilterTabs({ options, value, onChange, label = "Filter" }) {
 
 export function SearchBox({ value, onChange, placeholder = "Search", label = "Search" }) {
   return (
-    <label className="flex items-center gap-2.5 h-12 w-full sm:w-[340px] px-4 bg-white border border-ink/20 rounded-lg focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/30">
+    <label className="flex items-center gap-2.5 h-[52px] w-full sm:w-[340px] px-4 bg-white border border-ink/20 rounded-lg focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/30">
       <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink/70 shrink-0">
         <circle cx="11" cy="11" r="7" />
         <path d="M20 20l-4-4" />

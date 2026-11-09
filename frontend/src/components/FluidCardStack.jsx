@@ -75,7 +75,7 @@ function CardBody({ card, index, open, animated }) {
               {card.to && (
                 <Link
                   to={card.to}
-                  className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-ink text-white text-sm font-semibold hover:bg-ink-soft transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  className="btn btn-dark mt-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   {card.cta}
                   <ChevronRightIcon className="w-3.5 h-3.5" />
@@ -98,7 +98,7 @@ export default function FluidCardStack({ cards }) {
     return (
       <div className="flex flex-col gap-2">
         {cards.map((card, index) => (
-          <article key={card.key} className={`flex flex-col min-h-[18rem] rounded-2xl p-6 sm:p-8 text-ink ${card.fill}`}>
+          <article key={card.key} className={`flex flex-col min-h-[18rem] rounded-lg p-6 sm:p-8 text-ink ${card.fill}`}>
             <CardBody card={card} index={index} open animated={false} />
           </article>
         ))}
@@ -120,7 +120,7 @@ export default function FluidCardStack({ cards }) {
             initial={false}
             animate={{ flexGrow: open ? 1 : 0 }}
             transition={reduceMotion ? { duration: 0 } : SPRING}
-            className={`relative min-w-0 overflow-hidden rounded-2xl text-ink ${card.fill}`}
+            className={`relative min-w-0 overflow-hidden rounded-lg text-ink ${card.fill}`}
           >
             <div className="absolute inset-0 flex flex-col p-8">
               <CardBody card={card} index={index} open={open} animated={!reduceMotion} />
@@ -132,7 +132,7 @@ export default function FluidCardStack({ cards }) {
                 onClick={() => setOpenIndex(index)}
                 aria-expanded="false"
                 aria-label={`Show: ${card.title}`}
-                className="absolute inset-0 w-full h-full focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ink rounded-2xl"
+                className="absolute inset-0 w-full h-full focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-ink rounded-lg"
               />
             )}
           </motion.article>

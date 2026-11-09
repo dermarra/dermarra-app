@@ -49,10 +49,10 @@ export default function Shop() {
             key={filter.value}
             whileTap={{ scale: 0.95 }}
             onClick={() => setStepType(filter.value)}
-            className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-colors ${
+            className={`chip shrink-0 ${
               stepType === filter.value
-                ? "bg-ink text-bone-light border-ink"
-                : "border-mist text-ink/70"
+                ? "chip-on"
+                : "chip-off"
             }`}
           >
             {filter.label}

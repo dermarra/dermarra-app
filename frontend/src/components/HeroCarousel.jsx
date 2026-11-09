@@ -68,7 +68,7 @@ export default function HeroCarousel({ slides }) {
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-block mt-8">
                 <Link
                   to={slide.cta_link}
-                  className="block px-8 py-4 rounded-full bg-orange text-ink text-base sm:text-lg font-semibold hover:bg-orange-400 transition-colors"
+                  className="btn btn-primary"
                 >
                   {slide.cta_label}
                 </Link>
